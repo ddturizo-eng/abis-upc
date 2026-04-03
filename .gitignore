@@ -1,0 +1,33 @@
+# =========================
+# ENTORNOS PYTHON
+# =========================
+venv/
+env/
+__pycache__/
+*.pyc
+
+# =========================
+# COMPILADOS JAVA (MAVEN)
+# =========================
+target/
+*.class
+*.jar
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+
+# =========================
+# CONFIGURACIONES DE IDE
+# =========================
+.idea/
+*.iml
+.vscode/
+.settings/
+.classpath
+.project
+
+# =========================
+# SISTEMA OPERATIVO
+# =========================
+.DS_Store
+Thumbs.db
