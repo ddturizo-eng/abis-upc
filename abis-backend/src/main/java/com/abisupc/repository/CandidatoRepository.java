@@ -2,17 +2,16 @@ package com.abisupc.repository;
 
 import com.abisupc.model.Candidato;
 import java.util.List;
+import java.util.Optional;
 
 public class CandidatoRepository implements Repository<Candidato> {
     @Override
-    public Candidato findById(Long id) {
-
-        return null;
+    public Optional<Candidato> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override
     public List<Candidato> findAll() {
-
         return null;
     }
 

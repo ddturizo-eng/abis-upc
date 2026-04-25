@@ -1,12 +1,12 @@
 package com.abisupc.model;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 public class Voto extends Entity {
     private Long idRol;
     private Long idEleccion;
     private Long idCandidato;
-    private LocalDateTime fechaHora;
+    private Timestamp fechaHora;
     private double pesoVotoAplicado;
 
     public Long getIdRol() {
@@ -33,11 +33,11 @@ public class Voto extends Entity {
         this.idCandidato = idCandidato;
     }
 
-    public LocalDateTime getFechaHora() {
+    public Timestamp getFechaHora() {
         return fechaHora;
     }
 
-    public void setFechaHora(LocalDateTime fechaHora) {
+    public void setFechaHora(Timestamp fechaHora) {
         this.fechaHora = fechaHora;
     }
 
