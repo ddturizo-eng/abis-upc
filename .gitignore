@@ -25,7 +25,13 @@ pom.xml.versionsBackup
 .settings/
 .classpath
 .project
+*.jks
 
+# Scripts DB si no deben versionarse
+abis-database/
+
+# Docs temporales
+docs/
 # =========================
 # SISTEMA OPERATIVO
 # =========================
