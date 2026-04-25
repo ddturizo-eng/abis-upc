@@ -1,24 +1,42 @@
-# =========================
+
+# ABIS-UPC | .gitignore ( ningun archivo o carpeta con información sensible o de configuración debe
+ #ser versionado  o subido al repositorio )
+
+
+# SECRETS Y SEGURIDAD — NUNCA AL REPO
+.env
+*.jks
+*.p12
+*.keystore
+*.pfx
+
+# FOTOS BIOMÉTRICAS — DATO SENSIBLE (Ley 1581/2012)
+static/fotos/
+abis-biometric/static/fotos/
+abis-backend/src/main/resources/static/fotos/
+
 # ENTORNOS PYTHON
-# =========================
 venv/
 env/
+.venv/
 __pycache__/
 *.pyc
+*.pyo
 
-# =========================
 # COMPILADOS JAVA (MAVEN)
-# =========================
 target/
 *.class
 *.jar
 pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
+release.properties
 
-# =========================
-# CONFIGURACIONES DE IDE
-# =========================
+# LOGS
+*.log
+logs/
+
+# IDEs
 .idea/
 *.iml
 .vscode/
@@ -33,7 +51,16 @@ abis-database/
 # Docs temporales
 docs/
 # =========================
+
+*.swp
+
+# HERRAMIENTAS PYTHON
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
+
 # SISTEMA OPERATIVO
-# =========================
 .DS_Store
 Thumbs.db
+desktop.ini
