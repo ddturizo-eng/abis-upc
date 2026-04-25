@@ -2,11 +2,12 @@ package com.abisupc.repository;
 
 import com.abisupc.model.Sesion;
 import java.util.List;
+import java.util.Optional;
 
 public class SesionRepository implements Repository<Sesion> {
     @Override
-    public Sesion findById(Long id) {
-        return null;
+    public Optional<Sesion> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override
@@ -26,16 +27,16 @@ public class SesionRepository implements Repository<Sesion> {
     public void delete(Long id) {
     }
 
-    public Sesion findByToken(String token) {
+    public Optional<Sesion> findByToken(String token) {
         // Implementar en E1-A05: SELECT * FROM SESIONES WHERE TOKEN = ?
-        return null;
+        return Optional.empty();
     }
 
-    public Sesion findActivaByAdmin(Long idAdmin) {
+    public Optional<Sesion> findActivaByAdmin(Long idAdmin) {
         // Implementar en E1-A05: SELECT * FROM SESIONES
         // WHERE ADMINISTRADORES_IDADMIN = ? AND FECHA_FIN IS NULL
         // Null en fechaFin indica sesion activa (D6).
-        return null;
+        return Optional.empty();
     }
 
     public void invalidarToken(String token) {

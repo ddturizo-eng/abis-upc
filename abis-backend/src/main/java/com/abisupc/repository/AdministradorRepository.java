@@ -2,12 +2,13 @@ package com.abisupc.repository;
 
 import com.abisupc.model.Administrador;
 import java.util.List;
+import java.util.Optional;
 
 public class AdministradorRepository implements Repository<Administrador> {
     @Override
-    public Administrador findById(Long id) {
+    public Optional<Administrador> findById(Long id) {
 
-        return null;
+        return Optional.empty();
     }
 
     @Override
@@ -28,13 +29,13 @@ public class AdministradorRepository implements Repository<Administrador> {
     public void delete(Long id) {
     }
 
-    public Administrador findByUsuario(String usuario) {
+    public Optional<Administrador> findByUsuario(String usuario) {
         // Implementar en E1-A05: SELECT * FROM ADMINISTRADORES WHERE USUARIO = ?
-        return null;
+        return Optional.empty();
     }
 
-    public Administrador findByCorreo(String correo) {
+    public Optional<Administrador> findByCorreo(String correo) {
         // Implementar en E1-A05: SELECT * FROM ADMINISTRADORES WHERE CORREO = ?
-        return null;
+        return Optional.empty();
     }
 }

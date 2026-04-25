@@ -1,6 +1,6 @@
 package com.abisupc.model;
 
-import java.time.LocalDateTime;
+import java.sql.Timestamp;
 
 public class Votante extends Entity {
 
@@ -11,9 +11,9 @@ public class Votante extends Entity {
     private String segundoNombre;
     private String primerApellido;
     private String segundoApellido;
-    private EstadoVotante estadoVoto;
+    private String estadoVoto;
     private String fotoUrl;
-    private LocalDateTime fechaConsentimiento;
+    private Timestamp fechaConsentimiento;
     private String hashIntegridadBiometrica;
     private Long idRol;
     private Long idPuesto;
@@ -74,11 +74,11 @@ public class Votante extends Entity {
         this.segundoApellido = segundoApellido;
     }
 
-    public EstadoVotante getEstadoVoto() {
+    public String getEstadoVoto() {
         return estadoVoto;
     }
 
-    public void setEstadoVoto(EstadoVotante estadoVoto) {
+    public void setEstadoVoto(String estadoVoto) {
         this.estadoVoto = estadoVoto;
     }
 
@@ -90,11 +90,11 @@ public class Votante extends Entity {
         this.fotoUrl = fotoUrl;
     }
 
-    public LocalDateTime getFechaConsentimiento() {
+    public Timestamp getFechaConsentimiento() {
         return fechaConsentimiento;
     }
 
-    public void setFechaConsentimiento(LocalDateTime fechaConsentimiento) {
+    public void setFechaConsentimiento(Timestamp fechaConsentimiento) {
         this.fechaConsentimiento = fechaConsentimiento;
     }
 
