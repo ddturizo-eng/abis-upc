@@ -2,11 +2,12 @@ package com.abisupc.repository;
 
 import com.abisupc.model.Rol;
 import java.util.List;
+import java.util.Optional;
 
 public class RolRepository implements Repository<Rol> {
     @Override
-    public Rol findById(Long id) {
-        return null;
+    public Optional<Rol> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override
@@ -26,9 +27,9 @@ public class RolRepository implements Repository<Rol> {
     public void delete(Long id) {
     }
 
-    public Rol findByNombre(String nombre) {
+    public Optional<Rol> findByNombre(String nombre) {
         // Implementar en E1-A05: SELECT * FROM ROLES WHERE NOMBRE = ?
-        return null;
+        return Optional.empty();
     }
 
     public boolean estaEnUso(Long idRol) {

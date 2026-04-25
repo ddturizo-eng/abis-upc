@@ -2,11 +2,12 @@ package com.abisupc.repository;
 
 import com.abisupc.model.MesaJurado;
 import java.util.List;
+import java.util.Optional;
 
 public class MesaJuradoRepository implements Repository<MesaJurado> {
     @Override
-    public MesaJurado findById(Long id) {
-        return null;
+    public Optional<MesaJurado> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override

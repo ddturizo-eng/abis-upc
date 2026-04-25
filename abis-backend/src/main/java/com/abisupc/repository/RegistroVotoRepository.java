@@ -2,11 +2,12 @@ package com.abisupc.repository;
 
 import com.abisupc.model.RegistroVoto;
 import java.util.List;
+import java.util.Optional;
 
 public class RegistroVotoRepository implements Repository<RegistroVoto> {
     @Override
-    public RegistroVoto findById(Long id) {
-        return null;
+    public Optional<RegistroVoto> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override

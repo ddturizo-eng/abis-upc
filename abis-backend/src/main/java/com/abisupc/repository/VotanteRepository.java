@@ -2,11 +2,12 @@ package com.abisupc.repository;
 
 import com.abisupc.model.Votante;
 import java.util.List;
+import java.util.Optional;
 
 public class VotanteRepository implements Repository<Votante> {
     @Override
-    public Votante findById(Long id) {
-        return null;
+    public Optional<Votante> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override
@@ -26,10 +27,10 @@ public class VotanteRepository implements Repository<Votante> {
     public void delete(Long id) {
     }
 
-    public Votante findByIdentificacion(String identificacion) {
+    public Optional<Votante> findByIdentificacion(String identificacion) {
         // Implementar en E1-A05: SELECT * FROM VOTANTES WHERE IDENTIFICACION = ?
         // La identificacion es el PK natural en Oracle, no el id heredado de Entity.
-        return null;
+        return Optional.empty();
     }
 
     public List<Votante> findByIdRol(Long idRol) {
@@ -52,8 +53,9 @@ public class VotanteRepository implements Repository<Votante> {
         // Implementar en E1-A05: UPDATE VOTANTES SET ESTADO_VOTO = ? WHERE IDENTIFICACION = ?
     }
 
-    public void actualizarPlantilla(String identificacion, String templateCifrado) {
-        // Implementar en E1-A05: UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = ? WHERE IDENTIFICACION = ?
+    public void actualizarPlantilla(String identificacion, String templateCifrado, String hash) {
+        // E1-M04: Actualiza PLANTILLA_BIOMETRICA y HASHINTEGRIDADBIOMETRICA en el mismo UPDATE
+        // Se mantienen juntas para evitar inconsistencias entre plantilla y su hash
     }
 
     public void actualizarFoto(String identificacion, String fotoUrl) {

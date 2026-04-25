@@ -3,11 +3,12 @@ package com.abisupc.repository;
 import com.abisupc.model.Voto;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class VotoRepository implements Repository<Voto> {
     @Override
-    public Voto findById(Long id) {
-        return null;
+    public Optional<Voto> findById(Long id) {
+        return Optional.empty();
     }
 
     @Override
