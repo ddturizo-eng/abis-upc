@@ -1,5 +1,8 @@
 package com.abisupc.config;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+
 import java.sql.Connection;
 import java.sql.SQLException;
 
@@ -9,16 +12,21 @@ public class AppConfig {
 
     static {
         String dbUrl  = System.getenv("ABIS_DB_URL");
+        String dbUser = System.getenv("ABIS_DB_USER");
         String dbPass = System.getenv("ABIS_DB_PASSWORD");
 
-        if (dbUrl == null || dbPass == null)
+        if (dbUrl == null || dbUser == null || dbPass == null) {
             throw new IllegalStateException(
-                    "Variables ABIS_DB_URL y ABIS_DB_PASSWORD requeridas");
+                    "Variables de entorno requeridas: ABIS_DB_URL, ABIS_DB_USER, ABIS_DB_PASSWORD"
+            );
+        }
 
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl(dbUrl);
+        config.setUsername(dbUser);
         config.setPassword(dbPass);
         config.setMaximumPoolSize(10);
+        config.setConnectionTimeout(30_000);
 
         dataSource = new HikariDataSource(config);
     }
