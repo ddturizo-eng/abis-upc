@@ -1,52 +1,182 @@
 package com.abisupc.repository;
 
+import com.abisupc.config.AppConfig;
 import com.abisupc.model.RegistroVoto;
+
+import java.sql.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class RegistroVotoRepository implements Repository<RegistroVoto> {
+
+    private RegistroVoto mapRow(ResultSet rs) throws SQLException {
+        RegistroVoto registro = new RegistroVoto();
+
+        Timestamp fechaHora = rs.getTimestamp("FECHA_HORA");
+
+        registro.setId(rs.getLong("ID_REGISTRO"));
+        registro.setFechaHora(fechaHora != null ? fechaHora.toLocalDateTime() : null);
+        registro.setIdentificacion(rs.getString("VOTANTES_IDENTIFICACION"));
+        registro.setIdPuesto(rs.getLong("PUESTOS_VOTACION_IDPUESTOS"));
+        registro.setIdEleccion(rs.getLong("ELECCIONES_IDELECCION"));
+
+        return registro;
+    }
+
     @Override
     public Optional<RegistroVoto> findById(Long id) {
-        return Optional.empty();
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
+                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
+                "FROM REGISTRO_VOTOS WHERE ID_REGISTRO = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.findById - id: " + id, e);
+        }
     }
 
     @Override
     public List<RegistroVoto> findAll() {
-        return null;
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
+                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
+                "FROM REGISTRO_VOTOS ORDER BY ID_REGISTRO";
+        List<RegistroVoto> lista = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) lista.add(mapRow(rs));
+            return lista;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.findAll", e);
+        }
     }
 
     @Override
     public void save(RegistroVoto entity) {
+        String sql = "INSERT INTO REGISTRO_VOTOS (ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
+                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION) " +
+                "VALUES (SEQ_REGISTRO_VOTOS.NEXTVAL, ?, ?, ?, ?) RETURNING ID_REGISTRO INTO ?";
+        try (Connection conn = AppConfig.getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+            cs.setTimestamp(1, entity.getFechaHora() != null ? Timestamp.valueOf(entity.getFechaHora()) : null);
+            cs.setString(2, entity.getIdentificacion());
+            cs.setLong(3, entity.getIdPuesto());
+            cs.setLong(4, entity.getIdEleccion());
+            cs.registerOutParameter(5, Types.NUMERIC);
+            cs.execute();
+            entity.setId(cs.getLong(5));
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.save", e);
+        }
     }
 
     @Override
     public void update(RegistroVoto entity) {
+        String sql = "UPDATE REGISTRO_VOTOS SET FECHA_HORA = ?, VOTANTES_IDENTIFICACION = ?, " +
+                "PUESTOS_VOTACION_IDPUESTOS = ?, ELECCIONES_IDELECCION = ? WHERE ID_REGISTRO = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setTimestamp(1, entity.getFechaHora() != null ? Timestamp.valueOf(entity.getFechaHora()) : null);
+            ps.setString(2, entity.getIdentificacion());
+            ps.setLong(3, entity.getIdPuesto());
+            ps.setLong(4, entity.getIdEleccion());
+            ps.setLong(5, entity.getId());
+
+            int filas = ps.executeUpdate();
+            if (filas == 0) {
+                throw new RuntimeException("No se encontró el registro de voto con ID: " + entity.getId());
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.update - id: " + entity.getId(), e);
+        }
     }
 
     @Override
     public void delete(Long id) {
+        String sql = "DELETE FROM REGISTRO_VOTOS WHERE ID_REGISTRO = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            int filas = ps.executeUpdate();
+            if (filas == 0) {
+                throw new RuntimeException("No se encontró el registro de voto con ID: " + id);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.delete - id: " + id, e);
+        }
     }
 
     public boolean yaVoto(String identificacion, Long idEleccion) {
-        // Implementar en E1-A05: SELECT COUNT(*) > 0 FROM REGISTRO_VOTOS
-        // WHERE VOTANTES_IDENTIFICACION = ? AND ELECCIONES_IDELECCION = ?
-        // Verifica si un votante especifico ya emitio su voto en una eleccion especifica.
-        return false;
+        String sql = "SELECT COUNT(*) FROM REGISTRO_VOTOS " +
+                "WHERE VOTANTES_IDENTIFICACION = ? AND ELECCIONES_IDELECCION = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, identificacion);
+            ps.setLong(2, idEleccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.yaVoto - identificacion: " +
+                    identificacion + ", idEleccion: " + idEleccion, e);
+        }
     }
 
     public List<RegistroVoto> findByEleccion(Long idEleccion) {
-        // Implementar en E1-A05: SELECT * FROM REGISTRO_VOTOS WHERE ELECCIONES_IDELECCION = ?
-        return null;
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
+                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
+                "FROM REGISTRO_VOTOS WHERE ELECCIONES_IDELECCION = ? ORDER BY FECHA_HORA DESC";
+        List<RegistroVoto> lista = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idEleccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+                return lista;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.findByEleccion - idEleccion: " + idEleccion, e);
+        }
     }
 
     public List<RegistroVoto> findByIdentificacion(String identificacion) {
-        // Implementar en E1-A05: SELECT * FROM REGISTRO_VOTOS WHERE VOTANTES_IDENTIFICACION = ?
-        return null;
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
+                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
+                "FROM REGISTRO_VOTOS WHERE VOTANTES_IDENTIFICACION = ? ORDER BY FECHA_HORA DESC";
+        List<RegistroVoto> lista = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, identificacion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+                return lista;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.findByIdentificacion - identificacion: " + identificacion, e);
+        }
     }
 
     public int countByPuesto(Long idPuesto, Long idEleccion) {
-        // Implementar en E1-A05: SELECT COUNT(*) FROM REGISTRO_VOTOS
-        // WHERE PUESTOS_VOTACION_IDPUESTOS = ? AND ELECCIONES_IDELECCION = ?
-        return 0;
+        String sql = "SELECT COUNT(*) FROM REGISTRO_VOTOS " +
+                "WHERE PUESTOS_VOTACION_IDPUESTOS = ? AND ELECCIONES_IDELECCION = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idPuesto);
+            ps.setLong(2, idEleccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.countByPuesto - idPuesto: " +
+                    idPuesto + ", idEleccion: " + idEleccion, e);
+        }
     }
 }
