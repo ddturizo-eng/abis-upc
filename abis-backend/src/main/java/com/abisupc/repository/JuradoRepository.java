@@ -2,6 +2,7 @@ package com.abisupc.repository;
 
 import com.abisupc.config.AppConfig;
 import com.abisupc.model.Jurado;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,7 +13,6 @@ public class JuradoRepository {
         Jurado j = new Jurado();
         j.setIdMesa(rs.getLong("MESA_JURADOS_IDMESA"));
         j.setIdentificacion(rs.getString("VOTANTES_IDENTIFICACION"));
-        // DATE de Oracle → java.sql.Date → LocalDate de Java
         j.setFechaAsignacion(rs.getDate("FECHA_ASIGNACION").toLocalDate());
         j.setCargo(rs.getString("CARGO"));
         return j;
@@ -46,9 +46,10 @@ public class JuradoRepository {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idMesa);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) lista.add(mapRow(rs));
-            return lista;
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+                return lista;
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en JuradoRepository.findByMesa — idMesa: " + idMesa, e);
         }
@@ -61,9 +62,10 @@ public class JuradoRepository {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) lista.add(mapRow(rs));
-            return lista;
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+                return lista;
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en JuradoRepository.findByIdentificacion — id: " + identificacion, e);
         }
@@ -74,9 +76,10 @@ public class JuradoRepository {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
-            ResultSet rs = ps.executeQuery();
-            rs.next();
-            return rs.getInt(1) > 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en JuradoRepository.esJurado — id: " + identificacion, e);
         }
