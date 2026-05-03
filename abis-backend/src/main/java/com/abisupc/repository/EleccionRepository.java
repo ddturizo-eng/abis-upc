@@ -5,7 +5,6 @@ import com.abisupc.model.Eleccion;
 import com.abisupc.model.EstadoEleccion;
 
 import java.sql.*;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -34,9 +33,10 @@ public class EleccionRepository implements Repository<Eleccion> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en EleccionRepository.findById - id: " + id, e);
         }
@@ -48,8 +48,8 @@ public class EleccionRepository implements Repository<Eleccion> {
                 "FROM ELECCIONES ORDER BY ID_ELECCION";
         List<Eleccion> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
             return lista;
         } catch (SQLException e) {
@@ -123,9 +123,10 @@ public class EleccionRepository implements Repository<Eleccion> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, EstadoEleccion.EN_CURSO.name());
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en EleccionRepository.findActiva", e);
         }
@@ -138,9 +139,10 @@ public class EleccionRepository implements Repository<Eleccion> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, estado);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) lista.add(mapRow(rs));
-            return lista;
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+                return lista;
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en EleccionRepository.findByEstado - estado: " + estado, e);
         }
