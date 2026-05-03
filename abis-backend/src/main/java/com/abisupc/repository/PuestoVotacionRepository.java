@@ -2,6 +2,7 @@ package com.abisupc.repository;
 
 import com.abisupc.config.AppConfig;
 import com.abisupc.model.PuestoVotacion;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -24,9 +25,10 @@ public class PuestoVotacionRepository implements Repository<PuestoVotacion> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en PuestoVotacionRepository.findById — id: " + id, e);
         }
@@ -37,8 +39,8 @@ public class PuestoVotacionRepository implements Repository<PuestoVotacion> {
         String sql = "SELECT ID_PUESTOS, CIUDAD, SEDE, NOMBRE_PUESTO FROM PUESTOS_VOTACION ORDER BY ID_PUESTOS";
         List<PuestoVotacion> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
             return lista;
         } catch (SQLException e) {
