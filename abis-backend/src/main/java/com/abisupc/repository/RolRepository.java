@@ -24,9 +24,10 @@ public class RolRepository implements Repository<Rol> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en RolRepository.findById — id: " + id, e);
         }
@@ -37,8 +38,8 @@ public class RolRepository implements Repository<Rol> {
         String sql = "SELECT ID_ROL, NOMBRE, PESO_VOTO FROM ROLES ORDER BY ID_ROL";
         List<Rol> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
             return lista;
         } catch (SQLException e) {
@@ -101,9 +102,10 @@ public class RolRepository implements Repository<Rol> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, nombre);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en RolRepository.findByNombre — nombre: " + nombre, e);
         }
@@ -114,9 +116,10 @@ public class RolRepository implements Repository<Rol> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idRol);
-            ResultSet rs = ps.executeQuery();
-            rs.next();
-            return rs.getInt(1) > 0;
+            try (ResultSet rs = ps.executeQuery()) {
+                rs.next();
+                return rs.getInt(1) > 0;
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en RolRepository.estaEnUso — idRol: " + idRol, e);
         }
@@ -127,10 +130,11 @@ public class RolRepository implements Repository<Rol> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idRol);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return rs.getDouble("PESO_VOTO");
-            throw new RuntimeException("No existe el rol con ID: " + idRol +
-                    ". Inconsistencia entre VOTANTES.ROLES_IDROL y tabla ROLES.");
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return rs.getDouble("PESO_VOTO");
+                throw new RuntimeException("No existe el rol con ID: " + idRol +
+                        ". Inconsistencia entre VOTANTES.ROLES_IDROL y tabla ROLES.");
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en RolRepository.getPesoVoto — idRol: " + idRol, e);
         }
