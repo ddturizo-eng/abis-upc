@@ -13,7 +13,6 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
     private MesaJurado mapRow(ResultSet rs) throws SQLException {
         MesaJurado m = new MesaJurado();
         m.setId(rs.getLong("ID_MESA"));
-        // Timestamp de Oracle → LocalDateTime de Java
         Timestamp horaIngreso = rs.getTimestamp("HORA_INGRESO");
         if (horaIngreso != null) m.setHoraIngreso(horaIngreso.toLocalDateTime());
         Timestamp horaSalida = rs.getTimestamp("HORA_SALIDA");
@@ -30,9 +29,10 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en MesaJuradoRepository.findById — id: " + id, e);
         }
@@ -44,8 +44,8 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
                 "FROM MESA_JURADOS ORDER BY ID_MESA";
         List<MesaJurado> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
             return lista;
         } catch (SQLException e) {
@@ -114,9 +114,10 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idPuesto);
-            ResultSet rs = ps.executeQuery();
-            while (rs.next()) lista.add(mapRow(rs));
-            return lista;
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) lista.add(mapRow(rs));
+                return lista;
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en MesaJuradoRepository.findByPuesto — idPuesto: " + idPuesto, e);
         }
@@ -127,8 +128,8 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
                 "FROM MESA_JURADOS WHERE HORA_SALIDA IS NULL";
         List<MesaJurado> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
             return lista;
         } catch (SQLException e) {
