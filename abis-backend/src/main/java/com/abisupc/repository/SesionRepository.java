@@ -2,6 +2,7 @@ package com.abisupc.repository;
 
 import com.abisupc.config.AppConfig;
 import com.abisupc.model.Sesion;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -28,9 +29,10 @@ public class SesionRepository implements Repository<Sesion> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en SesionRepository.findById — id: " + id, e);
         }
@@ -42,8 +44,8 @@ public class SesionRepository implements Repository<Sesion> {
                 "FROM SESIONES ORDER BY ID_SESION";
         List<Sesion> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
             return lista;
         } catch (SQLException e) {
@@ -109,9 +111,10 @@ public class SesionRepository implements Repository<Sesion> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, token);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en SesionRepository.findByToken", e);
         }
@@ -123,9 +126,10 @@ public class SesionRepository implements Repository<Sesion> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idAdmin);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en SesionRepository.findActivaByAdmin — idAdmin: " + idAdmin, e);
         }
