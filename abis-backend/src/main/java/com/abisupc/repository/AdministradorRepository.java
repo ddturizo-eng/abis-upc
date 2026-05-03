@@ -2,6 +2,7 @@ package com.abisupc.repository;
 
 import com.abisupc.config.AppConfig;
 import com.abisupc.model.Administrador;
+
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -26,9 +27,10 @@ public class AdministradorRepository implements Repository<Administrador> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en AdministradorRepository.findById — id: " + id, e);
         }
@@ -40,8 +42,8 @@ public class AdministradorRepository implements Repository<Administrador> {
                 "FROM ADMINISTRADORES ORDER BY ID_ADMIN";
         List<Administrador> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ResultSet rs = ps.executeQuery();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
             while (rs.next()) lista.add(mapRow(rs));
             return lista;
         } catch (SQLException e) {
@@ -110,9 +112,10 @@ public class AdministradorRepository implements Repository<Administrador> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, usuario);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en AdministradorRepository.findByUsuario — usuario: " + usuario, e);
         }
@@ -124,9 +127,10 @@ public class AdministradorRepository implements Repository<Administrador> {
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, correo);
-            ResultSet rs = ps.executeQuery();
-            if (rs.next()) return Optional.of(mapRow(rs));
-            return Optional.empty();
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
         } catch (SQLException e) {
             throw new RuntimeException("Error en AdministradorRepository.findByCorreo — correo: " + correo, e);
         }
