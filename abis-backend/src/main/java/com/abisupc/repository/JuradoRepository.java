@@ -13,7 +13,8 @@ public class JuradoRepository {
         Jurado j = new Jurado();
         j.setIdMesa(rs.getLong("MESA_JURADOS_IDMESA"));
         j.setIdentificacion(rs.getString("VOTANTES_IDENTIFICACION"));
-        j.setFechaAsignacion(rs.getDate("FECHA_ASIGNACION").toLocalDate());
+        java.sql.Date fechaAsignacion = rs.getDate("FECHA_ASIGNACION");
+        j.setFechaAsignacion(fechaAsignacion != null ? fechaAsignacion.toLocalDate() : null);
         j.setCargo(rs.getString("CARGO"));
         return j;
     }
