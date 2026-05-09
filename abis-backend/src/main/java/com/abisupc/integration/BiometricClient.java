@@ -14,17 +14,18 @@ import java.io.InputStream;
  */
 public class BiometricClient {
 
-    private static final String OCR_URL       = "http://localhost:8002";
-    private static final String BIOMETRIC_URL = "http://localhost:8001";
+    private static final String BIOMETRIC_BASE_URL =
+        System.getenv().getOrDefault("BIOMETRIC_SERVICE_URL", "http://localhost:8001");
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  OCR — Escaneo de documentos
-    // ═══════════════════════════════════════════════════════════════════════
+    private static final String OCR_BASE_URL =
+        System.getenv().getOrDefault("OCR_SERVICE_URL", "http://localhost:8002");
+
+
 
     public static String scanDocument(InputStream imageStream, String filename) {
         try {
             HttpResponse<JsonNode> response = Unirest
-                    .post(OCR_URL + "/ocr/scan")
+                    .post(OCR_BASE_URL + "/ocr/scan")
                     .field("file", imageStream, filename)
                     .asJson();
 
@@ -43,10 +44,7 @@ public class BiometricClient {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  BIOMETRICO — Enrolamiento
-    // ═══════════════════════════════════════════════════════════════════════
-
+  
     public static String enrollVoter(String identificacion, boolean reEnroll) {
         try {
             String body = String.format(
@@ -54,7 +52,7 @@ public class BiometricClient {
                 identificacion, reEnroll
             );
             HttpResponse<JsonNode> response = Unirest
-                    .post(BIOMETRIC_URL + "/enroll/")
+                    .post(BIOMETRIC_BASE_URL + "/enroll/")
                     .header("Content-Type", "application/json")
                     .body(body)
                     .asJson();
@@ -67,14 +65,11 @@ public class BiometricClient {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  BIOMETRICO — Verificacion
-    // ═══════════════════════════════════════════════════════════════════════
-
+  
     public static String verifyFingerprint() {
         try {
             HttpResponse<JsonNode> response = Unirest
-                    .post(BIOMETRIC_URL + "/verify/")
+                    .post(BIOMETRIC_BASE_URL + "/verify/")
                     .asJson();
 
             return response.getBody().toString();
@@ -85,15 +80,13 @@ public class BiometricClient {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  BIOMETRICO — Registro de voto
-    // ═══════════════════════════════════════════════════════════════════════
+
 
     public static String registerVote(String identificacion) {
         try {
             String body = String.format("{\"identificacion\":\"%s\"}", identificacion);
             HttpResponse<JsonNode> response = Unirest
-                    .post(BIOMETRIC_URL + "/vote/")
+                    .post(BIOMETRIC_BASE_URL + "/vote/")
                     .header("Content-Type", "application/json")
                     .body(body)
                     .asJson();
@@ -106,13 +99,11 @@ public class BiometricClient {
         }
     }
 
-    // ═══════════════════════════════════════════════════════════════════════
-    //  Health checks
-    // ═══════════════════════════════════════════════════════════════════════
+  
 
     public static boolean isAlive() {
         try {
-            int status = Unirest.get(BIOMETRIC_URL + "/health").asJson().getStatus();
+            int status = Unirest.get(BIOMETRIC_BASE_URL + "/health").asJson().getStatus();
             return status == 200;
         } catch (Exception e) {
             return false;
@@ -121,7 +112,7 @@ public class BiometricClient {
 
     public static boolean isOcrAlive() {
         try {
-            int status = Unirest.get(OCR_URL + "/health").asJson().getStatus();
+            int status = Unirest.get(OCR_BASE_URL + "/health").asJson().getStatus();
             return status == 200;
         } catch (Exception e) {
             return false;
