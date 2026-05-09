@@ -29,6 +29,10 @@ abis-native/**/*.pdb
 abis-native/**/*.config
 
 
+# ─── OCR SERVICE (imagenes de datos sensibles) ──────────────────────────────
+abis-ocr/images/DOCUMENT-ABIS/
+
+
 # ─── ENTORNOS PYTHON ────────────────────────────────────────────────────────
 venv/
 env/
