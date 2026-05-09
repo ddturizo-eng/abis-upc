@@ -1,0 +1,33 @@
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeService.csproj.AssemblyReference.cache
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeService.GeneratedMSBuildEditorConfig.editorconfig
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeService.AssemblyInfoInputs.cache
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeService.AssemblyInfo.cs
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeService.csproj.CoreCompileInputs.cache
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\NativeService.exe.config
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\NativeService.exe
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\NativeService.pdb
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\Newtonsoft.Json.dll
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\DPFPDevNET.dll
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\DPFPEngNET.dll
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\DPFPShrNET.dll
+C:\biometric-poc\native-service\NativeService\bin\Debug\net48\DPFPVerNET.dll
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeSe.AF80A352.Up2Date
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeService.exe
+C:\biometric-poc\native-service\NativeService\obj\Debug\net48\NativeService.pdb
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.csproj.AssemblyReference.cache
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.GeneratedMSBuildEditorConfig.editorconfig
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.AssemblyInfoInputs.cache
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.AssemblyInfo.cs
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.csproj.CoreCompileInputs.cache
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.sourcelink.json
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.exe
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeService.pdb
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\NativeService.exe.config
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\NativeService.exe
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\NativeService.pdb
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\Newtonsoft.Json.dll
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\DPFPDevNET.dll
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\DPFPEngNET.dll
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\DPFPShrNET.dll
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\DPFPVerNET.dll
+C:\PROYECTOS P3\abis-upc\abis-native\NativeService\obj\Debug\net48\NativeSe.AF80A352.Up2Date
