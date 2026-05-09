@@ -43,6 +43,15 @@ logs/
 .settings/
 .classpath
 .project
+*.jks
+
+# Scripts DB si no deben versionarse
+abis-database/
+
+# Docs temporales
+docs/
+# =========================
+
 *.swp
 
 # HERRAMIENTAS PYTHON
