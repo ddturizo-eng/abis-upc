@@ -1,21 +1,48 @@
 package com.abisupc.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.sql.Timestamp;
 
 public class Votante extends Entity {
 
+    @JsonProperty("identificacion")
     private String identificacion;
+
+    @JsonProperty("plantilla_biometrica")
     private String plantillaBiometrica;
+
+    @JsonProperty("correo")
     private String correo;
+
+    @JsonProperty("primer_nombre")
     private String primerNombre;
+
+    @JsonProperty("segundo_nombre")
     private String segundoNombre;
+
+    @JsonProperty("primer_apellido")
     private String primerApellido;
+
+    @JsonProperty("segundo_apellido")
     private String segundoApellido;
+
+    @JsonProperty("estado_voto")
     private String estadoVoto;
+
+    @JsonProperty("foto_url")
     private String fotoUrl;
+
+    @JsonProperty("fecha_consentimiento")
     private Timestamp fechaConsentimiento;
+
+    @JsonProperty("hash_integridad_biometrica")
     private String hashIntegridadBiometrica;
+
+    @JsonProperty("rol_id")
     private Long idRol;
+
+    @JsonProperty("puesto_id")
     private Long idPuesto;
 
     public String getIdentificacion() {
