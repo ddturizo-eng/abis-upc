@@ -1,29 +1,49 @@
 
-# ABIS-UPC | .gitignore ( ningun archivo o carpeta con información sensible o de configuración debe
- #ser versionado  o subido al repositorio )
+# ABIS-UPC | .gitignore
+# Ningun archivo o carpeta con informacion sensible o de configuracion debe
+# ser versionado o subido al repositorio.
 
 
-# SECRETS Y SEGURIDAD — NUNCA AL REPO
+# ─── SECRETS Y SEGURIDAD (NUNCA AL REPO) ───────────────────────────────────
 .env
 *.jks
 *.p12
 *.keystore
 *.pfx
+*.key
+*.pem
+*.cert
 
-# FOTOS BIOMÉTRICAS — DATO SENSIBLE (Ley 1581/2012)
+
+# ─── FOTOS BIOMETRICAS (DATO SENSIBLE - Ley 1581/2012) ─────────────────────
 static/fotos/
 abis-biometric/static/fotos/
 abis-backend/src/main/resources/static/fotos/
 
-# ENTORNOS PYTHON
+
+# ─── NATIVE SERVICE C# (.NET Framework 4.8) ────────────────────────────────
+abis-native/**/bin/
+abis-native/**/obj/
+abis-native/**/*.exe
+abis-native/**/*.pdb
+abis-native/**/*.config
+
+
+# ─── ENTORNOS PYTHON ────────────────────────────────────────────────────────
 venv/
 env/
 .venv/
+abis-biometric/venv/
 __pycache__/
 *.pyc
 *.pyo
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
 
-# COMPILADOS JAVA (MAVEN)
+
+# ─── COMPILADOS JAVA (MAVEN) ────────────────────────────────────────────────
 target/
 *.class
 *.jar
@@ -31,36 +51,41 @@ pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
+abis-backend/.mvn/
+abis-biometric/.mvn/
 
-# LOGS
+
+# ─── LOGS ────────────────────────────────────────────────────────────────────
 *.log
 logs/
 
-# IDEs
+
+# ─── IDEs ────────────────────────────────────────────────────────────────────
 .idea/
+.vs/
 *.iml
 .vscode/
 .settings/
 .classpath
 .project
-*.jks
-
-# Scripts DB si no deben versionarse
-abis-database/
-
-# Docs temporales
-docs/
-# =========================
-
 *.swp
+*~
 
-# HERRAMIENTAS PYTHON
-.ruff_cache/
-.mypy_cache/
-.pytest_cache/
-.coverage
 
-# SISTEMA OPERATIVO
+# ─── SISTEMA OPERATIVO ──────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
+
+
+# ─── BASE DE DATOS (solo ignorar archivos temporales, no los DDL/DML) ──────
+abis-database/**/*.tmp
+abis-database/**/*.bak
+
+
+# ─── DOCUMENTOS (solo ignorar temporales, no los .md) ──────────────────────
+docs/**/*.aux
+docs/**/*.log
+docs/**/*.out
+docs/**/*.toc
+docs/**/*.synctex.gz
