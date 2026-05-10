@@ -82,9 +82,8 @@ Thumbs.db
 desktop.ini
 
 
-# ─── BASE DE DATOS (solo ignorar archivos temporales, no los DDL/DML) ──────
-abis-database/**/*.tmp
-abis-database/**/*.bak
+# ─── BASE DE DATOS (contiene datos sensibles de conexión y credenciales) ───────
+abis-database/
 
 
 # ─── DOCUMENTOS (solo ignorar temporales, no los .md) ──────────────────────
