@@ -55,15 +55,28 @@ public class SesionRepository implements Repository<Sesion> {
 
     @Override
     public void save(Sesion entity) {
-        String sql = "INSERT INTO SESIONES (ID_SESION, TOKEN, FECHA_INICIO, ADMINISTRADORES_IDADMIN) " +
-                "VALUES (SEQ_SESIONES.NEXTVAL, ?, SYSTIMESTAMP, ?) RETURNING ID_SESION INTO ?";
-        try (Connection conn = AppConfig.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setString(1, entity.getToken());
-            cs.setLong(2, entity.getIdAdministrador());
-            cs.registerOutParameter(3, Types.NUMERIC);
-            cs.execute();
-            entity.setId(cs.getLong(3));
+        try (Connection conn = AppConfig.getConnection()) {
+            // Primero obtener el nextval de la secuencia
+            Long nextId;
+            try (PreparedStatement psSeq = conn.prepareStatement("SELECT SEQ_SESIONES.NEXTVAL FROM DUAL");
+                 ResultSet rsSeq = psSeq.executeQuery()) {
+                if (rsSeq.next()) {
+                    nextId = rsSeq.getLong(1);
+                } else {
+                    throw new RuntimeException("No se pudo obtener el siguiente ID de la secuencia");
+                }
+            }
+            entity.setId(nextId);
+            
+            // Insertar con el ID obtenido
+            String sql = "INSERT INTO SESIONES (ID_SESION, TOKEN, FECHA_INICIO, ADMINISTRADORES_IDADMIN) " +
+                    "VALUES (?, ?, SYSTIMESTAMP, ?)";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, entity.getId());
+                ps.setString(2, entity.getToken());
+                ps.setLong(3, entity.getIdAdministrador());
+                ps.executeUpdate();
+            }
         } catch (SQLException e) {
             if (e.getErrorCode() == 1)
                 throw new RuntimeException("Ya existe una sesión con el token proporcionado.", e);
