@@ -14,7 +14,6 @@ public class VotanteRepository implements Repository<Votante> {
     private Votante mapRow(ResultSet rs) throws SQLException {
         Votante votante = new Votante();
 
-        votante.setId(rs.getLong("ID_VOTANTE"));
         votante.setIdentificacion(rs.getString("IDENTIFICACION"));
         votante.setPlantillaBiometrica(rs.getString("PLANTILLA_BIOMETRICA"));
         votante.setCorreo(rs.getString("CORREO"));
@@ -25,7 +24,7 @@ public class VotanteRepository implements Repository<Votante> {
         votante.setEstadoVoto(rs.getString("ESTADO_VOTO"));
         votante.setFotoUrl(rs.getString("FOTO_URL"));
         votante.setFechaConsentimiento(rs.getTimestamp("FECHA_CONSENTIMIENTO"));
-        votante.setHashIntegridadBiometrica(rs.getString("HASHINTEGRIDADBIOMETRICA"));
+        votante.setHashIntegridadBiometrica(rs.getString("HASH_INTEGRIDAD_BIOMETRICA"));
         votante.setIdRol(rs.getLong("ROLES_IDROL"));
         votante.setIdPuesto(rs.getLong("PUESTOS_VOTACION_IDPUESTOS"));
 
@@ -34,28 +33,15 @@ public class VotanteRepository implements Repository<Votante> {
 
     @Override
     public Optional<Votante> findById(Long id) {
-        String sql = "SELECT ID_VOTANTE, IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
-                "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
-                "FROM VOTANTES WHERE ID_VOTANTE = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
-                return Optional.empty();
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en VotanteRepository.findById - id: " + id, e);
-        }
+        return findByIdentificacion(String.valueOf(id));
     }
 
     @Override
     public List<Votante> findAll() {
-        String sql = "SELECT ID_VOTANTE, IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
+        String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
-                "FROM VOTANTES ORDER BY ID_VOTANTE";
+                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FROM VOTANTES ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -69,42 +55,10 @@ public class VotanteRepository implements Repository<Votante> {
 
     @Override
     public void save(Votante entity) {
-        String sql = "INSERT INTO VOTANTES (ID_VOTANTE, IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
+        String sql = "INSERT INTO VOTANTES (IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, FECHA_CONSENTIMIENTO, " +
-                "HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS) " +
-                "VALUES (SEQ_VOTANTES.NEXTVAL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) RETURNING ID_VOTANTE INTO ?";
-        try (Connection conn = AppConfig.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setString(1, entity.getIdentificacion());
-            cs.setString(2, entity.getPlantillaBiometrica());
-            cs.setString(3, entity.getCorreo());
-            cs.setString(4, entity.getPrimerNombre());
-            cs.setString(5, entity.getSegundoNombre());
-            cs.setString(6, entity.getPrimerApellido());
-            cs.setString(7, entity.getSegundoApellido());
-            cs.setString(8, entity.getEstadoVoto());
-            cs.setString(9, entity.getFotoUrl());
-            cs.setTimestamp(10, entity.getFechaConsentimiento());
-            cs.setString(11, entity.getHashIntegridadBiometrica());
-            cs.setLong(12, entity.getIdRol());
-            cs.setLong(13, entity.getIdPuesto());
-            cs.registerOutParameter(14, Types.NUMERIC);
-            cs.execute();
-            entity.setId(cs.getLong(14));
-        } catch (SQLException e) {
-            if (e.getErrorCode() == 1) {
-                throw new RuntimeException("Ya existe un votante con la identificación: " + entity.getIdentificacion(), e);
-            }
-            throw new RuntimeException("Error en VotanteRepository.save", e);
-        }
-    }
-
-    @Override
-    public void update(Votante entity) {
-        String sql = "UPDATE VOTANTES SET IDENTIFICACION = ?, PLANTILLA_BIOMETRICA = ?, CORREO = ?, PRIMER_NOMBRE = ?, " +
-                "SEGUNDO_NOMBRE = ?, PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, ESTADO_VOTO = ?, FOTO_URL = ?, " +
-                "FECHA_CONSENTIMIENTO = ?, HASHINTEGRIDADBIOMETRICA = ?, ROLES_IDROL = ?, PUESTOS_VOTACION_IDPUESTOS = ? " +
-                "WHERE ID_VOTANTE = ?";
+                "HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, entity.getIdentificacion());
@@ -114,45 +68,77 @@ public class VotanteRepository implements Repository<Votante> {
             ps.setString(5, entity.getSegundoNombre());
             ps.setString(6, entity.getPrimerApellido());
             ps.setString(7, entity.getSegundoApellido());
-            ps.setString(8, entity.getEstadoVoto());
+            ps.setString(8, entity.getEstadoVoto() != null ? entity.getEstadoVoto() : "PENDIENTE");
             ps.setString(9, entity.getFotoUrl());
             ps.setTimestamp(10, entity.getFechaConsentimiento());
             ps.setString(11, entity.getHashIntegridadBiometrica());
             ps.setLong(12, entity.getIdRol());
             ps.setLong(13, entity.getIdPuesto());
-            ps.setLong(14, entity.getId());
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            if (e.getErrorCode() == 1) {
+                throw new RuntimeException("Ya existe un votante con la identificación: " + entity.getIdentificacion(), e);
+            }
+            if (e.getErrorCode() == 22919) {
+                throw new RuntimeException("El rol o puesto de votación no existe.", e);
+            }
+            throw new RuntimeException("Error en VotanteRepository.save", e);
+        }
+    }
+
+    @Override
+    public void update(Votante entity) {
+        String sql = "UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = ?, CORREO = ?, PRIMER_NOMBRE = ?, " +
+                "SEGUNDO_NOMBRE = ?, PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, ESTADO_VOTO = ?, FOTO_URL = ?, " +
+                "FECHA_CONSENTIMIENTO = ?, HASH_INTEGRIDAD_BIOMETRICA = ?, ROLES_IDROL = ?, PUESTOS_VOTACION_IDPUESTOS = ? " +
+                "WHERE IDENTIFICACION = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, entity.getPlantillaBiometrica());
+            ps.setString(2, entity.getCorreo());
+            ps.setString(3, entity.getPrimerNombre());
+            ps.setString(4, entity.getSegundoNombre());
+            ps.setString(5, entity.getPrimerApellido());
+            ps.setString(6, entity.getSegundoApellido());
+            ps.setString(7, entity.getEstadoVoto());
+            ps.setString(8, entity.getFotoUrl());
+            ps.setTimestamp(9, entity.getFechaConsentimiento());
+            ps.setString(10, entity.getHashIntegridadBiometrica());
+            ps.setLong(11, entity.getIdRol());
+            ps.setLong(12, entity.getIdPuesto());
+            ps.setString(13, entity.getIdentificacion());
 
             int filas = ps.executeUpdate();
             if (filas == 0) {
-                throw new RuntimeException("No se encontró el votante con ID: " + entity.getId());
+                throw new RuntimeException("No se encontró el votante con identificación: " + entity.getIdentificacion());
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error en VotanteRepository.update - id: " + entity.getId(), e);
+            throw new RuntimeException("Error en VotanteRepository.update - identificacion: " + entity.getIdentificacion(), e);
         }
     }
 
     @Override
     public void delete(Long id) {
-        String sql = "DELETE FROM VOTANTES WHERE ID_VOTANTE = ?";
+        String sql = "DELETE FROM VOTANTES WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, id);
+            ps.setString(1, String.valueOf(id));
             int filas = ps.executeUpdate();
             if (filas == 0) {
-                throw new RuntimeException("No se encontró el votante con ID: " + id);
+                throw new RuntimeException("No se encontró el votante con identificación: " + id);
             }
         } catch (SQLException e) {
             if (e.getErrorCode() == 2292) {
-                throw new RuntimeException("No se puede eliminar el votante ID " + id + " porque tiene registros asociados.", e);
+                throw new RuntimeException("No se puede eliminar el votante " + id + " porque tiene registros asociados.", e);
             }
-            throw new RuntimeException("Error en VotanteRepository.delete - id: " + id, e);
+            throw new RuntimeException("Error en VotanteRepository.delete - identificacion: " + id, e);
         }
     }
 
     public Optional<Votante> findByIdentificacion(String identificacion) {
-        String sql = "SELECT ID_VOTANTE, IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
+        String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -166,10 +152,27 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
-    public List<Votante> findByIdRol(Long idRol) {
-        String sql = "SELECT ID_VOTANTE, IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
+    public Optional<Votante> findByCorreo(String correo) {
+        String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FROM VOTANTES WHERE CORREO = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, correo);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) return Optional.of(mapRow(rs));
+                return Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en VotanteRepository.findByCorreo - correo: " + correo, e);
+        }
+    }
+
+    public List<Votante> findByIdRol(Long idRol) {
+        String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
+                "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
+                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES WHERE ROLES_IDROL = ? ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
@@ -185,9 +188,9 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public List<Votante> findByIdPuesto(Long idPuesto) {
-        String sql = "SELECT ID_VOTANTE, IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
+        String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES WHERE PUESTOS_VOTACION_IDPUESTOS = ? ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
@@ -235,7 +238,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public void actualizarPlantilla(String identificacion, String templateCifrado, String hash) {
-        String sql = "UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = ?, HASHINTEGRIDADBIOMETRICA = ? " +
+        String sql = "UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = ?, HASH_INTEGRIDAD_BIOMETRICA = ? " +
                 "WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -269,7 +272,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public void anonimizarDatosBiometricos(String identificacion) {
-        String sql = "UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = NULL, HASHINTEGRIDADBIOMETRICA = NULL " +
+        String sql = "UPDATE VOTANTES SET PLANTILLABIOMETRICA = NULL, HASHINTEGRIDADBIOMETRICA = NULL " +
                 "WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
