@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABIS-UPC | Iniciar Sesión</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; display: flex; height: 100vh; }
+        .left-panel { width: 50%; position: relative; overflow: hidden; }
+        .left-panel img.bg { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .left-panel .overlay { position: absolute; inset: 0; background: rgba(26,92,56,0.7); display: flex; flex-direction: column; justify-content: flex-end; padding: 40px; }
+        .left-panel .logo-upc { width: 80px; margin-bottom: 12px; }
+        .left-panel .uni-name { color: white; font-size: 0.9rem; opacity: 0.85; }
+        .left-panel .sys-name { color: white; font-size: 1.1rem; font-weight: 500; margin-top: 4px; }
+        .right-panel { width: 50%; display: flex; align-items: center; justify-content: center; background: #fff; }
+        .login-box { width: 100%; max-width: 380px; padding: 40px; }
+        .login-box h1 { color: #111827; font-size: 1.8rem; font-weight: 700; }
+        .login-box h2 { color: #6b7280; font-size: 0.95rem; margin-top: 8px; margin-bottom: 32px; font-weight: 400; }
+        .form-group { margin-bottom: 20px; }
+        .form-group label { display: block; font-size: 0.75rem; font-weight: 700; color: #374151; letter-spacing: 0.05em; margin-bottom: 8px; }
+        .form-group input { width: 100%; padding: 12px 16px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; font-size: 0.95rem; color: #111827; transition: border-color 0.2s; }
+        .form-group input:focus { outline: none; border-color: #1a5c38; background: #fff; }
+        .btn-login { width: 100%; padding: 14px; background: #1a5c38; color: #fff; border: none; border-radius: 8px; font-size: 1rem; font-weight: 700; cursor: pointer; transition: background 0.2s; }
+        .btn-login:hover { background: #14472c; }
+        .btn-login:disabled { opacity: 0.6; cursor: not-allowed; }
+        .error-msg { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 12px; margin-bottom: 20px; color: #dc2626; font-size: 0.85rem; display: none; }
+        .error-msg.show { display: block; }
+        .footer-text { text-align: center; margin-top: 32px; font-size: 0.75rem; color: #9ca3af; }
+        @media (max-width: 768px) {
+            .left-panel { display: none; }
+            .right-panel { width: 100%; }
+            .login-box { padding: 24px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="left-panel">
+  <img src="/public/login-back.png" class="bg">
+  <div class="overlay">
+    <img src="/public/logo-upc.png" class="logo-upc">
+    <p class="uni-name">Universidad Popular del Cesar</p>
+    <p class="sys-name">Sistema Biométrico ABIS-UPC</p>
+  </div>
+</div>
+    </div>
+    <div class="right-panel">
+        <div class="login-box">
+            <h1>Bienvenido</h1>
+            <h2>Ingresa tus credenciales</h2>
+            <div id="error-msg" class="error-msg"></div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label>USUARIO</label>
+                    <input type="text" id="usuario" placeholder="Digita tu usuario" required autocomplete="username">
+                </div>
+                <div class="form-group">
+                    <label>CONTRASEÑA</label>
+                    <input type="password" id="password" placeholder="Digita tu contraseña" required autocomplete="current-password">
+                </div>
+                <button type="submit" class="btn-login" id="btn-submit">Iniciar Sesión</button>
+            </form>
+            <p class="footer-text">ABIS-UPC © Universidad Popular del Cesar</p>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('login-form');
+        const errorMsg = document.getElementById('error-msg');
+        const btnSubmit = document.getElementById('btn-submit');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            errorMsg.classList.remove('show');
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Verificando...';
+
+            const usuario = document.getElementById('usuario').value.trim();
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:7000/api/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ usuario, password })
+                });
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    localStorage.setItem('abis_token', data.token || 'authenticated');
+                    localStorage.setItem('abis_user', JSON.stringify(data.user || { usuario }));
+                    window.location.replace('/pages/auth/index.html');
+                } else {
+                    errorMsg.textContent = data.message || data.error || 'Credenciales incorrectas';
+                    errorMsg.classList.add('show');
+                    btnSubmit.disabled = false;
+                    btnSubmit.textContent = 'Iniciar Sesión';
+                }
+            } catch (error) {
+                errorMsg.textContent = 'Error de conexión con el servidor';
+                errorMsg.classList.add('show');
+                btnSubmit.disabled = false;
+                btnSubmit.textContent = 'Iniciar Sesión';
+            }
+        });
+    </script>
+</body>
+</html>
