@@ -3,626 +3,624 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ABIS-UPC | Pre-Registro Biométrico</title>
+    <title>ABIS-UPC | Pre-Registro de Votante</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles/base.css">
     <style>
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
+        :root {
+            --primary: #004D33;
+            --primary-dark: #003421;
+            --secondary: #4CAF7D;
+            --background: #F2F3F5;
+        }
+        
         body {
-            font-family: 'Segoe UI', system-ui, sans-serif;
-            background: #060d1f;
-            color: #e0e6f0;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 24px;
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
         }
 
-        .header {
-            text-align: center;
-            margin-bottom: 28px;
-        }
-        .header .logo { font-size: 2rem; margin-bottom: 6px; }
-        .header h1 { font-size: 1.3rem; color: #60a5fa; letter-spacing: 1px; }
-        .header p  { color: #475569; font-size: 0.78rem; margin-top: 4px; }
-
-        .card {
-            background: #0f1829;
-            border: 1px solid #1e3a5f;
-            border-radius: 16px;
-            padding: 32px;
+        .form-field {
             width: 100%;
-            max-width: 620px;
-            box-shadow: 0 0 60px rgba(59,130,246,0.08);
+            background: var(--background);
+            border: 1.5px solid #C8CBD2;
+            border-left: 3px solid #C8CBD2;
+            border-radius: 0.5rem;
+            padding: 0.75rem 0.875rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            color: #111827;
+            transition: all 150ms ease;
+            outline: none;
         }
 
-        /* ── Status ── */
-        .system-status {
-            display: flex; align-items: center; gap: 8px;
-            background: #0a1628; border: 1px solid #1e3a5f;
-            border-radius: 8px; padding: 10px 14px;
-            margin-bottom: 22px; font-size: 0.78rem; color: #64748b;
-        }
-        .dot { width:8px; height:8px; border-radius:50%; background:#94a3b8; flex-shrink:0; }
-        .dot.ok    { background:#22c55e; box-shadow:0 0 6px #22c55e88; }
-        .dot.error { background:#ef4444; box-shadow:0 0 6px #ef444488; }
-        .dot.pulse { background:#f59e0b; animation:blink 1s infinite; }
-        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
-
-        /* ── Pestañas de entrada ── */
-        .tabs {
-            display: flex; gap: 4px;
-            background: #0a1222; border: 1px solid #1e3a5f;
-            border-radius: 10px; padding: 4px;
-            margin-bottom: 20px;
-        }
-        .tab-btn {
-            flex: 1; padding: 10px 8px;
-            background: transparent; border: none; border-radius: 7px;
-            color: #475569; font-size: 0.82rem; font-weight: 600;
-            cursor: pointer; transition: all 0.2s; letter-spacing: 0.3px;
-        }
-        .tab-btn.active {
-            background: #1e3a5f; color: #93c5fd;
-        }
-        .tab-btn:hover:not(.active) { color: #93c5fd; }
-
-        .tab-panel { display: none; }
-        .tab-panel.active { display: block; }
-
-        /* ── Drop Zone ── */
-        .drop-zone {
-            border: 2px dashed #1e3a5f; border-radius: 10px;
-            padding: 26px 20px; text-align: center; cursor: pointer;
-            transition: all 0.25s; margin-bottom: 18px; background: #0a1222;
-        }
-        .drop-zone:hover, .drop-zone.dragover {
-            border-color: #3b82f6; background: #0d1e3a;
-        }
-        .drop-zone input { display: none; }
-        .drop-zone .icon { font-size: 2rem; margin-bottom: 8px; }
-        .drop-zone label {
-            cursor: pointer; color: #64748b;
-            font-size: 0.85rem; display: block;
-        }
-        .drop-zone label span { color: #3b82f6; text-decoration: underline; }
-
-        #preview {
-            max-width: 100%; max-height: 150px; border-radius: 8px;
-            margin-top: 12px; display: none; border: 1px solid #1e3a5f;
-        }
-        #filename-label {
-            display: none; font-size: 0.75rem;
-            color: #475569; margin-top: 5px;
+        .form-field::placeholder {
+            color: #9CA3AF;
+            font-style: italic;
         }
 
-        /* ── Cámara ── */
-        .camara-wrapper { position: relative; margin-bottom: 18px; }
-        #video-preview {
-            width: 100%; border-radius: 10px;
-            border: 1px solid #1e3a5f; background: #000;
-            display: none; max-height: 280px; object-fit: cover;
-        }
-        #canvas-capture { display: none; }
-        .camara-controles {
-            display: flex; gap: 10px; margin-top: 10px;
-        }
-        .btn-cam {
-            flex: 1; padding: 11px;
-            background: #0d1e3a; border: 1px solid #1e3a5f;
-            border-radius: 8px; color: #93c5fd;
-            font-size: 0.85rem; font-weight: 600; cursor: pointer;
-            transition: all 0.2s;
-        }
-        .btn-cam:hover { background: #1e3a5f; }
-        .btn-cam:disabled { opacity: 0.4; cursor: not-allowed; }
-        #camara-thumb {
-            max-width: 100%; max-height: 130px; border-radius: 8px;
-            margin-top: 10px; display: none; border: 1px solid #1e3a5f;
+        .form-field:focus {
+            border-color: var(--primary);
+            border-left-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 77, 51, 0.1);
         }
 
-        /* ── Botón escanear ── */
-        button#btnScan {
-            width: 100%; padding: 14px;
-            background: linear-gradient(135deg, #2563eb, #1d4ed8);
-            color: white; border: none; border-radius: 10px;
-            font-size: 1rem; font-weight: 700; cursor: pointer;
-            letter-spacing: 0.5px; transition: all 0.2s;
+        .form-field.filled {
+            border-color: var(--secondary);
+            border-left-color: var(--secondary);
+            font-weight: 600;
+            background: #F0FDF4;
         }
-        button#btnScan:hover:not(:disabled) {
-            background: linear-gradient(135deg, #3b82f6, #2563eb);
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 200ms ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
             transform: translateY(-1px);
-        }
-        button#btnScan:disabled {
-            background: #1e2d45; color: #334155;
-            cursor: not-allowed; transform: none;
+            box-shadow: 0 10px 30px rgba(0, 77, 51, 0.15);
         }
 
-        /* ── Error ── */
-        #error-msg {
-            display: none; background: #1a0a0a;
-            border: 1px solid #7f1d1d; border-radius: 8px;
-            padding: 12px 14px; color: #fca5a5;
-            font-size: 0.82rem; margin-top: 14px;
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
         }
 
-        /* ── Sección formulario pre-registro ── */
-        .form-section {
-            display: none; margin-top: 26px;
-        }
-        .form-section-title {
-            font-size: 0.82rem; font-weight: 700;
-            color: #60a5fa; letter-spacing: 0.5px;
-            margin-bottom: 14px;
-            display: flex; align-items: center; gap: 8px;
-        }
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 14px;
-        }
-        .form-group { display: flex; flex-direction: column; gap: 5px; }
-        .form-group.full { grid-column: 1 / -1; }
-        .form-group label {
-            font-size: 0.75rem; color: #475569; letter-spacing: 0.3px;
-        }
-        .form-group input, .form-group select {
-            background: #0a1222; border: 1px solid #1e3a5f;
-            border-radius: 8px; padding: 10px 12px;
-            color: #e0e6f0; font-size: 0.88rem;
-            transition: border-color 0.2s; outline: none;
-            font-family: inherit;
-        }
-        .form-group input:focus, .form-group select:focus {
-            border-color: #3b82f6;
-        }
-        .form-group input.autofilled {
-            border-color: #22c55e;
-            background: #041810;
-        }
-        .form-group select option { background: #0f1829; }
-
-        .badge-tipo {
-            display: inline-block; padding: 2px 10px;
-            border-radius: 20px; font-size: 0.72rem; font-weight: 700;
-        }
-        .badge-ti  { background:#0c2045; color:#60a5fa; border:1px solid #1e4a8f; }
-        .badge-cc  { background:#052e16; color:#4ade80; border:1px solid #16a34a; }
-        .badge-upc { background:#3d1f00; color:#fbbf24; border:1px solid #92400e; }
-        .badge-unk { background:#1a0a0a; color:#f87171; border:1px solid #991b1b; }
-
-        .btn-submit {
-            width: 100%; padding: 14px; margin-top: 20px;
-            background: linear-gradient(135deg, #059669, #047857);
-            color: white; border: none; border-radius: 10px;
-            font-size: 0.95rem; font-weight: 700; cursor: pointer;
-            letter-spacing: 0.5px; transition: all 0.2s;
-        }
-        .btn-submit:hover { background: linear-gradient(135deg, #10b981, #059669); transform: translateY(-1px); }
-
-        /* ── OCR resultado (mini) ── */
-        .ocr-resultado-mini {
-            display: none; margin-top: 14px;
-            background: #071220; border: 1px solid #1e3a5f;
-            border-radius: 10px; overflow: hidden;
-        }
-        .ocr-mini-header {
-            background: #0d1e3a; padding: 9px 14px;
-            font-size: 0.78rem; font-weight: 700;
-            color: #60a5fa; letter-spacing: 0.4px;
-        }
-        .ocr-mini-body {
-            padding: 12px 14px; font-size: 0.8rem; color: #64748b;
+        .btn-secondary {
+            background: white;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            padding: 0.75rem 1.5rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 200ms ease;
+            font-family: 'DM Sans', sans-serif;
         }
 
-        /* ── Flujo ── */
-        .flow {
-            display: flex; justify-content: center; align-items: center;
-            gap: 6px; margin-top: 20px;
-            font-size: 0.7rem; color: #334155;
+        .btn-secondary:hover {
+            background: rgba(0, 77, 51, 0.05);
         }
-        .flow .step {
-            background: #0d1829; border: 1px solid #1e3a5f;
-            border-radius: 6px; padding: 4px 10px;
+
+        .doc-type-btn {
+            padding: 0.375rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 200ms ease;
+            border: none;
         }
-        .flow .step.active { border-color: #3b82f6; color: #60a5fa; }
-        .flow .arrow { color: #1e3a5f; }
+
+        .doc-type-btn.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .doc-type-btn:not(.active) {
+            background: white;
+            color: #6B7280;
+            border: 1px solid #E5E7EB;
+        }
+
+        .doc-type-btn:not(.active):hover {
+            background: #F9FAFB;
+        }
+
+        .step-active {
+            background: #ECFDF5;
+            border-left: 3px solid var(--primary);
+        }
+
+        .step-pending {
+            opacity: 0.6;
+        }
+
+        .step-locked {
+            opacity: 0.4;
+        }
+
+        @keyframes pulse-bracket {
+            0%, 100% { transform: scale(1); opacity: 0.7; }
+            50% { transform: scale(1.02); opacity: 1; }
+        }
+
+        .animate-bracket {
+            animation: pulse-bracket 2.5s infinite ease-in-out;
+        }
+
+        .drop-zone {
+            border: 2px dashed #C8CBD2;
+            border-radius: 0.625rem;
+            transition: all 200ms ease;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: var(--secondary);
+            background: #F0FDF4;
+        }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            font-weight: 700;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success {
+            background: #DBEAFE;
+            color: #1E40AF;
+        }
     </style>
 </head>
-<body>
-
-<div class="header">
-    <div class="logo">🗳️</div>
-    <h1>ABIS-UPC</h1>
-    <p>Pre-Registro Biométrico · Escaneo OCR de Documentos</p>
-</div>
-
-<div class="card">
-
-    <!-- Estado del sistema -->
-    <div class="system-status">
-        <div class="dot pulse" id="statusDot"></div>
-        <span id="statusText">Verificando conexión con el backend...</span>
-    </div>
-
-    <!-- Pestañas: Imagen/PDF | Cámara -->
-    <div class="tabs">
-        <button class="tab-btn active" onclick="switchTab('archivo')">📂 Imagen / PDF</button>
-        <button class="tab-btn"        onclick="switchTab('camara')">📷 Cámara</button>
-    </div>
-
-    <!-- Panel: Archivo -->
-    <div class="tab-panel active" id="panel-archivo">
-        <div class="drop-zone" id="dropZone">
-            <input type="file" id="fileInput" accept="image/*,.pdf">
-            <div class="icon">📄</div>
-            <label for="fileInput">
-                Arrastra aquí o <span>haz clic para explorar</span><br>
-                <small style="color:#334155;font-size:0.72rem">PNG, JPG, WEBP, PDF</small>
-            </label>
-            <img id="preview" alt="Vista previa">
-            <p id="filename-label"></p>
-        </div>
-    </div>
-
-    <!-- Panel: Cámara -->
-    <div class="tab-panel" id="panel-camara">
-        <div class="camara-wrapper">
-            <video id="video-preview" autoplay playsinline></video>
-            <canvas id="canvas-capture"></canvas>
-            <img id="camara-thumb" alt="Captura">
-        </div>
-        <div class="camara-controles">
-            <button class="btn-cam" id="btnIniciarCamara" onclick="iniciarCamara()">
-                📷 Activar cámara
-            </button>
-            <button class="btn-cam" id="btnCapturar" onclick="capturarFoto()" disabled>
-                🎯 Capturar foto
-            </button>
-            <button class="btn-cam" id="btnDetenerCamara" onclick="detenerCamara()" disabled style="flex:0.6">
-                ✕ Cerrar
-            </button>
-        </div>
-    </div>
-
-    <!-- Botón escanear -->
-    <button id="btnScan" disabled>🧬 Escanear Documento</button>
-    <div id="error-msg"></div>
-
-    <!-- Resultado mini OCR (fuente y tipo) -->
-    <div class="ocr-resultado-mini" id="ocrMini">
-        <div class="ocr-mini-header">📋 Datos extraídos — revisión antes de registrar</div>
-        <div class="ocr-mini-body" id="ocrMiniBody"></div>
-    </div>
-
-    <!-- Formulario de Pre-Registro -->
-    <div class="form-section" id="formSection">
-        <div class="form-section-title">
-            ✏️ FORMULARIO DE PRE-REGISTRO
-            <span id="badge-tipo" class="badge-tipo badge-unk">—</span>
-        </div>
-
-        <div class="form-grid">
-            <div class="form-group">
-                <label>Tipo de documento</label>
-                <select id="f-tipo">
-                    <option value="CC">Cédula de Ciudadanía (C.C.)</option>
-                    <option value="TI">Tarjeta de Identidad (T.I.)</option>
-                    <option value="CE">Cédula de Extranjería</option>
-                    <option value="PASAPORTE">Pasaporte</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label>Número de documento</label>
-                <input type="text" id="f-numero" placeholder="Ej: 1.052.041.109">
-            </div>
-            <div class="form-group">
-                <label>Apellidos</label>
-                <input type="text" id="f-apellidos" placeholder="Apellidos">
-            </div>
-            <div class="form-group">
-                <label>Nombres</label>
-                <input type="text" id="f-nombres" placeholder="Nombres">
-            </div>
-            <div class="form-group">
-                <label>Fecha de nacimiento</label>
-                <input type="text" id="f-nacimiento" placeholder="Ej: 13 JUN 2006">
-            </div>
-            <div class="form-group">
-                <label>Sexo</label>
-                <select id="f-sexo">
-                    <option value="">— Sin especificar —</option>
-                    <option value="M">Masculino</option>
-                    <option value="F">Femenino</option>
-                </select>
-            </div>
-            <div class="form-group full">
-                <label>Programa / Facultad (si aplica)</label>
-                <input type="text" id="f-programa" placeholder="Ej: Ingeniería de Sistemas">
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-[#F2F3F5] flex justify-between items-center w-full px-8 py-4">
+        <div class="flex items-center gap-4">
+            <span class="text-xl font-bold text-[#004D33] tracking-tight">ABIS-UPC</span>
+            <div class="flex gap-2 ml-4">
+                <span class="bg-[#004D33] text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">AES-256</span>
+                <span class="bg-[#93F7BF] text-[#004D33] text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">SESIÓN SEGURA</span>
             </div>
         </div>
+        <div class="flex items-center gap-4">
+            <span class="text-xs text-slate-500" id="status-indicator">
+                <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse mr-2"></span>
+                Verificando conexión...
+            </span>
+        </div>
+    </header>
 
-        <button class="btn-submit" onclick="enviarRegistro()">
-            🗳️ Confirmar Pre-Registro
-        </button>
-    </div>
+    <!-- Main Content -->
+    <main class="flex-grow flex p-6 gap-6 mb-24">
+        <!-- Sidebar Navigation -->
+        <aside class="flex flex-col w-64 h-full py-6 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)]">
+            <div class="px-6 mb-8">
+                <h2 class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Proceso</h2>
+                <p class="text-sm text-slate-500">Estado de flujo</p>
+            </div>
+            <nav class="flex flex-col gap-2">
+                <div class="flex items-center gap-4 px-6 py-4 step-active">
+                    <div class="w-8 h-8 shrink-0 rounded-full bg-[#004D33] text-white flex items-center justify-center text-[11px] font-bold">1</div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-bold text-[#004D33]">Pre-Registro</span>
+                        <span class="text-[10px] text-[#004D33] font-bold tracking-wider">EN CURSO</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4 step-pending">
+                    <div class="w-8 h-8 shrink-0 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold">2</div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-medium text-slate-600">Enrolamiento Biom.</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">PENDIENTE</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4 step-locked">
+                    <div class="w-8 h-8 shrink-0 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold">
+                        <span class="material-symbols-outlined text-[16px]">lock_outline</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-medium text-slate-600">Verificación</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">BLOQUEADO</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
 
-    <!-- Flujo -->
-    <div class="flow">
-        <div class="step" id="f-front">Frontend JS</div>
-        <div class="arrow">→</div>
-        <div class="step" id="f-java">Java :7000</div>
-        <div class="arrow">→</div>
-        <div class="step" id="f-python">Python :8000</div>
-    </div>
+        <!-- Content Area -->
+        <section class="flex-grow flex flex-col gap-6">
+            <!-- Document Type Selector -->
+            <div class="flex items-center gap-3 px-1">
+                <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mr-2">Tipo de Documento:</span>
+                <div class="flex bg-white p-1 rounded-full shadow-[0px_10px_30px_rgba(0,77,51,0.08)]">
+                    <button class="doc-type-btn active" onclick="selectDocType('CC')">C.C.</button>
+                    <button class="doc-type-btn" onclick="selectDocType('CE')">C.E.</button>
+                    <button class="doc-type-btn" onclick="selectDocType('TI')">T.I.</button>
+                    <button class="doc-type-btn" onclick="selectDocType('PASAPORTE')">PASAPORTE</button>
+                </div>
+            </div>
 
-</div>
+            <!-- Split Layout -->
+            <div class="flex-grow grid grid-cols-12 gap-6">
+                <!-- Left: Capture Zone -->
+                <div class="col-span-5 bg-[#E8EAED] border border-[#C8CBD2] rounded-[10px] shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col p-5 overflow-hidden">
+                    <div class="mb-4 flex justify-between items-center">
+                        <h3 class="font-mono text-[10px] uppercase text-[#6B7280]">ZONA DE CAPTURA</h3>
+                        <span class="flex items-center gap-1.5 font-mono text-[10px] text-[#6B7280]">
+                            <span class="w-2 h-2 rounded-full bg-[#4CAF7D]"></span>
+                            SCANNER READY
+                        </span>
+                    </div>
+                    
+                    <!-- Drop Zone -->
+                    <div class="flex-grow bg-[#D5D8DC] rounded-[10px] overflow-hidden relative flex flex-col items-center justify-center drop-zone" id="dropZone">
+                        <input type="file" id="fileInput" accept="image/*,.pdf" class="hidden">
+                        <div class="flex flex-col items-center text-center px-4" id="capture-content">
+                            <span class="material-symbols-outlined text-[40px] text-[#6B7280] opacity-60 mb-4">document_scanner</span>
+                            <p class="text-[13px] text-[#6B7280] max-w-[190px]">Posicione el documento frente a la cámara</p>
+                            <p class="text-[11px] italic text-[#9CA3AF] max-w-[170px] mt-1">Arrastre o haga clic para subir</p>
+                        </div>
+                        <img id="preview" class="hidden max-h-40 rounded-lg mt-4">
+                    </div>
 
-<script>
-    // ─── Estado global ───────────────────────────────────────────────────────
-    let archivoActual  = null;  // File o Blob listo para enviar
-    let streamCamara   = null;
+                    <!-- Action Buttons -->
+                    <div class="mt-4">
+                        <div class="flex gap-[10px]">
+                            <button class="flex-1 bg-[#1B3A2D] text-white py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90" onclick="document.getElementById('fileInput').click()">
+                                <span class="material-symbols-outlined text-[18px]">upload</span>
+                                Subir Archivo
+                            </button>
+                            <button class="flex-1 bg-[#1B3A2D] text-white py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90" id="btnCamera" onclick="toggleCamera()">
+                                <span class="material-symbols-outlined text-[18px]">photo_camera</span>
+                                Cámara
+                            </button>
+                        </div>
+                        <p class="text-center font-mono text-[10px] text-[#9CA3AF] mt-2">PNG, JPG o PDF</p>
+                    </div>
 
-    // ─── Health check ─────────────────────────────────────────────────────────
-    async function checkHealth() {
-        try {
-            const resp = await fetch('/api/health');
-            const data = await resp.json();
-            if (data.biometric === 'ok') {
-                setStatus('ok', '✅ Backend Java y Microservicio Python operativos');
-                activateFlow('f-java'); activateFlow('f-python');
-            } else {
-                setStatus('error', '⚠️ Backend Java OK · Python offline');
-                activateFlow('f-java');
+                    <!-- Camera Panel -->
+                    <div id="cameraPanel" class="hidden mt-4">
+                        <video id="videoPreview" class="w-full rounded-lg" autoplay playsinline></video>
+                        <canvas id="canvasCapture" class="hidden"></canvas>
+                        <div class="flex gap-2 mt-2">
+                            <button class="flex-1 bg-[#004D33] text-white py-2 rounded-lg text-xs font-bold" onclick="capturePhoto()">Capturar</button>
+                            <button class="flex-1 border border-[#C8CBD2] text-[#6B7280] py-2 rounded-lg text-xs" onclick="stopCamera()">Cerrar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right: Form -->
+                <div class="col-span-7 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col overflow-hidden">
+                    <div class="px-6 py-4 bg-slate-50 border-b flex justify-between items-center">
+                        <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Datos del Votante</h3>
+                        <div class="flex items-center gap-2">
+                            <span class="badge badge-success">OCR ACTIVO</span>
+                        </div>
+                    </div>
+                    
+                    <div class="p-6 overflow-y-auto grid grid-cols-2 gap-x-6 gap-y-4">
+                        <!-- Primer Nombre -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Primer Nombre *</label>
+                            <input class="form-field" id="f-primernombre" type="text" placeholder="Primer nombre">
+                        </div>
+
+                        <!-- Segundo Nombre -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Segundo Nombre</label>
+                            <input class="form-field" id="f-segundonombre" type="text" placeholder="Segundo nombre">
+                        </div>
+
+                        <!-- Primer Apellido -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Primer Apellido *</label>
+                            <input class="form-field" id="f-primerapellido" type="text" placeholder="Primer apellido">
+                        </div>
+
+                        <!-- Segundo Apellido -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Segundo Apellido</label>
+                            <input class="form-field" id="f-segundoapellido" type="text" placeholder="Segundo apellido">
+                        </div>
+
+                        <!-- Identificación -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Número de Identificación *</label>
+                            <input class="form-field" id="f-identificacion" type="text" placeholder="Número de documento">
+                        </div>
+
+                        <!-- Correo -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Correo Electrónico *</label>
+                            <input class="form-field" id="f-correo" type="email" placeholder="correo@ejemplo.com">
+                        </div>
+
+                        <!-- Rol -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">ROL DEL VOTANTE *</label>
+                            <select class="form-field" id="f-rol">
+                                <option value="">Seleccionar rol...</option>
+                                <option value="1">ESTUDIANTE</option>
+                                <option value="2">EGRESADO</option>
+                                <option value="3">DOCENTE</option>
+                                <option value="4">ADMINISTRATIVO</option>
+                            </select>
+                        </div>
+
+                        <!-- Puesto de Votación -->
+                        <div class="col-span-1">
+                            <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">PUESTO DE VOTACIÓN *</label>
+                            <select class="form-field" id="f-puesto">
+                                <option value="">Seleccionar puesto...</option>
+                                <option value="1">Universidad Popular del Cesar - Sede Principal</option>
+                                <option value="2">Centro Cultural Jorge Eliécer Gaitán</option>
+                                <option value="3">Escuela Normal Superior</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Error Message -->
+                    <div id="error-msg" class="hidden mx-6 mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600"></div>
+
+                    <!-- Actions -->
+                    <div class="p-6 bg-slate-50 border-t flex gap-4">
+                        <button class="flex-1 border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-50" onclick="resetForm()">
+                            <span class="material-symbols-outlined">refresh</span>
+                            Nuevo Escaneo
+                        </button>
+                        <button class="flex-1 bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20" onclick="enviarPreRegistro()">
+                            Continuar a Biometría
+                            <span class="material-symbols-outlined">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="fixed bottom-2 left-8 right-8 flex justify-between items-center text-[9px] font-bold text-slate-400 tracking-widest uppercase">
+        <div class="flex gap-4">
+            <span>INTEGRIDAD: ---</span>
+            <span>STATUS: LISTO</span>
+        </div>
+        <div class="flex gap-4">
+            <span>v1.0.0-STABLE</span>
+        </div>
+    </footer>
+
+    <script src="../../js/api.js"></script>
+    <script>
+        const token = localStorage.getItem('abis_token');
+        if (!token) { window.location.replace('/pages/auth/login.html'); }
+
+        let currentDocType = 'CC';
+        let currentFile = null;
+        let cameraStream = null;
+
+        async function cargarPuestos() {
+            try {
+                const res = await fetch('http://localhost:7000/api/puestos');
+                const puestos = await res.json();
+                const select = document.getElementById('f-puesto');
+                if (!select) return;
+                select.innerHTML = '<option value="">Seleccionar puesto...</option>';
+                puestos.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p.id;
+                    opt.textContent = p.nombrePuesto + ' - ' + p.ciudad;
+                    select.appendChild(opt);
+                });
+            } catch(e) {
+                console.error('Error cargando puestos:', e);
             }
-        } catch {
-            setStatus('error', '❌ Backend Java no responde · ¿Puerto 7000 activo?');
         }
-    }
+        document.addEventListener('DOMContentLoaded', cargarPuestos);
 
-    function setStatus(tipo, texto) {
-        document.getElementById('statusDot').className = 'dot ' + tipo;
-        document.getElementById('statusText').textContent = texto;
-    }
-
-    function activateFlow(id) {
-        document.getElementById(id)?.classList.add('active');
-    }
-
-    // ─── Pestañas ─────────────────────────────────────────────────────────────
-    function switchTab(tab) {
-        document.querySelectorAll('.tab-btn').forEach((b, i) =>
-            b.classList.toggle('active', (tab === 'archivo' ? i===0 : i===1))
-        );
-        document.getElementById('panel-archivo').classList.toggle('active', tab === 'archivo');
-        document.getElementById('panel-camara').classList.toggle('active', tab === 'camara');
-
-        // Si cambia a archivo, detener cámara
-        if (tab === 'archivo' && streamCamara) detenerCamara();
-        resetUI();
-    }
-
-    // ─── Drag & Drop / Archivo ────────────────────────────────────────────────
-    const dropZone  = document.getElementById('dropZone');
-    const fileInput = document.getElementById('fileInput');
-    const preview   = document.getElementById('preview');
-    const fnLabel   = document.getElementById('filename-label');
-
-    dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-    dropZone.addEventListener('drop', e => {
-        e.preventDefault();
-        dropZone.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        if (file) cargarArchivo(file);
-    });
-    fileInput.addEventListener('change', () => { if (fileInput.files[0]) cargarArchivo(fileInput.files[0]); });
-
-    function cargarArchivo(file) {
-        archivoActual = file;
-        const esPDF = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
-
-        if (esPDF) {
-            preview.style.display = 'none';
-            fnLabel.textContent = `📑 ${file.name} (${(file.size/1024).toFixed(1)} KB) — PDF`;
-        } else {
-            preview.src = URL.createObjectURL(file);
-            preview.style.display = 'block';
-            fnLabel.textContent = `📄 ${file.name} (${(file.size/1024).toFixed(1)} KB)`;
+        async function checkHealth() {
+            try {
+                const result = await ApiHealth.check();
+                const indicator = document.getElementById('status-indicator');
+                if (result.success) {
+                    indicator.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>Backend conectado';
+                    indicator.className = 'text-xs text-green-600';
+                } else {
+                    indicator.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>Backend desconectado';
+                    indicator.className = 'text-xs text-red-600';
+                }
+            } catch (e) {
+                document.getElementById('status-indicator').innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>Error de conexión';
+            }
         }
-        fnLabel.style.display = 'block';
-        document.getElementById('btnScan').disabled = false;
-        resetResultados();
-        activateFlow('f-front');
-    }
+        checkHealth();
 
-    // ─── Cámara ───────────────────────────────────────────────────────────────
-    const video    = document.getElementById('video-preview');
-    const canvas   = document.getElementById('canvas-capture');
-    const camaraThumb = document.getElementById('camara-thumb');
-
-    async function iniciarCamara() {
-        try {
-            streamCamara = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'environment', width:{ideal:1920}, height:{ideal:1080} }
+        function selectDocType(type) {
+            currentDocType = type;
+            document.querySelectorAll('.doc-type-btn').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.textContent.trim() === type || 
+                    (type === 'CC' && btn.textContent.includes('C.C.')) ||
+                    (type === 'CE' && btn.textContent.includes('C.E.')) ||
+                    (type === 'TI' && btn.textContent.includes('T.I.'))) {
+                    btn.classList.add('active');
+                }
             });
-            video.srcObject = streamCamara;
-            video.style.display = 'block';
-            document.getElementById('btnCapturar').disabled = false;
-            document.getElementById('btnDetenerCamara').disabled = false;
-            document.getElementById('btnIniciarCamara').disabled = true;
-        } catch(e) {
-            mostrarError('No se pudo acceder a la cámara: ' + e.message);
         }
-    }
 
-    function capturarFoto() {
-        if (!streamCamara) return;
-        canvas.width  = video.videoWidth;
-        canvas.height = video.videoHeight;
-        canvas.getContext('2d').drawImage(video, 0, 0);
-        canvas.toBlob(blob => {
-            archivoActual = new File([blob], 'captura.jpg', { type: 'image/jpeg' });
-            camaraThumb.src = URL.createObjectURL(blob);
-            camaraThumb.style.display = 'block';
-            document.getElementById('btnScan').disabled = false;
-            resetResultados();
-            activateFlow('f-front');
-        }, 'image/jpeg', 0.92);
-    }
+        // File handling
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const preview = document.getElementById('preview');
+        const captureContent = document.getElementById('capture-content');
 
-    function detenerCamara() {
-        if (streamCamara) {
-            streamCamara.getTracks().forEach(t => t.stop());
-            streamCamara = null;
-        }
-        video.style.display = 'none';
-        document.getElementById('btnCapturar').disabled = true;
-        document.getElementById('btnDetenerCamara').disabled = true;
-        document.getElementById('btnIniciarCamara').disabled = false;
-    }
+        dropZone.addEventListener('click', () => fileInput.click());
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+        });
+        fileInput.addEventListener('change', () => {
+            if (fileInput.files[0]) handleFile(fileInput.files[0]);
+        });
 
-    // ─── Escaneo OCR ──────────────────────────────────────────────────────────
-    document.getElementById('btnScan').addEventListener('click', async () => {
-        if (!archivoActual) return;
-
-        const btnScan = document.getElementById('btnScan');
-        btnScan.disabled = true;
-        btnScan.textContent = '⏳ Procesando...';
-        resetResultados();
-
-        try {
-            const formData = new FormData();
-            formData.append('file', archivoActual);
-
-            const resp = await fetch('/api/ocr/scan', { method:'POST', body:formData });
-            const data = await resp.json();
-
-            if (data.error) throw new Error(data.error);
-
-            rellenarFormulario(data);
-            mostrarOcrMini(data);
-            document.getElementById('formSection').style.display = 'block';
-
-        } catch(err) {
-            mostrarError('❌ ' + err.message);
-        } finally {
-            btnScan.disabled = false;
-            btnScan.textContent = '🧬 Escanear Documento';
-        }
-    });
-
-    // ─── Rellenar formulario ──────────────────────────────────────────────────
-    function rellenarFormulario(data) {
-        // Tipo de documento
-        const fTipo = document.getElementById('f-tipo');
-        const tipo  = (data.tipo_doc || '').toUpperCase();
-        if (['CC','TI','CE','PASAPORTE'].includes(tipo)) fTipo.value = tipo;
-
-        // Badge
-        const badgeTipo = document.getElementById('badge-tipo');
-        badgeTipo.textContent = data.label_tipo || tipo;
-        const badgeClases = { TI:'badge-ti', CC:'badge-cc', CARNET_UPC:'badge-upc' };
-        badgeTipo.className = 'badge-tipo ' + (badgeClases[tipo] || 'badge-unk');
-
-        // Campos de texto
-        const mapeo = {
-            'f-numero'    : data.numero_id,
-            'f-apellidos' : data.apellidos,
-            'f-nombres'   : data.nombres,
-            'f-nacimiento': data.fecha_nacimiento,
-        };
-
-        for (const [id, valor] of Object.entries(mapeo)) {
-            const el = document.getElementById(id);
-            if (valor && valor !== 'No detectado' && valor !== '—') {
-                el.value = valor;
-                el.classList.add('autofilled');
+        function handleFile(file) {
+            currentFile = file;
+            if (file.type.startsWith('image/')) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    preview.src = e.target.result;
+                    preview.classList.remove('hidden');
+                    captureContent.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
             } else {
-                el.value = '';
-                el.classList.remove('autofilled');
+                captureContent.innerHTML = `<span class="material-symbols-outlined text-[40px] text-[#6B7280]">picture_as_pdf</span><p class="text-[13px] text-[#6B7280] mt-2">${file.name}</p>`;
             }
         }
 
-        // Sexo
-        const fSexo = document.getElementById('f-sexo');
-        if (data.sexo === 'M' || data.sexo === 'F') {
-            fSexo.value = data.sexo;
-        }
-    }
+        // Camera
+        async function toggleCamera() {
+            const panel = document.getElementById('cameraPanel');
+            const video = document.getElementById('videoPreview');
+            
+            if (cameraStream) {
+                stopCamera();
+                return;
+            }
 
-    function mostrarOcrMini(data) {
-        const fuente = data.fuente || 'desconocido';
-        const fuenteLabel = fuente === 'tesseract'
-            ? '<span style="color:#4ade80">✅ TESSERACT LIVE</span>'
-            : '<span style="color:#fb923c">⚠️ MOCK / OCR fallido</span>';
-
-        document.getElementById('ocrMiniBody').innerHTML =
-            `Fuente: ${fuenteLabel} &nbsp;|&nbsp; `
-            + `Tipo detectado: <strong style="color:#93c5fd">${data.label_tipo || '—'}</strong> &nbsp;|&nbsp; `
-            + `Nombre: <strong style="color:#e2e8f0">${data.nombre_completo || '—'}</strong> &nbsp;|&nbsp; `
-            + `ID: <strong style="color:#e2e8f0">${data.numero_id || '—'}</strong>`
-            + (data.nota ? `<br><span style="color:#f87171;margin-top:4px;display:block">⚠️ ${data.nota}</span>` : '');
-
-        document.getElementById('ocrMini').style.display = 'block';
-    }
-
-    // ─── Enviar pre-registro ──────────────────────────────────────────────────
-    async function enviarRegistro() {
-        const payload = {
-            tipo_doc   : document.getElementById('f-tipo').value,
-            numero_id  : document.getElementById('f-numero').value,
-            apellidos  : document.getElementById('f-apellidos').value,
-            nombres    : document.getElementById('f-nombres').value,
-            nacimiento : document.getElementById('f-nacimiento').value,
-            sexo       : document.getElementById('f-sexo').value,
-            programa   : document.getElementById('f-programa').value,
-        };
-
-        // Validación mínima
-        if (!payload.numero_id || !payload.nombres) {
-            mostrarError('⚠️ Número de documento y nombres son obligatorios.');
-            return;
+            try {
+                cameraStream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'environment' } 
+                });
+                video.srcObject = cameraStream;
+                panel.classList.remove('hidden');
+                document.getElementById('btnCamera').textContent = 'Cerrar Cámara';
+            } catch (e) {
+                showError('No se pudo acceder a la cámara: ' + e.message);
+            }
         }
 
-        try {
-            // Ajusta este endpoint a tu ruta real en Java
-            const resp = await fetch('/api/registro/preregistro', {
-                method : 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body   : JSON.stringify(payload),
+        function capturePhoto() {
+            const video = document.getElementById('videoPreview');
+            const canvas = document.getElementById('canvasCapture');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+            canvas.toBlob(blob => {
+                currentFile = new File([blob], 'captura.jpg', { type: 'image/jpeg' });
+                preview.src = URL.createObjectURL(blob);
+                preview.classList.remove('hidden');
+                captureContent.classList.add('hidden');
+                stopCamera();
+            }, 'image/jpeg');
+        }
+
+        function stopCamera() {
+            if (cameraStream) {
+                cameraStream.getTracks().forEach(t => t.stop());
+                cameraStream = null;
+            }
+            document.getElementById('cameraPanel').classList.add('hidden');
+            document.getElementById('btnCamera').innerHTML = '<span class="material-symbols-outlined text-[18px]">photo_camera</span>Cámara';
+        }
+
+        // OCR Scan
+        async function scanDocument() {
+            if (!currentFile) return;
+            document.getElementById('scan-overlay').style.display = 'flex';
+            try {
+                const data = await ApiDocument.scan(currentFile);
+                fillFormFromOCR(data);
+            } catch (e) {
+                showError('Error al escanear: ' + e.message);
+            } finally {
+                document.getElementById('scan-overlay').style.display = 'none';
+            }
+        }
+
+        function fillFormFromOCR(data) {
+            if (data.status === 'complete' || (data.overall_confidence && data.overall_confidence > 0)) {
+                const fields = {
+                    'f-primernombre': data.primer_nombre,
+                    'f-segundonombre': data.segundo_nombre,
+                    'f-primerapellido': data.primer_apellido,
+                    'f-segundoapellido': data.segundo_apellido,
+                    'f-identificacion': data.numero
+                };
+                for (const [id, value] of Object.entries(fields)) {
+                    const el = document.getElementById(id);
+                    if (el && value) {
+                        el.value = value;
+                        el.classList.add('filled');
+                    }
+                }
+            }
+        }
+
+        // Submit
+        async function enviarPreRegistro() {
+            const data = {
+                identificacion: document.getElementById('f-identificacion').value,
+                primerNombre: document.getElementById('f-primernombre').value,
+                segundoNombre: document.getElementById('f-segundonombre').value,
+                primerApellido: document.getElementById('f-primerapellido').value,
+                segundoApellido: document.getElementById('f-segundoapellido').value,
+                correo: document.getElementById('f-correo').value,
+                idRol: document.getElementById('f-rol').value,
+                idPuesto: document.getElementById('f-puesto').value
+            };
+
+            // Validation
+            if (!data.identificacion || !data.primerNombre || !data.primerApellido || 
+                !data.correo || !data.idRol || !data.idPuesto) {
+                showError('Por favor complete todos los campos obligatorios (*)');
+                return;
+            }
+
+            try {
+                const result = await ApiPreRegistro.crear(data);
+                // Store for next step
+                sessionStorage.setItem('votanteData', JSON.stringify(data));
+                window.location.href = '../biometric/enroll.html';
+            } catch (e) {
+                showError('Error al registrar: ' + e.message);
+            }
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-msg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+        }
+
+        function resetForm() {
+            document.querySelectorAll('.form-field').forEach(f => {
+                f.value = '';
+                f.classList.remove('filled');
             });
-            const data = await resp.json();
-            if (data.error) throw new Error(data.error);
-            alert('✅ Pre-registro enviado correctamente.\n' + JSON.stringify(data, null, 2));
-        } catch(err) {
-            mostrarError('Error al enviar registro: ' + err.message);
+            currentFile = null;
+            preview.classList.add('hidden');
+            captureContent.classList.remove('hidden');
+            document.getElementById('error-msg').classList.add('hidden');
         }
-    }
 
-    // ─── Helpers ──────────────────────────────────────────────────────────────
-    function mostrarError(msg) {
-        const el = document.getElementById('error-msg');
-        el.innerHTML = msg;
-        el.style.display = 'block';
-    }
-
-    function resetResultados() {
-        document.getElementById('error-msg').style.display = 'none';
-        document.getElementById('ocrMini').style.display = 'none';
-        document.getElementById('formSection').style.display = 'none';
-    }
-
-    function resetUI() {
-        archivoActual = null;
-        preview.style.display = 'none';
-        fnLabel.style.display = 'none';
-        camaraThumb.style.display = 'none';
-        document.getElementById('btnScan').disabled = true;
-        resetResultados();
-    }
-
-    checkHealth();
-</script>
+        // Auto-scan when file is loaded
+        fileInput.addEventListener('change', async () => {
+            if (currentFile) {
+                await scanDocument();
+            }
+        });
+    </script>
+<div id="scan-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; gap:16px;">
+        <div style="width:52px;height:52px;border:5px solid rgba(255,255,255,0.2); border-top-color:#4ade80;border-radius:50%; animation:spin 0.9s linear infinite;"></div>
+        <span style="font-size:1.1rem;font-weight:500;letter-spacing:0.05em;">Procesando documento...</span>
+        <span style="font-size:0.85rem;opacity:0.7;">Extrayendo datos con OCR</span>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>
 </body>
 </html>
