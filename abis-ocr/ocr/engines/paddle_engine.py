@@ -114,12 +114,7 @@ class PaddleEngine(BaseEngine):
             )
             from paddleocr import PaddleOCR
 
-            # PaddleOCR 2.x usa use_gpu y show_log
-            self._ocr = PaddleOCR(
-                lang=self._lang,
-                use_gpu=self._use_gpu,
-                show_log=False,
-            )
+            self._ocr = PaddleOCR(lang="es", use_angle_cls=True, show_log=False)
             logger.info("PaddleOCR inicializado correctamente.")
         return self._ocr
 
