@@ -24,7 +24,7 @@ public class VotanteRepository implements Repository<Votante> {
         votante.setEstadoVoto(rs.getString("ESTADO_VOTO"));
         votante.setFotoUrl(rs.getString("FOTO_URL"));
         votante.setFechaConsentimiento(rs.getTimestamp("FECHA_CONSENTIMIENTO"));
-        votante.setHashIntegridadBiometrica(rs.getString("HASH_INTEGRIDAD_BIOMETRICA"));
+        votante.setHashIntegridadBiometrica(rs.getString("HASHINTEGRIDADBIOMETRICA"));
         votante.setIdRol(rs.getLong("ROLES_IDROL"));
         votante.setIdPuesto(rs.getLong("PUESTOS_VOTACION_IDPUESTOS"));
 
@@ -40,7 +40,7 @@ public class VotanteRepository implements Repository<Votante> {
     public List<Votante> findAll() {
         String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
@@ -57,7 +57,7 @@ public class VotanteRepository implements Repository<Votante> {
     public void save(Votante entity) {
         String sql = "INSERT INTO VOTANTES (IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, FECHA_CONSENTIMIENTO, " +
-                "HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS) " +
+                "HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS) " +
                 "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -90,7 +90,7 @@ public class VotanteRepository implements Repository<Votante> {
     public void update(Votante entity) {
         String sql = "UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = ?, CORREO = ?, PRIMER_NOMBRE = ?, " +
                 "SEGUNDO_NOMBRE = ?, PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, ESTADO_VOTO = ?, FOTO_URL = ?, " +
-                "FECHA_CONSENTIMIENTO = ?, HASH_INTEGRIDAD_BIOMETRICA = ?, ROLES_IDROL = ?, PUESTOS_VOTACION_IDPUESTOS = ? " +
+                "FECHA_CONSENTIMIENTO = ?, HASHINTEGRIDADBIOMETRICA = ?, ROLES_IDROL = ?, PUESTOS_VOTACION_IDPUESTOS = ? " +
                 "WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -138,7 +138,7 @@ public class VotanteRepository implements Repository<Votante> {
     public Optional<Votante> findByIdentificacion(String identificacion) {
         String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -155,7 +155,7 @@ public class VotanteRepository implements Repository<Votante> {
     public Optional<Votante> findByCorreo(String correo) {
         String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES WHERE CORREO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -172,7 +172,7 @@ public class VotanteRepository implements Repository<Votante> {
     public List<Votante> findByIdRol(Long idRol) {
         String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES WHERE ROLES_IDROL = ? ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
@@ -190,7 +190,7 @@ public class VotanteRepository implements Repository<Votante> {
     public List<Votante> findByIdPuesto(Long idPuesto) {
         String sql = "SELECT IDENTIFICACION, PLANTILLA_BIOMETRICA, CORREO, PRIMER_NOMBRE, " +
                 "SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, " +
-                "FECHA_CONSENTIMIENTO, HASH_INTEGRIDAD_BIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
+                "FECHA_CONSENTIMIENTO, HASHINTEGRIDADBIOMETRICA, ROLES_IDROL, PUESTOS_VOTACION_IDPUESTOS " +
                 "FROM VOTANTES WHERE PUESTOS_VOTACION_IDPUESTOS = ? ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
@@ -238,7 +238,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public void actualizarPlantilla(String identificacion, String templateCifrado, String hash) {
-        String sql = "UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = ?, HASH_INTEGRIDAD_BIOMETRICA = ? " +
+        String sql = "UPDATE VOTANTES SET PLANTILLA_BIOMETRICA = ?, HASHINTEGRIDADBIOMETRICA = ? " +
                 "WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
