@@ -5,25 +5,25 @@ POOL_MIN = 2
 POOL_MAX = 10
 POOL_INC = 1
 
-DB_USER = os.getenv("ABIS_DB_USER", "abis")
-DB_PASSWORD = os.getenv("ABIS_DB_PASSWORD", "")
-_JDBC_URL = os.getenv("ABIS_DB_URL", "jdbc:oracle:thin:@localhost:1521/xepdb1")
-_DSN = _JDBC_URL.replace("jdbc:oracle:thin:@", "")
-
 _pool = None
 
 
 def init_db():
     global _pool
+    db_user = os.getenv("ABIS_DB_USER", "abis")
+    db_password = os.getenv("ABIS_DB_PASSWORD", "")
+    jdbc_url = os.getenv("ABIS_DB_URL", "jdbc:oracle:thin:@localhost:1521/XEPDB1")
+    dsn = jdbc_url.replace("jdbc:oracle:thin:@", "")
+
     _pool = oracledb.create_pool(
-        user=DB_USER,
-        password=DB_PASSWORD,
-        dsn=_DSN,
+        user=db_user,
+        password=db_password,
+        dsn=dsn,
         min=POOL_MIN,
         max=POOL_MAX,
         increment=POOL_INC,
     )
-    print(f"[Oracle] Pool creado: min={POOL_MIN} max={POOL_MAX} dsn={_DSN}")
+    print(f"[Oracle] Pool creado: min={POOL_MIN} max={POOL_MAX} dsn={dsn}")
 
 
 def _get_connection():
@@ -33,15 +33,16 @@ def _get_connection():
 
 
 def save_template(identificacion: str, template_b64: str, hash_sha256: str) -> bool:
+    """Guarda plantilla biométrica y hash en VOTANTES."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
-            """UPDATE Votantes
-               SET plantillaBiometrica = :1,
-                   hashIntegridadBiometrica = :2,
-                   fechaConsentimiento = SYSDATE
-               WHERE identificacion = :3""",
+            """UPDATE VOTANTES
+               SET PLANTILLA_BIOMETRICA     = :1,
+                   HASHINTEGRIDADBIOMETRICA  = :2,
+                   FECHA_CONSENTIMIENTO      = SYSDATE
+               WHERE IDENTIFICACION = :3""",
             [template_b64, hash_sha256, identificacion],
         )
         conn.commit()
@@ -51,19 +52,20 @@ def save_template(identificacion: str, template_b64: str, hash_sha256: str) -> b
 
 
 def get_all_templates() -> list[dict]:
+    """Retorna todos los votantes con plantilla enrolada y estado PENDIENTE."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
-            """SELECT identificacion,
-                      primerNombre,
-                      segundoNombre,
-                      primerApellido,
-                      segundoApellido,
-                      plantillaBiometrica
-               FROM Votantes
-               WHERE plantillaBiometrica IS NOT NULL
-                 AND estadoVoto = 'PENDIENTE'"""
+            """SELECT IDENTIFICACION,
+                      PRIMER_NOMBRE,
+                      SEGUNDO_NOMBRE,
+                      PRIMER_APELLIDO,
+                      SEGUNDO_APELLIDO,
+                      PLANTILLA_BIOMETRICA
+               FROM VOTANTES
+               WHERE PLANTILLA_BIOMETRICA IS NOT NULL
+                 AND ESTADO_VOTO = 'PENDIENTE'"""
         )
         rows = cur.fetchall()
         return [
@@ -82,16 +84,22 @@ def get_all_templates() -> list[dict]:
 
 
 def get_user_by_id(identificacion: str) -> dict | None:
+    """Retorna datos básicos del votante incluyendo plantilla biométrica."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
-            """SELECT identificacion, primerNombre, segundoNombre,
-                      primerApellido, segundoApellido, estadoVoto,
-                      Roles_idRol, Puestos_votacion_idPuestos,
-                      plantillaBiometrica
-               FROM Votantes
-               WHERE identificacion = :1""",
+            """SELECT IDENTIFICACION,
+                      PRIMER_NOMBRE,
+                      SEGUNDO_NOMBRE,
+                      PRIMER_APELLIDO,
+                      SEGUNDO_APELLIDO,
+                      ESTADO_VOTO,
+                      ROLES_IDROL,
+                      PUESTOS_VOTACION_IDPUESTOS,
+                      PLANTILLA_BIOMETRICA
+               FROM VOTANTES
+               WHERE IDENTIFICACION = :1""",
             [identificacion],
         )
         r = cur.fetchone()
@@ -113,16 +121,24 @@ def get_user_by_id(identificacion: str) -> dict | None:
 
 
 def get_votante_completo(identificacion: str) -> dict | None:
+    """Retorna todos los campos del votante sin plantilla biométrica."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
-            """SELECT identificacion, primerNombre, segundoNombre,
-                      primerApellido, segundoApellido, correo,
-                      estadoVoto, fotoUrl, fechaConsentimiento,
-                      Roles_idRol, Puestos_votacion_idPuestos
-               FROM Votantes
-               WHERE identificacion = :1""",
+            """SELECT IDENTIFICACION,
+                      PRIMER_NOMBRE,
+                      SEGUNDO_NOMBRE,
+                      PRIMER_APELLIDO,
+                      SEGUNDO_APELLIDO,
+                      CORREO,
+                      ESTADO_VOTO,
+                      FOTO_URL,
+                      FECHA_CONSENTIMIENTO,
+                      ROLES_IDROL,
+                      PUESTOS_VOTACION_IDPUESTOS
+               FROM VOTANTES
+               WHERE IDENTIFICACION = :1""",
             [identificacion],
         )
         r = cur.fetchone()
@@ -146,13 +162,33 @@ def get_votante_completo(identificacion: str) -> dict | None:
 
 
 def marcar_voto_ejercido(identificacion: str) -> bool:
+    """Cambia ESTADO_VOTO de PENDIENTE a EJERCIDO."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
-            """UPDATE Votantes SET estadoVoto = 'EJERCIDO'
-               WHERE identificacion = :1 AND estadoVoto = 'PENDIENTE'""",
+            """UPDATE VOTANTES
+               SET ESTADO_VOTO = 'EJERCIDO'
+               WHERE IDENTIFICACION = :1
+                 AND ESTADO_VOTO    = 'PENDIENTE'""",
             [identificacion],
+        )
+        conn.commit()
+        return cur.rowcount > 0
+    finally:
+        conn.close()
+
+
+def actualizar_foto(identificacion: str, foto_url: str) -> bool:
+    """Guarda la URL de la foto del rostro del votante."""
+    conn = _get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """UPDATE VOTANTES
+               SET FOTO_URL = :1
+               WHERE IDENTIFICACION = :2""",
+            [foto_url, identificacion],
         )
         conn.commit()
         return cur.rowcount > 0
