@@ -1,0 +1,140 @@
+﻿<div class="flex flex-col gap-6">
+    <!-- Estado OCR visible -->
+    <div id="ocr-status-bar" class="bg-slate-50 border border-slate-200 rounded-lg px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-3">
+            <span id="ocr-status-icon" class="material-symbols-outlined text-[20px] text-slate-400">document_scanner</span>
+            <span id="ocr-status-text" class="text-sm text-slate-600 font-medium">Esperando documento...</span>
+        </div>
+        <span id="ocr-status-badge" class="text-[10px] font-bold px-2 py-1 rounded bg-slate-200 text-slate-500 uppercase tracking-wider">OCR INACTIVO</span>
+    </div>
+
+    <!-- Selector de tipo de documento -->
+    <div class="flex items-center gap-3 px-1">
+        <span class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mr-2">Tipo de Documento:</span>
+        <div class="flex bg-white p-1 rounded-full shadow-[0px_10px_30px_rgba(0,77,51,0.08)]">
+            <button class="doc-type-btn active" data-doc-type="CC">C.C.</button>
+            <button class="doc-type-btn" data-doc-type="CE">C.E.</button>
+            <button class="doc-type-btn" data-doc-type="TI">T.I.</button>
+            <button class="doc-type-btn" data-doc-type="PASAPORTE">PASAPORTE</button>
+        </div>
+    </div>
+
+    <div class="flex-grow grid grid-cols-12 gap-6">
+        <!-- Zona de captura (izquierda) -->
+        <div class="col-span-5 bg-[#E8EAED] border border-[#C8CBD2] rounded-[10px] shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col p-5 overflow-hidden">
+            <div class="mb-4 flex justify-between items-center">
+                <h3 class="font-mono text-[10px] uppercase text-[#6B7280]">ZONA DE CAPTURA</h3>
+                <span class="flex items-center gap-1.5 font-mono text-[10px] text-[#6B7280]">
+                    <span class="w-2 h-2 rounded-full bg-[#4CAF7D]"></span>
+                    SCANNER READY
+                </span>
+            </div>
+
+            <div class="flex-grow bg-[#D5D8DC] rounded-[10px] overflow-hidden relative flex flex-col items-center justify-center drop-zone" id="dropZone">
+                <input type="file" id="fileInput" accept="image/*,.pdf" class="hidden">
+                <div class="flex flex-col items-center text-center px-4" id="capture-content">
+                    <span class="material-symbols-outlined text-[40px] text-[#6B7280] opacity-60 mb-4">document_scanner</span>
+                    <p class="text-[13px] text-[#6B7280] max-w-[190px]">Posicione el documento frente a la camara</p>
+                    <p class="text-[11px] italic text-[#9CA3AF] max-w-[170px] mt-1">Arrastre o haga clic para subir</p>
+                </div>
+                <img id="preview" class="hidden max-h-40 rounded-lg mt-4" alt="Preview del documento">
+            </div>
+
+            <div class="mt-4">
+                <div class="flex gap-[10px]">
+                    <button id="btn-upload" class="flex-1 bg-[#1B3A2D] text-white py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90">
+                        <span class="material-symbols-outlined text-[18px]">upload</span>
+                        Subir Archivo
+                    </button>
+                    <button id="btnCamera" class="flex-1 bg-[#1B3A2D] text-white py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90">
+                        <span class="material-symbols-outlined text-[18px]">photo_camera</span>
+                        Camara
+                    </button>
+                </div>
+                <p class="text-center font-mono text-[10px] text-[#9CA3AF] mt-2">PNG, JPG o PDF</p>
+            </div>
+
+            <div id="cameraPanel" class="hidden mt-4">
+                <video id="videoPreview" class="w-full rounded-lg" autoplay playsinline></video>
+                <canvas id="canvasCapture" class="hidden"></canvas>
+                <div class="flex gap-2 mt-2">
+                    <button id="btn-capture" class="flex-1 bg-[#004D33] text-white py-2 rounded-lg text-xs font-bold">Capturar</button>
+                    <button id="btn-close-camera" class="flex-1 border border-[#C8CBD2] text-[#6B7280] py-2 rounded-lg text-xs">Cerrar</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Formulario (derecha) -->
+        <div class="col-span-7 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col overflow-hidden">
+            <!-- Sección: Datos detectados por OCR -->
+            <div class="px-6 py-3 bg-[#F0FDF4] border-b border-[#4CAF7D]/30 flex justify-between items-center">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Datos Detectados por OCR</h3>
+                <span id="ocr-data-badge" class="hidden text-[10px] font-bold px-2 py-0.5 rounded bg-[#4CAF7D] text-white uppercase tracking-wider">DATOS EXTRAÍDOS</span>
+            </div>
+
+            <div class="p-6 overflow-y-auto grid grid-cols-2 gap-x-6 gap-y-4 border-b border-slate-100">
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Primer Nombre *</label>
+                    <input class="form-field" id="f-primernombre" type="text" placeholder="Primer nombre">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Segundo Nombre</label>
+                    <input class="form-field" id="f-segundonombre" type="text" placeholder="Segundo nombre">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Primer Apellido *</label>
+                    <input class="form-field" id="f-primerapellido" type="text" placeholder="Primer apellido">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Segundo Apellido</label>
+                    <input class="form-field" id="f-segundoapellido" type="text" placeholder="Segundo apellido">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Numero de Identificacion *</label>
+                    <input class="form-field" id="f-identificacion" type="text" placeholder="Numero de documento">
+                </div>
+            </div>
+
+            <!-- Sección: Datos Complementarios -->
+            <div class="px-6 py-3 bg-slate-50 border-b border-slate-200 flex justify-between items-center">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#6B7280]">Datos Complementarios</h3>
+            </div>
+
+            <div class="p-6 overflow-y-auto grid grid-cols-2 gap-x-6 gap-y-4">
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Correo Electronico *</label>
+                    <input class="form-field" id="f-correo" type="email" placeholder="correo@ejemplo.com">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Rol del Votante *</label>
+                    <select class="form-field" id="f-rol">
+                        <option value="">Seleccionar rol...</option>
+                        <option value="1">ESTUDIANTE</option>
+                        <option value="2">EGRESADO</option>
+                        <option value="3">DOCENTE</option>
+                        <option value="4">ADMINISTRATIVO</option>
+                    </select>
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Puesto de Votacion *</label>
+                    <select class="form-field" id="f-puesto">
+                        <option value="">Seleccionar puesto...</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="error-msg" class="hidden mx-6 mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600"></div>
+
+            <div class="p-6 bg-slate-50 border-t flex gap-4">
+                <button id="btn-reset" class="flex-1 border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-50">
+                    <span class="material-symbols-outlined">refresh</span>
+                    Nuevo Escaneo
+                </button>
+                <button id="btn-continuar" class="flex-1 bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20">
+                    Continuar a Biometria
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
