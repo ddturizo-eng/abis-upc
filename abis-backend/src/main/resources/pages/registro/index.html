@@ -1,0 +1,201 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABIS-UPC | Registro de Votante</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles/base.css">
+    <style>
+        :root {
+            --primary: #004D33;
+            --primary-dark: #003421;
+            --secondary: #4CAF7D;
+            --background: #F2F3F5;
+        }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
+        }
+
+        .step-active { background: #ECFDF5; border-left: 3px solid var(--primary); }
+        .step-completed { opacity: 1; }
+        .step-pending { opacity: 0.6; }
+        .step-locked { opacity: 0.4; }
+
+        .form-field {
+            width: 100%;
+            background: var(--background);
+            border: 1.5px solid #C8CBD2;
+            border-left: 3px solid #C8CBD2;
+            border-radius: 0.5rem;
+            padding: 0.75rem 0.875rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            color: #111827;
+            transition: all 150ms ease;
+            outline: none;
+        }
+
+        .form-field::placeholder { color: #9CA3AF; font-style: italic; }
+        .form-field:focus {
+            border-color: var(--primary);
+            border-left-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(0, 77, 51, 0.1);
+        }
+        .form-field.filled {
+            border-color: var(--secondary);
+            border-left-color: var(--secondary);
+            font-weight: 600;
+            background: #F0FDF4;
+        }
+
+        .doc-type-btn {
+            padding: 0.375rem 1rem;
+            border-radius: 9999px;
+            font-size: 0.6875rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 200ms ease;
+            border: none;
+        }
+
+        .doc-type-btn.active { background: var(--primary); color: white; }
+        .doc-type-btn:not(.active) { background: white; color: #6B7280; border: 1px solid #E5E7EB; }
+        .doc-type-btn:not(.active):hover { background: #F9FAFB; }
+
+        .drop-zone {
+            border: 2px dashed #C8CBD2;
+            border-radius: 0.625rem;
+            transition: all 200ms ease;
+        }
+        .drop-zone:hover, .drop-zone.dragover { border-color: var(--secondary); background: #F0FDF4; }
+
+        .badge {
+            font-size: 0.625rem;
+            font-weight: 700;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge-success { background: #DBEAFE; color: #1E40AF; }
+
+        select {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 14px center;
+            background-size: 16px;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <header class="bg-[#F2F3F5] flex justify-between items-center w-full px-8 py-4">
+        <div class="flex items-center gap-4">
+            <span class="text-xl font-bold text-[#004D33] tracking-tight">ABIS-UPC</span>
+            <div class="flex gap-2 ml-4">
+                <span class="bg-[#004D33] text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">AES-256</span>
+                <span class="bg-[#93F7BF] text-[#004D33] text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">SESI&Oacute;N SEGURA</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-xs text-slate-500" id="status-indicator">
+                <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse mr-2"></span>
+                Verificando conexi&oacute;n...
+            </span>
+        </div>
+    </header>
+
+    <main class="flex-grow flex p-6 gap-6 mb-24">
+        <aside class="flex flex-col w-64 h-full py-6 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)]">
+            <div class="px-6 mb-8">
+                <h2 class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Proceso</h2>
+                <p class="text-sm text-slate-500">Estado de flujo</p>
+            </div>
+            <nav class="flex flex-col gap-2">
+                <div class="flex items-center gap-4 px-6 py-4" data-step="1">
+                    <div class="w-8 h-8 shrink-0 rounded-full bg-[#004D33] text-white flex items-center justify-center text-[11px] font-bold" data-step-indicator>1</div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-bold text-[#004D33]" data-step-title>Pre-Registro</span>
+                        <span class="text-[10px] text-[#004D33] font-bold uppercase tracking-widest" data-step-status>EN CURSO</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4" data-step="2">
+                    <div class="w-8 h-8 shrink-0 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold" data-step-indicator>2</div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-medium text-slate-600" data-step-title>Enrolamiento Biom&eacute;trico</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest" data-step-status>PENDIENTE</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4" data-step="3">
+                    <div class="w-8 h-8 shrink-0 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold" data-step-indicator>
+                        <span class="material-symbols-outlined text-[16px]">lock_outline</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-medium text-slate-600" data-step-title>Verificaci&oacute;n</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest" data-step-status>BLOQUEADO</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <section id="step-content" class="flex-grow flex flex-col gap-6"></section>
+    </main>
+
+    <footer class="fixed bottom-2 left-8 right-8 flex justify-between items-center text-[9px] font-bold text-slate-400 tracking-widest uppercase">
+        <div class="flex gap-4">
+            <span>INTEGRIDAD: ---</span>
+            <span>STATUS: LISTO</span>
+        </div>
+        <div class="flex gap-4">
+            <span>v1.0.0-STABLE</span>
+        </div>
+    </footer>
+
+    <div id="scan-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.65); z-index:9999; flex-direction:column; align-items:center; justify-content:center; color:white; gap:16px;">
+        <div style="width:52px;height:52px;border:5px solid rgba(255,255,255,0.2); border-top-color:#4ade80;border-radius:50%; animation:spin 0.9s linear infinite;"></div>
+        <span style="font-size:1.1rem;font-weight:500;letter-spacing:0.05em;">Procesando documento...</span>
+        <span style="font-size:0.85rem;opacity:0.7;">Extrayendo datos con OCR</span>
+    </div>
+
+    <script src="../../js/api.js"></script>
+    <script src="../../js/votante-session.js"></script>
+    <script src="../../js/router.js"></script>
+    <script>
+        const token = localStorage.getItem('abis_token');
+        if (!token) {
+            window.location.replace('/pages/auth/login.html');
+        }
+
+        async function checkHealth() {
+            try {
+                const result = await ApiHealth.check();
+                const indicator = document.getElementById('status-indicator');
+                if (result.success) {
+                    indicator.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>Backend conectado';
+                    indicator.className = 'text-xs text-green-600';
+                } else {
+                    indicator.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>Backend desconectado';
+                    indicator.className = 'text-xs text-red-600';
+                }
+            } catch (error) {
+                const indicator = document.getElementById('status-indicator');
+                indicator.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>Error de conexi&oacute;n';
+                indicator.className = 'text-xs text-red-600';
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', async () => {
+            await checkHealth();
+            await Router.irA(1);
+        });
+    </script>
+</body>
+</html>
