@@ -1,0 +1,113 @@
+﻿<div class="flex flex-col gap-6">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+        <h2 class="text-xl font-bold text-[#004D33]">Revisión y Confirmación</h2>
+        <p class="text-sm text-slate-500 mt-1">Verifica los datos antes de confirmar el registro</p>
+    </div>
+
+    <!-- Sección 1: Estado General -->
+    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Estado del Registro</h3>
+        <div class="grid grid-cols-3 gap-4">
+            <div id="estado-final-foto" class="flex items-center gap-3 p-4 rounded-lg border border-[#4CAF7D]/30 bg-[#F0FDF4]">
+                <span class="w-8 h-8 rounded-full bg-[#4CAF7D] text-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[16px]">check</span>
+                </span>
+                <div>
+                    <p class="text-sm font-bold text-[#004D33]">Foto guardada</p>
+                    <p class="text-xs text-slate-500">Almacenada correctamente</p>
+                </div>
+            </div>
+            <div id="estado-final-huella" class="flex items-center gap-3 p-4 rounded-lg border border-[#4CAF7D]/30 bg-[#F0FDF4]">
+                <span class="w-8 h-8 rounded-full bg-[#4CAF7D] text-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[16px]">check</span>
+                </span>
+                <div>
+                    <p class="text-sm font-bold text-[#004D33]">Huella enrolada</p>
+                    <p class="text-xs text-slate-500">Plantilla biométrica creada</p>
+                </div>
+            </div>
+            <div id="estado-final-datos" class="flex items-center gap-3 p-4 rounded-lg border border-[#4CAF7D]/30 bg-[#F0FDF4]">
+                <span class="w-8 h-8 rounded-full bg-[#4CAF7D] text-white flex items-center justify-center">
+                    <span class="material-symbols-outlined text-[16px]">check</span>
+                </span>
+                <div>
+                    <p class="text-sm font-bold text-[#004D33]">Datos almacenados</p>
+                    <p class="text-xs text-slate-500">En base de datos Oracle</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 2 y 3: Resumen + Foto -->
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Resumen del votante -->
+        <div class="col-span-7 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Datos del Votante</h3>
+            </div>
+            <div class="p-6 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Nombre completo</p>
+                    <p class="mt-1 font-bold text-slate-700" id="summary-fullname">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Identificación</p>
+                    <p class="mt-1 font-bold text-slate-700" id="summary-identificacion">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Correo</p>
+                    <p class="mt-1 font-bold text-slate-700" id="summary-correo">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Rol</p>
+                    <p class="mt-1 font-bold text-slate-700" id="summary-rol">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Puesto</p>
+                    <p class="mt-1 font-bold text-slate-700" id="summary-puesto">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Foto capturada del votante (SECCIÓN 3) -->
+        <div class="col-span-5 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Foto del Votante</h3>
+            </div>
+            <div class="p-6 flex flex-col items-center">
+                <div class="w-full aspect-[4/3] bg-[#E8EAED] rounded-lg overflow-hidden flex items-center justify-center">
+                    <img id="summary-foto" class="w-full h-full object-cover" alt="Foto del votante">
+                    <div id="summary-foto-placeholder" class="flex flex-col items-center text-center">
+                        <span class="material-symbols-outlined text-[40px] text-slate-400">person</span>
+                        <p class="text-sm text-slate-500 mt-2">Sin foto disponible</p>
+                    </div>
+                </div>
+                <p class="text-xs text-slate-400 mt-3 text-center">Verifica que la foto corresponda a la persona</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sección 4: Botones de acción -->
+    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+        <div class="flex gap-4">
+            <button id="btn-volver-editar" class="flex-1 border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-50">
+                <span class="material-symbols-outlined">edit</span>
+                Volver a editar
+            </button>
+            <button id="btn-confirmar-registro" class="flex-1 bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20">
+                <span class="material-symbols-outlined">check_circle</span>
+                Confirmar registro
+            </button>
+        </div>
+    </div>
+
+    <!-- Estado de carga cuando confirma -->
+    <div id="confirmando-overlay" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl shadow-2xl p-8 flex flex-col items-center">
+            <div class="animate-spin w-12 h-12 border-4 border-[#004D33] border-t-transparent rounded-full"></div>
+            <p class="text-lg font-bold text-[#004D33] mt-4">Confirmando registro...</p>
+            <p class="text-sm text-slate-500 mt-1">Guardando en base de datos</p>
+        </div>
+    </div>
+</div>
