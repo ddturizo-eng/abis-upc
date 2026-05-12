@@ -7,8 +7,21 @@ Integracion completa:
 """
 
 from dotenv import load_dotenv
+from pathlib import Path
 
-load_dotenv()
+
+load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent.parent / ".env")
+
+# DIAGNÓSTICO TEMPORAL — eliminar después
+import os
+print(f"[ENV] DB_USER={os.getenv('ABIS_DB_USER')}")
+print(f"[ENV] DB_PASSWORD={os.getenv('ABIS_DB_PASSWORD')}")
+print(f"[ENV] __file__={Path(__file__).resolve()}")
+print(f"[ENV] .env path={Path(__file__).resolve().parent.parent.parent / '.env'}")
+# Carga el .env desde la raíz del proyecto (abis-upc/.env)
+# __file__ = abis-upc/abis-biometric/app/main.py
+# .parent.parent.parent = abis-upc/
+l
 
 import re
 import hashlib
@@ -144,15 +157,8 @@ def detectar_tipo_documento(texto: str) -> str:
 
 def limpiar_numero(raw: str) -> str:
     sustituir = {
-        "O": "0",
-        "o": "0",
-        "l": "1",
-        "I": "1",
-        "S": "5",
-        "s": "5",
-        "B": "8",
-        "G": "9",
-        "Z": "2",
+        "O": "0", "o": "0", "l": "1", "I": "1",
+        "S": "5", "s": "5", "B": "8", "G": "9", "Z": "2",
     }
     limpio = ""
     for c in raw:
@@ -171,49 +177,40 @@ def extraer_numero_id(texto: str, tipo_doc: str) -> str:
         m = re.search(r"NUIP[\s.:]*([0-9OolISsBGZ.\s]{7,20})", texto, re.I)
         if m:
             return limpiar_numero(m.group(1))
-
     if tipo_doc == "TI":
         m = re.search(r"N[UÚ]MERO[\s.:]*([0-9OolISsBGZ.\s]{7,20})", texto, re.I)
         if m:
             return limpiar_numero(m.group(1))
-
     if tipo_doc == "CARNET_UPC":
         m = re.search(r"\bCC\b[\s.:]*([0-9OolISsBGZ.\s]{7,20})", texto, re.I)
         if m:
             return limpiar_numero(m.group(1))
-
     m = re.search(r"\b(\d{1,3}[.\s]\d{3}[.\s]\d{3}[.\s]\d{3})\b", texto)
     if m:
         return limpiar_numero(m.group(1).replace(" ", ""))
-
     m = re.search(r"\b(\d{7,12})\b", texto)
     if m:
         return limpiar_numero(m.group(1))
-
     return ""
 
 
 def extraer_nombre(texto: str, tipo_doc: str) -> dict:
     apellidos = ""
     nombres = ""
-
     if tipo_doc in ("CC", "TI", "CARNET_UPC"):
         m_ap = re.search(
             r"APELLIDOS[\s\n:]*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]{3,40})", texto, re.I
         )
         if m_ap:
             apellidos = m_ap.group(1).strip().split("\n")[0].strip()
-
         m_no = re.search(
             r"NOMBRES[\s\n:]*([A-ZÁÉÍÓÚÑ][A-ZÁÉÍÓÚÑ\s]{2,30})", texto, re.I
         )
         if m_no:
             nombres = m_no.group(1).strip().split("\n")[0].strip()
-
     nombre_completo = " ".join(filter(None, [apellidos, nombres])).strip()
     if not nombre_completo:
         nombre_completo = "No detectado"
-
     return {
         "apellidos": apellidos or "No detectado",
         "nombres": nombres or "No detectado",
@@ -267,20 +264,17 @@ def pdf_a_imagenes(raw_bytes: bytes) -> list[np.ndarray]:
 
 def parsear_documento(texto_raw: str) -> dict:
     texto = normalizar(texto_raw)
-
     tipo_doc = detectar_tipo_documento(texto)
     nombres_dict = extraer_nombre(texto, tipo_doc)
     numero_id = extraer_numero_id(texto, tipo_doc)
     fecha_nac = extraer_fecha_nacimiento(texto)
     sexo = extraer_sexo(texto)
-
     label_tipo = {
         "TI": "Tarjeta de Identidad",
         "CC": "Cedula de Ciudadania",
         "CARNET_UPC": "Carnet Estudiantil UPC",
         "DESCONOCIDO": "Documento desconocido",
     }.get(tipo_doc, "Documento desconocido")
-
     return {
         "tipo_doc": tipo_doc,
         "label_tipo": label_tipo,
@@ -321,9 +315,9 @@ async def ocr_scan(file: UploadFile = File(...)):
     content_type = file.content_type or ""
 
     is_pdf = (
-        content_type == "application/pdf"
-        or (file.filename or "").lower().endswith(".pdf")
-        or raw[:4] == b"%PDF"
+            content_type == "application/pdf"
+            or (file.filename or "").lower().endswith(".pdf")
+            or raw[:4] == b"%PDF"
     )
 
     if is_pdf:
@@ -349,15 +343,15 @@ async def ocr_scan(file: UploadFile = File(...)):
         return {
             "tipo_doc": "DESCONOCIDO",
             "label_tipo": "No detectado",
-            "nombres": "\u2014",
-            "apellidos": "\u2014",
-            "nombre_completo": "\u2014",
-            "numero_id": "\u2014",
+            "nombres": "—",
+            "apellidos": "—",
+            "nombre_completo": "—",
+            "numero_id": "—",
             "fecha_nacimiento": "",
             "sexo": "",
             "fuente": "mock",
             "nota": "Tesseract no extrajo texto suficiente. "
-            "Verifica iluminacion y resolucion.",
+                    "Verifica iluminacion y resolucion.",
         }
 
     return parsear_documento(texto_total)
