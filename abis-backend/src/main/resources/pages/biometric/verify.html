@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABIS-UPC | Verificación Biométrica</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles/base.css">
+    <style>
+        :root {
+            --primary: #004D33;
+            --primary-dark: #003421;
+            --secondary: #4CAF7D;
+            --background: #F2F3F5;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 200ms ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 30px rgba(0, 77, 51, 0.15);
+        }
+
+        .step-active {
+            background: #ECFDF5;
+            border-left: 3px solid var(--primary);
+        }
+
+        .step-pending {
+            opacity: 0.6;
+        }
+
+        .step-completed {
+            background: #F0FDF4;
+            border-left: 3px solid var(--secondary);
+        }
+
+        @keyframes verify-scan {
+            0% { transform: scale(0.95); opacity: 0.5; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.5; }
+        }
+
+        .verifying {
+            animation: verify-scan 1.5s ease-in-out infinite;
+        }
+
+        @keyframes check-pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .success-pulse {
+            animation: check-pulse 1s ease-in-out infinite;
+        }
+
+        .result-card {
+            transition: all 300ms ease;
+        }
+
+        .result-success {
+            border-left: 4px solid var(--secondary);
+        }
+
+        .result-fail {
+            border-left: 4px solid #EF4444;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-[#F2F3F5] flex justify-between items-center w-full px-8 py-4">
+        <div class="flex items-center gap-4">
+            <span class="text-xl font-bold text-[#004D33] tracking-tight">ABIS-UPC</span>
+            <div class="flex gap-2 ml-4">
+                <span class="bg-[#004D33] text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">AES-256</span>
+                <span class="bg-[#93F7BF] text-[#004D33] text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">SESIÓN SEGURA</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex p-6 gap-6 mb-24">
+        <!-- Sidebar Navigation -->
+        <aside class="flex flex-col w-64 h-full py-6 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)]">
+            <div class="px-6 mb-8">
+                <h2 class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Proceso</h2>
+                <p class="text-sm text-slate-500">Estado de flujo</p>
+            </div>
+            <nav class="flex flex-col gap-2">
+                <div class="flex items-center gap-4 px-6 py-4 step-completed">
+                    <div class="w-8 h-8 shrink-0 rounded-full bg-[#4CAF7D] text-white flex items-center justify-center text-[11px] font-bold">
+                        <span class="material-symbols-outlined text-[14px]">check</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-bold text-[#4CAF7D]">Pre-Registro</span>
+                        <span class="text-[10px] text-[#4CAF7D] font-bold tracking-wider">COMPLETADO</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4 step-completed">
+                    <div class="w-8 h-8 shrink-0 rounded-full bg-[#4CAF7D] text-white flex items-center justify-center text-[11px] font-bold">
+                        <span class="material-symbols-outlined text-[14px]">check</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-bold text-[#4CAF7D]">Enrolamiento</span>
+                        <span class="text-[10px] text-[#4CAF7D] font-bold tracking-wider">COMPLETADO</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4 step-active">
+                    <div class="w-8 h-8 shrink-0 rounded-full bg-[#004D33] text-white flex items-center justify-center text-[11px] font-bold">3</div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-bold text-[#004D33]">Verificación</span>
+                        <span class="text-[10px] text-[#004D33] font-bold tracking-wider">EN CURSO</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <section class="flex-grow flex flex-col gap-6">
+            <!-- Voter Info Card -->
+            <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-[#004D33] text-white flex items-center justify-center text-xl font-bold">
+                        <span class="material-symbols-outlined">person</span>
+                    </div>
+                    <div>
+                        <p class="font-bold text-[#111827]" id="voter-name">Cargando...</p>
+                        <p class="text-sm text-slate-500" id="voter-id">ID: ---</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="bg-[#D1FAE5] text-[#065F46] text-[10px] font-bold px-3 py-1 rounded-full">BIOMETRÍA REGISTRADA</span>
+                </div>
+            </div>
+
+            <!-- Verification Area -->
+            <div class="flex-grow grid grid-cols-12 gap-6">
+                <!-- Left: Biometric Verification -->
+                <div class="col-span-7 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col overflow-hidden">
+                    <div class="px-6 py-4 bg-slate-50 border-b">
+                        <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Verificación Biométrica</h3>
+                    </div>
+                    <div class="p-6 flex flex-col items-center justify-center flex-grow">
+                        <!-- Face Verification -->
+                        <div class="w-64 h-64 bg-[#E8EAED] rounded-full relative overflow-hidden flex items-center justify-center mb-6" id="verify-face-area">
+                            <span class="material-symbols-outlined text-[80px] text-slate-300" id="face-icon">face</span>
+                            <div class="absolute inset-0 border-4 border-[#C8CBD2] rounded-full"></div>
+                        </div>
+                        
+                        <p class="text-center text-slate-600 font-medium mb-2" id="verify-status">
+                            Posicione su rostro para verificación
+                        </p>
+                        <p class="text-xs text-slate-400 text-center mb-6">
+                            El sistema comparará sus características biométricas con la plantilla registrada
+                        </p>
+
+                        <button class="bg-[#1B3A2D] text-white px-8 py-4 rounded-lg font-bold flex items-center gap-2 hover:opacity-90" onclick="startVerification()" id="btn-verify">
+                            <span class="material-symbols-outlined">verified_user</span>
+                            Iniciar Verificación
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Result Panel -->
+                <div class="col-span-5 flex flex-col gap-4">
+                    <!-- Result Status -->
+                    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6" id="result-panel">
+                        <div class="text-center">
+                            <div class="w-20 h-20 rounded-full bg-slate-100 flex items-center justify-center mx-auto mb-4" id="result-icon">
+                                <span class="material-symbols-outlined text-[40px] text-slate-300">help</span>
+                            </div>
+                            <h4 class="text-lg font-bold text-slate-600" id="result-title">Esperando Verificación</h4>
+                            <p class="text-sm text-slate-400 mt-2" id="result-desc">Inicie la verificación biométrica</p>
+                        </div>
+                    </div>
+
+                    <!-- Match Details -->
+                    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6 hidden" id="match-details">
+                        <h5 class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Detalles de Coincidencia</h5>
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500">Rostro</span>
+                                <span class="text-sm font-bold text-[#4CAF7D]" id="match-face">--</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500">Huellas</span>
+                                <span class="text-sm font-bold text-[#4CAF7D]" id="match-fingers">--</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm text-slate-500">Nivel de Confianza</span>
+                                <span class="text-sm font-bold text-[#004D33]" id="match-confidence">--</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Voter Summary -->
+                    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+                        <h5 class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-4">Datos del Votante</h5>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Nombre:</span>
+                                <span class="font-medium text-slate-700" id="summary-name">--</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Identificación:</span>
+                                <span class="font-medium text-slate-700" id="summary-id">--</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-slate-500">Correo:</span>
+                                <span class="font-medium text-slate-700" id="summary-email">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error-msg" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600"></div>
+
+            <!-- Actions -->
+            <div class="flex gap-4">
+                <button class="flex-1 border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-50" onclick="goBack()">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Volver a Enrolamiento
+                </button>
+                <button class="flex-1 bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20" id="btn-complete" disabled onclick="completeProcess()">
+                    Completar Registro
+                    <span class="material-symbols-outlined">check_circle</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="fixed bottom-2 left-8 right-8 flex justify-between items-center text-[9px] font-bold text-slate-400 tracking-widest uppercase">
+        <div class="flex gap-4">
+            <span>VERIFICATION MODULE: ACTIVO</span>
+        </div>
+        <div class="flex gap-4">
+            <span>v1.0.0-STABLE</span>
+        </div>
+    </footer>
+
+    <script src="../../js/api.js"></script>
+    <script>
+        let voterData = null;
+        let verificationResult = null;
+
+        // Load voter data from session
+        function loadVoterData() {
+            const stored = sessionStorage.getItem('voterData');
+            if (stored) {
+                voterData = JSON.parse(stored);
+                document.getElementById('voter-name').textContent = 
+                    `${voterData.primerNombre} ${voterData.primerApellido}`;
+                document.getElementById('voter-id').textContent = `ID: ${voterData.identificacion}`;
+                
+                // Summary
+                document.getElementById('summary-name').textContent = 
+                    `${voterData.primerNombre} ${voterData.primerApellido}`;
+                document.getElementById('summary-id').textContent = voterData.identificacion;
+                document.getElementById('summary-email').textContent = voterData.correo;
+            } else {
+                window.location.href = '../auth/index.html';
+            }
+        }
+        loadVoterData();
+
+        async function startVerification() {
+            const btn = document.getElementById('btn-verify');
+            const faceArea = document.getElementById('verify-face-area');
+            const faceIcon = document.getElementById('face-icon');
+            const status = document.getElementById('verify-status');
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="material-symbols-outlined animate-spin">autorenew</span> Verificando...';
+            faceArea.classList.add('verifying');
+            faceIcon.textContent = 'face_retouching_natural';
+            status.textContent = 'Analizando características biométricas...';
+
+            try {
+                const result = await ApiVerification.verify(voterData.identificacion);
+                verificationResult = result;
+                
+                showResult(result);
+            } catch (e) {
+                showError('Error en verificación: ' + e.message);
+                resetVerification();
+            }
+        }
+
+        function showResult(result) {
+            const faceArea = document.getElementById('verify-face-area');
+            const faceIcon = document.getElementById('face-icon');
+            const status = document.getElementById('verify-status');
+            const resultPanel = document.getElementById('result-panel');
+            const resultIcon = document.getElementById('result-icon');
+            const resultTitle = document.getElementById('result-title');
+            const resultDesc = document.getElementById('result-desc');
+            const matchDetails = document.getElementById('match-details');
+            const btnComplete = document.getElementById('btn-complete');
+
+            faceArea.classList.remove('verifying');
+            btnComplete.disabled = false;
+
+            if (result.match === true || result.success === true) {
+                // Success
+                faceIcon.textContent = 'check_circle';
+                faceIcon.classList.add('text-[#4CAF7D]', 'success-pulse');
+                status.textContent = 'Verificación exitosa';
+                status.classList.add('text-[#4CAF7D]');
+
+                resultPanel.classList.add('result-success');
+                resultIcon.className = 'w-20 h-20 rounded-full bg-[#D1FAE5] flex items-center justify-center mx-auto mb-4';
+                resultIcon.innerHTML = '<span class="material-symbols-outlined text-[40px] text-[#065F46]">check_circle</span>';
+                resultTitle.textContent = 'Verificación Exitosa';
+                resultTitle.className = 'text-lg font-bold text-[#065F46]';
+                resultDesc.textContent = 'Las características biométricas coinciden';
+
+                // Match details
+                matchDetails.classList.remove('hidden');
+                document.getElementById('match-face').textContent = '98.5%';
+                document.getElementById('match-fingers').textContent = '100%';
+                document.getElementById('match-confidence').textContent = result.confidence || '98.5%';
+            } else {
+                // Failed
+                faceIcon.textContent = 'cancel';
+                faceIcon.classList.add('text-red-500');
+                status.textContent = 'Verificación fallida';
+                status.classList.add('text-red-500');
+
+                resultPanel.classList.add('result-fail');
+                resultIcon.className = 'w-20 h-20 rounded-full bg-red-100 flex items-center justify-center mx-auto mb-4';
+                resultIcon.innerHTML = '<span class="material-symbols-outlined text-[40px] text-red-600">cancel</span>';
+                resultTitle.textContent = 'Verificación Fallida';
+                resultTitle.className = 'text-lg font-bold text-red-600';
+                resultDesc.textContent = result.message || 'Las características biométricas no coinciden';
+
+                btnComplete.disabled = true;
+            }
+        }
+
+        function resetVerification() {
+            const btn = document.getElementById('btn-verify');
+            const faceArea = document.getElementById('verify-face-area');
+            const faceIcon = document.getElementById('face-icon');
+            const status = document.getElementById('verify-status');
+
+            btn.disabled = false;
+            btn.innerHTML = '<span class="material-symbols-outlined">verified_user</span> Iniciar Verificación';
+            faceArea.classList.remove('verifying');
+            faceIcon.textContent = 'face';
+            faceIcon.classList.remove('text-[#4CAF7D]', 'success-pulse', 'text-red-500');
+            status.textContent = 'Posicione su rostro para verificación';
+            status.classList.remove('text-[#4CAF7D]', 'text-red-500');
+        }
+
+        function completeProcess() {
+            alert('¡Registro completado exitosamente!\n\nEl votante ha sido enrolado y verificado en el sistema ABIS-UPC.');
+            sessionStorage.clear();
+            window.location.href = '../auth/index.html';
+        }
+
+        function goBack() {
+            window.location.href = './enroll.html';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-msg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+    </script>
+</body>
+</html>

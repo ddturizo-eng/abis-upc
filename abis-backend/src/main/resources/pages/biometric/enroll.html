@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ABIS-UPC | Enrolamiento Biométrico</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles/base.css">
+    <style>
+        :root {
+            --primary: #004D33;
+            --primary-dark: #003421;
+            --secondary: #4CAF7D;
+            --background: #F2F3F5;
+        }
+        
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--background);
+        }
+
+        .form-field {
+            width: 100%;
+            background: var(--background);
+            border: 1.5px solid #C8CBD2;
+            border-left: 3px solid #C8CBD2;
+            border-radius: 0.5rem;
+            padding: 0.75rem 0.875rem;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            color: #111827;
+            outline: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(to right, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 1rem 1.5rem;
+            font-weight: 700;
+            border-radius: 0.5rem;
+            border: none;
+            cursor: pointer;
+            transition: all 200ms ease;
+            font-family: 'DM Sans', sans-serif;
+        }
+
+        .btn-primary:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 30px rgba(0, 77, 51, 0.15);
+        }
+
+        .step-active {
+            background: #ECFDF5;
+            border-left: 3px solid var(--primary);
+        }
+
+        .step-pending {
+            opacity: 0.6;
+        }
+
+        .step-locked {
+            opacity: 0.4;
+        }
+
+        .biometric-capture {
+            border: 2px dashed #C8CBD2;
+            border-radius: 0.75rem;
+            transition: all 200ms ease;
+        }
+
+        .biometric-capture:hover {
+            border-color: var(--secondary);
+            background: #F0FDF4;
+        }
+
+        .biometric-capture.active {
+            border-color: var(--primary);
+            background: #ECFDF5;
+        }
+
+        .fingerprint-slot {
+            width: 80px;
+            height: 100px;
+            border: 1.5px dashed #C8CBD2;
+            border-radius: 0.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 200ms ease;
+            background: #F9FAFB;
+        }
+
+        .fingerprint-slot:hover {
+            border-color: var(--secondary);
+        }
+
+        .fingerprint-slot.captured {
+            border-color: var(--secondary);
+            border-style: solid;
+            background: #F0FDF4;
+        }
+
+        @keyframes scan-line {
+            0% { top: 0; }
+            100% { top: 100%; }
+        }
+
+        .scanning {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scanning::after {
+            content: '';
+            position: absolute;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, transparent, var(--secondary), transparent);
+            animation: scan-line 1.5s ease-in-out infinite;
+        }
+
+        .badge {
+            font-size: 0.625rem;
+            font-weight: 700;
+            padding: 0.125rem 0.5rem;
+            border-radius: 9999px;
+        }
+
+        .badge-success { background: #D1FAE5; color: #065F46; }
+        .badge-warning { background: #FEF3C7; color: #92400E; }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col">
+    <!-- Header -->
+    <header class="bg-[#F2F3F5] flex justify-between items-center w-full px-8 py-4">
+        <div class="flex items-center gap-4">
+            <span class="text-xl font-bold text-[#004D33] tracking-tight">ABIS-UPC</span>
+            <div class="flex gap-2 ml-4">
+                <span class="bg-[#004D33] text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">AES-256</span>
+                <span class="bg-[#93F7BF] text-[#004D33] text-[10px] font-bold px-2 py-0.5 rounded tracking-widest">SESIÓN SEGURA</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-4">
+            <span class="text-xs text-slate-500">
+                <span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                Sistema operativo
+            </span>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex p-6 gap-6 mb-24">
+        <!-- Sidebar Navigation -->
+        <aside class="flex flex-col w-64 h-full py-6 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)]">
+            <div class="px-6 mb-8">
+                <h2 class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Proceso</h2>
+                <p class="text-sm text-slate-500">Estado de flujo</p>
+            </div>
+            <nav class="flex flex-col gap-2">
+                <div class="flex items-center gap-4 px-6 py-4 step-pending">
+                    <div class="w-8 h-8 shrink-0 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold">1</div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-medium text-slate-600">Pre-Registro</span>
+                        <span class="text-[10px] text-slate-400 font-bold tracking-wider uppercase">COMPLETADO</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4 step-active">
+                    <div class="w-8 h-8 shrink-0 rounded-full bg-[#004D33] text-white flex items-center justify-center text-[11px] font-bold">2</div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-bold text-[#004D33]">Enrolamiento Biom.</span>
+                        <span class="text-[10px] text-[#004D33] font-bold tracking-wider">EN CURSO</span>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4 px-6 py-4 step-locked">
+                    <div class="w-8 h-8 shrink-0 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold">
+                        <span class="material-symbols-outlined text-[16px]">lock_outline</span>
+                    </div>
+                    <div class="flex flex-col">
+                        <span class="text-[13px] font-medium text-slate-600">Verificación</span>
+                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">BLOQUEADO</span>
+                    </div>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Content Area -->
+        <section class="flex-grow flex flex-col gap-6">
+            <!-- Voter Info Card -->
+            <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-4 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 rounded-full bg-[#004D33] text-white flex items-center justify-center text-xl font-bold">
+                        <span class="material-symbols-outlined">person</span>
+                    </div>
+                    <div>
+                        <p class="font-bold text-[#111827]" id="voter-name">Cargando...</p>
+                        <p class="text-sm text-slate-500" id="voter-id">ID: ---</p>
+                    </div>
+                </div>
+                <div class="flex gap-3">
+                    <span class="badge badge-success" id="voter-role">ESTUDIANTE</span>
+                    <span class="badge badge-warning" id="voter-station">Puesto: ---</span>
+                </div>
+            </div>
+
+            <!-- Biometric Capture Grid -->
+            <div class="flex-grow grid grid-cols-12 gap-6">
+                <!-- Left: Face Capture -->
+                <div class="col-span-5 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col overflow-hidden">
+                    <div class="px-6 py-4 bg-slate-50 border-b">
+                        <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Captura de Rostro</h3>
+                    </div>
+                    <div class="p-6 flex flex-col items-center">
+                        <div class="w-full aspect-square bg-[#E8EAED] rounded-xl relative overflow-hidden flex items-center justify-center biometric-capture" id="face-capture-area">
+                            <div class="absolute inset-4 border-2 border-dashed border-slate-300 rounded-lg"></div>
+                            <span class="material-symbols-outlined text-[60px] text-slate-400 opacity-50" id="face-icon">face</span>
+                        </div>
+                        <div class="mt-4 text-center">
+                            <p class="text-sm text-slate-600 font-medium" id="face-status">Posicione el rostro en el marco</p>
+                            <p class="text-xs text-slate-400 mt-1">La captura es automática</p>
+                        </div>
+                        <button class="mt-4 bg-[#1B3A2D] text-white px-6 py-3 rounded-lg font-bold flex items-center gap-2 hover:opacity-90" onclick="captureFace()">
+                            <span class="material-symbols-outlined">photo_camera</span>
+                            Iniciar Captura
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Right: Fingerprints -->
+                <div class="col-span-7 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col overflow-hidden">
+                    <div class="px-6 py-4 bg-slate-50 border-b flex justify-between items-center">
+                        <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Captura de Huellas</h3>
+                        <span class="text-xs text-slate-500" id="fingerprint-progress">0/10 capturadas</span>
+                    </div>
+                    <div class="p-6">
+                        <div class="grid grid-cols-5 gap-4">
+                            <!-- Left hand -->
+                            <div class="col-span-1 flex flex-col gap-3">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase text-center">Izquierda</p>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('LI')" id="slot-LI">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">ÍNDICE</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('LM')" id="slot-LM">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">MEDIO</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('LA')" id="slot-LA">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">ANULAR</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('LP')" id="slot-LP">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">MEÑIQUE</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('LPB')" id="slot-LPB">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">PULGAR</span>
+                                </div>
+                            </div>
+                            <!-- Right hand -->
+                            <div class="col-span-1 flex flex-col gap-3">
+                                <p class="text-[10px] font-bold text-slate-400 uppercase text-center">Derecha</p>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('RPB')" id="slot-RPB">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">PULGAR</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('RI')" id="slot-RI">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">ÍNDICE</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('RM')" id="slot-RM">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">MEDIO</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('RA')" id="slot-RA">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">ANULAR</span>
+                                </div>
+                                <div class="fingerprint-slot" onclick="captureFingerprint('RP')" id="slot-RP">
+                                    <span class="material-symbols-outlined text-[24px] text-slate-400">fingerprint</span>
+                                    <span class="text-[10px] text-slate-400 mt-1">MEÑIQUE</span>
+                                </div>
+                            </div>
+                            <!-- Info column -->
+                            <div class="col-span-3 flex flex-col justify-center">
+                                <div class="bg-slate-50 rounded-lg p-4">
+                                    <h4 class="text-xs font-bold text-slate-600 uppercase mb-3">Instrucciones</h4>
+                                    <ul class="text-xs text-slate-500 space-y-2">
+                                        <li class="flex items-start gap-2">
+                                            <span class="material-symbols-outlined text-[14px] text-[#4CAF7D]">check_circle</span>
+                                            Coloque el dedo firmemente
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <span class="material-symbols-outlined text-[14px] text-[#4CAF7D]">check_circle</span>
+                                            Mantenga seco el dedo
+                                        </li>
+                                        <li class="flex items-start gap-2">
+                                            <span class="material-symbols-outlined text-[14px] text-[#4CAF7D]">check_circle</span>
+                                            No mueva durante captura
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error-msg" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600"></div>
+
+            <!-- Actions -->
+            <div class="flex gap-4">
+                <button class="flex-1 border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-50" onclick="goBack()">
+                    <span class="material-symbols-outlined">arrow_back</span>
+                    Volver a Pre-Registro
+                </button>
+                <button class="flex-1 bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20" onclick="submitEnrollment()">
+                    Enviar Enrolamiento
+                    <span class="material-symbols-outlined">arrow_forward</span>
+                </button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="fixed bottom-2 left-8 right-8 flex justify-between items-center text-[9px] font-bold text-slate-400 tracking-widest uppercase">
+        <div class="flex gap-4">
+            <span>BIOMETRIC MODULE: ACTIVO</span>
+        </div>
+        <div class="flex gap-4">
+            <span>v1.0.0-STABLE</span>
+        </div>
+    </footer>
+
+    <script src="../../js/api.js"></script>
+    <script>
+        let voterData = null;
+        let capturedFingerprints = new Set();
+        let faceCaptured = false;
+
+        // Load voter data from session
+        function loadVoterData() {
+            const stored = sessionStorage.getItem('voterData');
+            if (stored) {
+                voterData = JSON.parse(stored);
+                document.getElementById('voter-name').textContent = 
+                    `${voterData.primerNombre} ${voterData.primerApellido}`;
+                document.getElementById('voter-id').textContent = `ID: ${voterData.identificacion}`;
+                document.getElementById('voter-station').textContent = `Puesto: ${voterData.idPuesto}`;
+            } else {
+                window.location.href = '../auth/index.html';
+            }
+        }
+        loadVoterData();
+
+        function captureFace() {
+            const area = document.getElementById('face-capture-area');
+            const icon = document.getElementById('face-icon');
+            const status = document.getElementById('face-status');
+            
+            area.classList.add('scanning');
+            icon.textContent = 'autorenew';
+            icon.classList.add('animate-spin');
+            status.textContent = 'Capturando...';
+            status.classList.add('text-[#4CAF7D]');
+
+            setTimeout(() => {
+                area.classList.remove('scanning');
+                icon.textContent = 'check_circle';
+                icon.classList.remove('animate-spin');
+                icon.classList.add('text-[#4CAF7D]');
+                status.textContent = 'Rostro capturado exitosamente';
+                faceCaptured = true;
+            }, 2000);
+        }
+
+        function captureFingerprint(finger) {
+            const slot = document.getElementById(`slot-${finger}`);
+            
+            if (capturedFingerprints.has(finger)) {
+                showError('Esta huella ya fue capturada');
+                return;
+            }
+
+            slot.classList.add('scanning');
+            
+            setTimeout(() => {
+                slot.classList.remove('scanning');
+                slot.classList.add('captured');
+                const icon = slot.querySelector('.material-symbols-outlined');
+                icon.textContent = 'check_circle';
+                icon.classList.add('text-[#4CAF7D]');
+                
+                capturedFingerprints.add(finger);
+                updateProgress();
+            }, 1500);
+        }
+
+        function updateProgress() {
+            document.getElementById('fingerprint-progress').textContent = 
+                `${capturedFingerprints.size}/10 capturadas`;
+        }
+
+        async function submitEnrollment() {
+            if (!faceCaptured) {
+                showError('Debe capturar el rostro antes de continuar');
+                return;
+            }
+
+            if (capturedFingerprints.size < 5) {
+                showError(`Debe capturar al menos 5 huellas (actuales: ${capturedFingerprints.size})`);
+                return;
+            }
+
+            try {
+                const result = await ApiEnrollment.enroll(voterData.identificacion, false);
+                sessionStorage.setItem('enrollmentResult', JSON.stringify(result));
+                window.location.href = './verify.html';
+            } catch (e) {
+                showError('Error en enrolamiento: ' + e.message);
+            }
+        }
+
+        function goBack() {
+            window.location.href = '../auth/index.html';
+        }
+
+        function showError(msg) {
+            const el = document.getElementById('error-msg');
+            el.textContent = msg;
+            el.classList.remove('hidden');
+            setTimeout(() => el.classList.add('hidden'), 5000);
+        }
+    </script>
+</body>
+</html>
