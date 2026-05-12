@@ -6,6 +6,8 @@ import com.abisupc.model.Votante;
 import com.abisupc.repository.VotanteRepository;
 import io.javalin.http.Context;
 
+import java.sql.Timestamp;
+
 public class RegistroController {
 
     private static final VotanteRepository repository = new VotanteRepository();
@@ -59,6 +61,7 @@ public class RegistroController {
             votante.setSegundoApellido(body.segundoApellido);
             votante.setCorreo(body.correo);
             votante.setEstadoVoto(EstadoVotante.PENDIENTE.name());
+            votante.setFechaConsentimiento(new Timestamp(System.currentTimeMillis()));
             votante.setIdRol(body.idRol);
             votante.setIdPuesto(body.idPuesto);
 

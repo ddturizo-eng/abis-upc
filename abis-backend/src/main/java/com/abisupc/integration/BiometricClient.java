@@ -25,7 +25,7 @@ public class BiometricClient {
     public static String scanDocument(InputStream imageStream, String filename) {
         try {
             HttpResponse<JsonNode> response = Unirest
-                    .post(OCR_BASE_URL + "/ocr/scan")
+                    .post(OCR_BASE_URL + "/scan")
                     .field("file", imageStream, filename)
                     .asJson();
 
