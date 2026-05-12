@@ -1,0 +1,304 @@
+/* =========================================
+   ABIS-UPC | Base Styles
+   Design System: "The Digital Registrar"
+   ========================================= */
+
+/* --- Variables CSS (Design Tokens) --- */
+:root {
+  /* Core Palette */
+  --primary: #004D33;
+  --primary-dark: #003421;
+  --secondary: #4CAF7D;
+  --secondary-dim: #93d4b2;
+  --background: #F2F3F5;
+  
+  /* Neutrals */
+  --surface: #F8F9FF;
+  --surface-container: #EBEEF5;
+  --surface-container-high: #E5E8EF;
+  --surface-container-highest: #E0E2EA;
+  --surface-container-low: #F1F3FB;
+  --surface-dim: #D7DAE1;
+  
+  /* Borders */
+  --border-default: #C8CBD2;
+  --border-subtle: rgba(200, 203, 210, 0.4);
+  
+  /* Text */
+  --text-primary: #111827;
+  --text-secondary: #181C21;
+  --text-tertiary: #404943;
+  --text-muted: #9CA3AF;
+  --text-placeholder: #9CA3AF;
+  
+  /* States */
+  --success: #4CAF7D;
+  --error: #BA1A1A;
+  --warning: #F59E0B;
+  
+  /* Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  
+  /* Border Radius */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-card: 0px 10px 30px rgba(0, 77, 51, 0.08);
+  --shadow-float: 0px 10px 30px rgba(0, 77, 51, 0.12);
+  
+  /* Typography */
+  --font-dm: 'DM Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+  
+  /* Transitions */
+  --transition-fast: 150ms ease;
+  --transition-normal: 200ms ease;
+  --transition-slow: 300ms ease;
+}
+
+/* --- Reset & Base --- */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--font-dm);
+  background: var(--background);
+  color: var(--text-secondary);
+  min-height: 100vh;
+  line-height: 1.5;
+}
+
+/* --- Typography --- */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-dm);
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+h1 { font-size: 2rem; }
+h2 { font-size: 1.5rem; }
+h3 { font-size: 1.25rem; }
+h4 { font-size: 1rem; }
+
+/* Labels (Documentary feel) */
+.label {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.label-sm {
+  font-size: 0.625rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+}
+
+/* Body text */
+.body-md {
+  font-size: 0.875rem;
+  font-weight: 400;
+}
+
+.body-sm {
+  font-size: 0.8125rem;
+}
+
+/* Mono (for data) */
+.mono {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+}
+
+/* --- Utility Classes --- */
+.hidden { display: none !important; }
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: 0.5rem; }
+.gap-4 { gap: 1rem; }
+.gap-6 { gap: 1.5rem; }
+
+/* --- Form Fields (Signature Validation Style) --- */
+.form-field {
+  width: 100%;
+  background: var(--background);
+  border: 1.5px solid var(--border-default);
+  border-left: 3px solid var(--border-default);
+  border-radius: var(--radius-md);
+  padding: 0.75rem 0.875rem;
+  font-family: var(--font-dm);
+  font-size: 0.875rem;
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+  outline: none;
+}
+
+.form-field::placeholder {
+  color: var(--text-placeholder);
+  font-style: italic;
+}
+
+.form-field:focus {
+  border-color: var(--primary);
+  border-left-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(0, 77, 51, 0.1);
+}
+
+.form-field.filled {
+  border-color: var(--success);
+  border-left-color: var(--success);
+  font-weight: 600;
+}
+
+/* --- Buttons --- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-dm);
+  font-size: 0.8125rem;
+  font-weight: 700;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all var(--transition-normal);
+  border: none;
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: linear-gradient(to right, var(--primary-dark), var(--primary));
+  color: white;
+  box-shadow: var(--shadow-card);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  background: white;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+}
+
+.btn-secondary:hover {
+  background: rgba(0, 77, 51, 0.05);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--text-tertiary);
+  border: 1.5px solid var(--border-default);
+}
+
+.btn-ghost:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+/* --- Cards --- */
+.card {
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  padding: var(--space-lg);
+}
+
+/* --- Scrollbar --- */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+/* --- Status Indicators --- */
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.status-dot.success {
+  background: var(--success);
+  box-shadow: 0 0 6px rgba(76, 175, 125, 0.5);
+}
+
+.status-dot.error {
+  background: var(--error);
+  box-shadow: 0 0 6px rgba(186, 26, 26, 0.5);
+}
+
+.status-dot.warning {
+  background: var(--warning);
+  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+}
+
+/* --- Loading Animation --- */
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* --- Icon Styles --- */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  font-size: 1.25rem;
+  vertical-align: middle;
+}
+
+/* --- Container --- */
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: var(--space-lg);
+}
+
+/* --- Grid System --- */
+.grid {
+  display: grid;
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.grid-cols-12 {
+  grid-template-columns: repeat(12, 1fr);
+}
+
+.col-span-5 { grid-column: span 5; }
+.col-span-7 { grid-column: span 7; }
+.col-span-12 { grid-column: span 12; }
