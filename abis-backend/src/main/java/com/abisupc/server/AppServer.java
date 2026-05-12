@@ -7,6 +7,7 @@ import com.abisupc.controller.OcrController;
 import com.abisupc.controller.AdminController;
 import com.abisupc.controller.PuestoController;
 import com.abisupc.controller.RegistroController;
+import com.abisupc.controller.FotoController;
 import com.abisupc.security.AuthMiddleware;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
@@ -43,6 +44,9 @@ public class AppServer {
         // Registro de votantes
         app.post("/api/registro/preregistro", RegistroController::crear);
 
+        // Foto del votante
+        app.post("/api/votantes/foto", FotoController::subirFoto);
+
         // Auth (publica - login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
         app.post("/api/auth/logout", AdminController::logout);
@@ -55,6 +59,7 @@ public class AppServer {
         System.out.println("  GET  /api/health");
         System.out.println("  GET  /api/status");
         System.out.println("  POST /api/registro/preregistro  (Oracle)");
+        System.out.println("  POST /api/votantes/foto   (foto rostro)");
         System.out.println("  POST /api/enroll          (biometrico :8001)");
         System.out.println("  POST /api/verify          (biometrico :8001)");
         System.out.println("  POST /api/document/scan   (OCR :8002)");
