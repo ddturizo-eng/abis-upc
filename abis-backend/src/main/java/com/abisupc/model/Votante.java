@@ -9,9 +9,6 @@ public class Votante extends Entity {
     @JsonProperty("identificacion")
     private String identificacion;
 
-    @JsonProperty("plantilla_biometrica")
-    private String plantillaBiometrica;
-
     @JsonProperty("correo")
     private String correo;
 
@@ -36,9 +33,6 @@ public class Votante extends Entity {
     @JsonProperty("fecha_consentimiento")
     private Timestamp fechaConsentimiento;
 
-    @JsonProperty("hash_integridad_biometrica")
-    private String hashIntegridadBiometrica;
-
     @JsonProperty("rol_id")
     private Long idRol;
 
@@ -51,14 +45,6 @@ public class Votante extends Entity {
 
     public void setIdentificacion(String identificacion) {
         this.identificacion = identificacion;
-    }
-
-    public String getPlantillaBiometrica() {
-        return plantillaBiometrica;
-    }
-
-    public void setPlantillaBiometrica(String plantillaBiometrica) {
-        this.plantillaBiometrica = plantillaBiometrica;
     }
 
     public String getCorreo() {
@@ -123,14 +109,6 @@ public class Votante extends Entity {
 
     public void setFechaConsentimiento(Timestamp fechaConsentimiento) {
         this.fechaConsentimiento = fechaConsentimiento;
-    }
-
-    public String getHashIntegridadBiometrica() {
-        return hashIntegridadBiometrica;
-    }
-
-    public void setHashIntegridadBiometrica(String hashIntegridadBiometrica) {
-        this.hashIntegridadBiometrica = hashIntegridadBiometrica;
     }
 
     public Long getIdRol() {
