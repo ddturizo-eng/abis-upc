@@ -1,3 +1,0 @@
--- DDL pendiente
--- Se definirá junto al equipo completo en una sesión conjunta.
--- Referencia de diseño: docs/uml-clases-backend-java.md v3
