@@ -21,7 +21,7 @@ print(f"[ENV] .env path={Path(__file__).resolve().parent.parent.parent / '.env'}
 # Carga el .env desde la raíz del proyecto (abis-upc/.env)
 # __file__ = abis-upc/abis-biometric/app/main.py
 # .parent.parent.parent = abis-upc/
-l
+
 
 import re
 import hashlib

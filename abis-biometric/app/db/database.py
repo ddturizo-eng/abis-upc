@@ -1,5 +1,6 @@
-import oracledb
 import os
+
+import oracledb
 
 POOL_MIN = 2
 POOL_MAX = 10
@@ -33,39 +34,65 @@ def _get_connection():
 
 
 def save_template(identificacion: str, template_b64: str, hash_sha256: str) -> bool:
-    """Guarda plantilla biométrica y hash en VOTANTES."""
+    """Guarda o actualiza plantilla biometrica en BIOMETRIA_VOTANTES."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
+        template_bytes = template_b64.encode("utf-8")
+        cur.execute(
+            """MERGE INTO BIOMETRIA_VOTANTES b
+               USING (SELECT :1 AS IDENTIFICACION FROM DUAL) src
+               ON (b.IDENTIFICACION = src.IDENTIFICACION)
+               WHEN MATCHED THEN
+                 UPDATE SET b.PLANTILLA_BIOMETRICA = :2,
+                            b.HASHINTEGRIDADBIOMETRICA = :3,
+                            b.FECHA_ENROLAMIENTO = SYSDATE,
+                            b.ACTIVO = 'S'
+               WHEN NOT MATCHED THEN
+                 INSERT (ID_BIOMETRIA,
+                         IDENTIFICACION,
+                         PLANTILLA_BIOMETRICA,
+                         HASHINTEGRIDADBIOMETRICA,
+                         FECHA_ENROLAMIENTO,
+                         ACTIVO)
+                 VALUES (seq_biometria_votantes.NEXTVAL,
+                         :1,
+                         :2,
+                         :3,
+                         SYSDATE,
+                         'S')""",
+            [identificacion, template_bytes, hash_sha256],
+        )
         cur.execute(
             """UPDATE VOTANTES
-               SET PLANTILLA_BIOMETRICA     = :1,
-                   HASHINTEGRIDADBIOMETRICA  = :2,
-                   FECHA_CONSENTIMIENTO      = SYSDATE
-               WHERE IDENTIFICACION = :3""",
-            [template_b64, hash_sha256, identificacion],
+               SET FECHA_CONSENTIMIENTO = SYSDATE
+               WHERE IDENTIFICACION = :1""",
+            [identificacion],
         )
+        updated = cur.rowcount > 0
         conn.commit()
-        return cur.rowcount > 0
+        return updated
     finally:
         conn.close()
 
 
 def get_all_templates() -> list[dict]:
-    """Retorna todos los votantes con plantilla enrolada y estado PENDIENTE."""
+    """Retorna votantes con plantilla activa y estado PENDIENTE."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
         cur.execute(
-            """SELECT IDENTIFICACION,
-                      PRIMER_NOMBRE,
-                      SEGUNDO_NOMBRE,
-                      PRIMER_APELLIDO,
-                      SEGUNDO_APELLIDO,
-                      PLANTILLA_BIOMETRICA
-               FROM VOTANTES
-               WHERE PLANTILLA_BIOMETRICA IS NOT NULL
-                 AND ESTADO_VOTO = 'PENDIENTE'"""
+            """SELECT v.IDENTIFICACION,
+                      v.PRIMER_NOMBRE,
+                      v.SEGUNDO_NOMBRE,
+                      v.PRIMER_APELLIDO,
+                      v.SEGUNDO_APELLIDO,
+                      b.PLANTILLA_BIOMETRICA
+               FROM VOTANTES v
+               JOIN BIOMETRIA_VOTANTES b
+                 ON b.IDENTIFICACION = v.IDENTIFICACION
+                AND b.ACTIVO = 'S'
+               WHERE v.ESTADO_VOTO = 'PENDIENTE'"""
         )
         rows = cur.fetchall()
         return [
@@ -75,7 +102,7 @@ def get_all_templates() -> list[dict]:
                 "segundo_nombre": r[2] or "",
                 "primer_apellido": r[3],
                 "segundo_apellido": r[4] or "",
-                "template_b64": r[5],
+                "template_b64": _blob_to_text(r[5]),
             }
             for r in rows
         ]
@@ -84,7 +111,7 @@ def get_all_templates() -> list[dict]:
 
 
 def get_user_by_id(identificacion: str) -> dict | None:
-    """Retorna datos básicos del votante incluyendo plantilla biométrica."""
+    """Retorna datos basicos del votante y plantilla activa si existe."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
@@ -95,9 +122,8 @@ def get_user_by_id(identificacion: str) -> dict | None:
                       PRIMER_APELLIDO,
                       SEGUNDO_APELLIDO,
                       ESTADO_VOTO,
-                      ROLES_IDROL,
-                      PUESTOS_VOTACION_IDPUESTOS,
-                      PLANTILLA_BIOMETRICA
+                      ID_ROL,
+                      ID_PUESTO
                FROM VOTANTES
                WHERE IDENTIFICACION = :1""",
             [identificacion],
@@ -114,14 +140,14 @@ def get_user_by_id(identificacion: str) -> dict | None:
             "estado_voto": r[5],
             "rol_id": r[6],
             "puesto_id": r[7],
-            "template_b64": r[8],
+            "template_b64": _get_template_by_identificacion(identificacion),
         }
     finally:
         conn.close()
 
 
 def get_votante_completo(identificacion: str) -> dict | None:
-    """Retorna todos los campos del votante sin plantilla biométrica."""
+    """Retorna todos los campos del votante sin plantilla biometrica."""
     conn = _get_connection()
     try:
         cur = conn.cursor()
@@ -135,8 +161,8 @@ def get_votante_completo(identificacion: str) -> dict | None:
                       ESTADO_VOTO,
                       FOTO_URL,
                       FECHA_CONSENTIMIENTO,
-                      ROLES_IDROL,
-                      PUESTOS_VOTACION_IDPUESTOS
+                      ID_ROL,
+                      ID_PUESTO
                FROM VOTANTES
                WHERE IDENTIFICACION = :1""",
             [identificacion],
@@ -170,7 +196,7 @@ def marcar_voto_ejercido(identificacion: str) -> bool:
             """UPDATE VOTANTES
                SET ESTADO_VOTO = 'EJERCIDO'
                WHERE IDENTIFICACION = :1
-                 AND ESTADO_VOTO    = 'PENDIENTE'""",
+                 AND ESTADO_VOTO = 'PENDIENTE'""",
             [identificacion],
         )
         conn.commit()
@@ -194,3 +220,30 @@ def actualizar_foto(identificacion: str, foto_url: str) -> bool:
         return cur.rowcount > 0
     finally:
         conn.close()
+
+
+def _get_template_by_identificacion(identificacion: str) -> str | None:
+    conn = _get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute(
+            """SELECT PLANTILLA_BIOMETRICA
+               FROM BIOMETRIA_VOTANTES
+               WHERE IDENTIFICACION = :1
+                 AND ACTIVO = 'S'""",
+            [identificacion],
+        )
+        row = cur.fetchone()
+        return _blob_to_text(row[0]) if row else None
+    finally:
+        conn.close()
+
+
+def _blob_to_text(value) -> str | None:
+    if value is None:
+        return None
+    if hasattr(value, "read"):
+        value = value.read()
+    if isinstance(value, bytes):
+        return value.decode("utf-8")
+    return str(value)
