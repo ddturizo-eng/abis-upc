@@ -19,6 +19,7 @@
 static/fotos/
 abis-biometric/static/fotos/
 abis-backend/src/main/resources/static/fotos/
+abis-backend/src/main/resources/assets/fotos/
 
 
 # ─── NATIVE SERVICE C# (.NET Framework 4.8) ────────────────────────────────
