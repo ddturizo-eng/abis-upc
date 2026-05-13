@@ -4,38 +4,49 @@ import com.abisupc.config.AppConfig;
 import com.abisupc.model.Eleccion;
 import com.abisupc.model.EstadoEleccion;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class EleccionRepository implements Repository<Eleccion> {
 
-    private Eleccion mapRow(ResultSet rs) throws SQLException {
-        Eleccion eleccion = new Eleccion();
-
-        Timestamp inicio = rs.getTimestamp("FECHA_HORA_INICIO");
-        Timestamp fin = rs.getTimestamp("FECHA_HORA_FIN");
-
-        eleccion.setId(rs.getLong("ID_ELECCION"));
-        eleccion.setNombre(rs.getString("NOMBRE"));
-        eleccion.setFechaHoraInicio(inicio != null ? inicio.toLocalDateTime() : null);
-        eleccion.setFechaHoraFin(fin != null ? fin.toLocalDateTime() : null);
-        eleccion.setEstado(EstadoEleccion.valueOf(rs.getString("ESTADO")));
-
-        return eleccion;
+    @Override
+    public List<Eleccion> findAll() {
+        List<Eleccion> lista = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection()) {
+            String inicioCol = fechaInicioColumn(conn);
+            String finCol = fechaFinColumn(conn);
+            String sql = "SELECT ID_ELECCION, NOMBRE, " + inicioCol + " AS FECHAHORA_INICIO, " +
+                    finCol + " AS FECHAHORA_FIN, ESTADO FROM Elecciones ORDER BY " + inicioCol + " DESC";
+            try (PreparedStatement ps = conn.prepareStatement(sql);
+                 ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+                return lista;
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en EleccionRepository.findAll", e);
+        }
     }
 
     @Override
     public Optional<Eleccion> findById(Long id) {
-        String sql = "SELECT ID_ELECCION, NOMBRE, FECHA_HORA_INICIO, FECHA_HORA_FIN, ESTADO " +
-                "FROM ELECCIONES WHERE ID_ELECCION = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, id);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
-                return Optional.empty();
+        try (Connection conn = AppConfig.getConnection()) {
+            String inicioCol = fechaInicioColumn(conn);
+            String finCol = fechaFinColumn(conn);
+            String sql = "SELECT ID_ELECCION, NOMBRE, " + inicioCol + " AS FECHAHORA_INICIO, " +
+                    finCol + " AS FECHAHORA_FIN, ESTADO FROM Elecciones WHERE ID_ELECCION = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, id);
+                try (ResultSet rs = ps.executeQuery()) {
+                    return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en EleccionRepository.findById - id: " + id, e);
@@ -43,124 +54,155 @@ public class EleccionRepository implements Repository<Eleccion> {
     }
 
     @Override
-    public List<Eleccion> findAll() {
-        String sql = "SELECT ID_ELECCION, NOMBRE, FECHA_HORA_INICIO, FECHA_HORA_FIN, ESTADO " +
-                "FROM ELECCIONES ORDER BY ID_ELECCION";
-        List<Eleccion> lista = new ArrayList<>();
+    public void save(Eleccion e) {
+        try (Connection conn = AppConfig.getConnection()) {
+            String sql = "INSERT INTO Elecciones (ID_ELECCION, NOMBRE, " + fechaInicioColumn(conn) + ", " +
+                    fechaFinColumn(conn) + ", ESTADO) " +
+                    "VALUES (seq_elecciones.NEXTVAL, ?, ?, ?, 'PROGRAMADA')";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, e.getNombre());
+                ps.setTimestamp(2, Timestamp.valueOf(e.getFechaHoraInicio()));
+                ps.setTimestamp(3, Timestamp.valueOf(e.getFechaHoraFin()));
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = conn.prepareStatement("SELECT seq_elecciones.CURRVAL FROM dual");
+                 ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    e.setId(rs.getLong(1));
+                }
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error en EleccionRepository.save", ex);
+        }
+    }
+
+    @Override
+    public void update(Eleccion e) {
+        try (Connection conn = AppConfig.getConnection()) {
+            String sql = "UPDATE Elecciones SET NOMBRE = ?, " + fechaInicioColumn(conn) + " = ?, " +
+                    fechaFinColumn(conn) + " = ? WHERE ID_ELECCION = ? AND ESTADO = 'PROGRAMADA'";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, e.getNombre());
+                ps.setTimestamp(2, Timestamp.valueOf(e.getFechaHoraInicio()));
+                ps.setTimestamp(3, Timestamp.valueOf(e.getFechaHoraFin()));
+                ps.setLong(4, e.getId());
+                int filas = ps.executeUpdate();
+                if (filas == 0) {
+                    throw new IllegalStateException("Solo se puede editar una eleccion en estado PROGRAMADA");
+                }
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error en EleccionRepository.update - id: " + e.getId(), ex);
+        }
+    }
+
+    public void cambiarEstado(Long id, String nuevoEstado) {
+        String sql = "UPDATE Elecciones SET ESTADO = ? WHERE ID_ELECCION = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nuevoEstado);
+            ps.setLong(2, id);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error en EleccionRepository.cambiarEstado - id: " + id, ex);
+        }
+    }
+
+    public boolean tieneVotos(Long id) {
+        String sql = "SELECT COUNT(*) FROM Votos WHERE ID_ELECCION = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error en EleccionRepository.tieneVotos - id: " + id, ex);
+        }
+    }
+
+    public boolean hayEleccionEnCurso() {
+        String sql = "SELECT COUNT(*) FROM Elecciones WHERE ESTADO = 'EN_CURSO'";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapRow(rs));
-            return lista;
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en EleccionRepository.findAll", e);
-        }
-    }
-
-    @Override
-    public void save(Eleccion entity) {
-        String sql = "INSERT INTO ELECCIONES (ID_ELECCION, NOMBRE, FECHA_HORA_INICIO, FECHA_HORA_FIN, ESTADO) " +
-                "VALUES (SEQ_ELECCIONES.NEXTVAL, ?, ?, ?, ?) RETURNING ID_ELECCION INTO ?";
-        try (Connection conn = AppConfig.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setString(1, entity.getNombre());
-            cs.setTimestamp(2, entity.getFechaHoraInicio() != null ? Timestamp.valueOf(entity.getFechaHoraInicio()) : null);
-            cs.setTimestamp(3, entity.getFechaHoraFin() != null ? Timestamp.valueOf(entity.getFechaHoraFin()) : null);
-            cs.setString(4, entity.getEstado().name());
-            cs.registerOutParameter(5, Types.NUMERIC);
-            cs.execute();
-            entity.setId(cs.getLong(5));
-        } catch (SQLException e) {
-            if (e.getErrorCode() == 1) {
-                throw new RuntimeException("Ya existe una eleccion con el nombre: " + entity.getNombre(), e);
-            }
-            throw new RuntimeException("Error en EleccionRepository.save", e);
-        }
-    }
-
-    @Override
-    public void update(Eleccion entity) {
-        String sql = "UPDATE ELECCIONES SET NOMBRE = ?, FECHA_HORA_INICIO = ?, FECHA_HORA_FIN = ?, ESTADO = ? " +
-                "WHERE ID_ELECCION = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, entity.getNombre());
-            ps.setTimestamp(2, entity.getFechaHoraInicio() != null ? Timestamp.valueOf(entity.getFechaHoraInicio()) : null);
-            ps.setTimestamp(3, entity.getFechaHoraFin() != null ? Timestamp.valueOf(entity.getFechaHoraFin()) : null);
-            ps.setString(4, entity.getEstado().name());
-            ps.setLong(5, entity.getId());
-
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontró la elección con ID: " + entity.getId());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en EleccionRepository.update - id: " + entity.getId(), e);
+            return rs.next() && rs.getInt(1) > 0;
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error en EleccionRepository.hayEleccionEnCurso", ex);
         }
     }
 
     @Override
     public void delete(Long id) {
-        String sql = "DELETE FROM ELECCIONES WHERE ID_ELECCION = ?";
+        String sql = "DELETE FROM Elecciones WHERE ID_ELECCION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontró la elección con ID: " + id);
-            }
-        } catch (SQLException e) {
-            if (e.getErrorCode() == 2292) {
-                throw new RuntimeException("No se puede eliminar la elección ID " + id + " porque tiene registros asociados.", e);
-            }
-            throw new RuntimeException("Error en EleccionRepository.delete - id: " + id, e);
+            ps.executeUpdate();
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error en EleccionRepository.delete - id: " + id, ex);
         }
     }
 
     public Optional<Eleccion> findActiva() {
-        String sql = "SELECT ID_ELECCION, NOMBRE, FECHA_HORA_INICIO, FECHA_HORA_FIN, ESTADO " +
-                "FROM ELECCIONES WHERE ESTADO = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, EstadoEleccion.EN_CURSO.name());
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
-                return Optional.empty();
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en EleccionRepository.findActiva", e);
-        }
+        return findByEstado("EN_CURSO").stream().findFirst();
     }
 
     public List<Eleccion> findByEstado(String estado) {
-        String sql = "SELECT ID_ELECCION, NOMBRE, FECHA_HORA_INICIO, FECHA_HORA_FIN, ESTADO " +
-                "FROM ELECCIONES WHERE ESTADO = ? ORDER BY FECHA_HORA_INICIO DESC";
         List<Eleccion> lista = new ArrayList<>();
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, estado);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
-                return lista;
+        try (Connection conn = AppConfig.getConnection()) {
+            String inicioCol = fechaInicioColumn(conn);
+            String finCol = fechaFinColumn(conn);
+            String sql = "SELECT ID_ELECCION, NOMBRE, " + inicioCol + " AS FECHAHORA_INICIO, " +
+                    finCol + " AS FECHAHORA_FIN, ESTADO FROM Elecciones WHERE ESTADO = ? ORDER BY " + inicioCol + " DESC";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setString(1, estado);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        lista.add(mapRow(rs));
+                    }
+                    return lista;
+                }
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en EleccionRepository.findByEstado - estado: " + estado, e);
+        } catch (SQLException ex) {
+            throw new RuntimeException("Error en EleccionRepository.findByEstado - estado: " + estado, ex);
         }
     }
 
     public void actualizarEstado(Long idEleccion, String estado) {
-        String sql = "UPDATE ELECCIONES SET ESTADO = ? WHERE ID_ELECCION = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, estado);
-            ps.setLong(2, idEleccion);
+        cambiarEstado(idEleccion, estado);
+    }
 
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontró la elección con ID: " + idEleccion);
+    private Eleccion mapRow(ResultSet rs) throws SQLException {
+        Eleccion eleccion = new Eleccion();
+        Timestamp inicio = rs.getTimestamp("FECHAHORA_INICIO");
+        Timestamp fin = rs.getTimestamp("FECHAHORA_FIN");
+
+        eleccion.setId(rs.getLong("ID_ELECCION"));
+        eleccion.setNombre(rs.getString("NOMBRE"));
+        eleccion.setFechaHoraInicio(inicio != null ? inicio.toLocalDateTime() : null);
+        eleccion.setFechaHoraFin(fin != null ? fin.toLocalDateTime() : null);
+        eleccion.setEstado(EstadoEleccion.fromDb(rs.getString("ESTADO")));
+
+        return eleccion;
+    }
+
+    private String fechaInicioColumn(Connection conn) throws SQLException {
+        return columnExists(conn, "ELECCIONES", "FECHAHORA_INICIO") ? "FECHAHORA_INICIO" : "FECHA_HORA_INICIO";
+    }
+
+    private String fechaFinColumn(Connection conn) throws SQLException {
+        return columnExists(conn, "ELECCIONES", "FECHAHORA_FIN") ? "FECHAHORA_FIN" : "FECHA_HORA_FIN";
+    }
+
+    private boolean columnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
             }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en EleccionRepository.actualizarEstado - idEleccion: " + idEleccion, e);
         }
     }
 }
