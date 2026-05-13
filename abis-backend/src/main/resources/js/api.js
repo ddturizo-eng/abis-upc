@@ -159,3 +159,38 @@ window.ApiEnrollment = ApiEnrollment;
 window.ApiVerification = ApiVerification;
 window.ApiAuth = ApiAuth;
 window.ApiPreRegistro = ApiPreRegistro;
+
+const ApiElecciones = {
+    listar: () => API.get('/api/elecciones'),
+    crear: (data) => API.post('/api/elecciones', data),
+    editar: (id, data) => API.request(`/api/elecciones/${id}`, { method: 'PUT', body: data }),
+    iniciar: (id) => API.post(`/api/elecciones/${id}/iniciar`, {}),
+    cerrar: (id) => API.post(`/api/elecciones/${id}/cerrar`, {}),
+    eliminar: (id) => API.request(`/api/elecciones/${id}`, { method: 'DELETE' }),
+    candidatos: (id) => API.get(`/api/elecciones/${id}/candidatos`),
+};
+
+const ApiCandidatos = {
+    agregar: (idEleccion, data) =>
+        API.post(`/api/elecciones/${idEleccion}/candidatos`, data),
+    editar: (idEleccion, idCandidato, data) =>
+        API.request(`/api/elecciones/${idEleccion}/candidatos/${idCandidato}`,
+            { method: 'PUT', body: data }),
+    eliminar: (idEleccion, idCandidato) =>
+        API.request(`/api/elecciones/${idEleccion}/candidatos/${idCandidato}`,
+            { method: 'DELETE' }),
+};
+
+const ApiEleccionRoles = {
+    listar: (idEleccion) =>
+        API.get(`/api/elecciones/${idEleccion}/roles`),
+    configurar: (idEleccion, idRol, pesoVoto) =>
+        API.post(`/api/elecciones/${idEleccion}/roles`, {
+            idRol,
+            pesoVoto
+        }),
+};
+
+window.ApiElecciones = ApiElecciones;
+window.ApiCandidatos = ApiCandidatos;
+window.ApiEleccionRoles = ApiEleccionRoles;
