@@ -1,0 +1,529 @@
+<div id="vista-elecciones" class="flex flex-col gap-6">
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-2xl font-bold text-[#004D33] font-dm">Elecciones</h1>
+        <p class="text-sm text-slate-400 mt-1 font-dm">Gestión de procesos electorales</p>
+      </div>
+      <button onclick="abrirModalCrear()" class="bg-[#004D33] text-white font-bold py-3 px-5 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">add</span>
+        Nueva Elección
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50">
+      <h2 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Procesos registrados</h2>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-left">
+        <thead class="bg-[#F2F3F5] text-[11px] font-bold uppercase tracking-widest text-slate-400">
+          <tr>
+            <th class="px-6 py-3">Nombre</th>
+            <th class="px-6 py-3">Inicio</th>
+            <th class="px-6 py-3">Fin</th>
+            <th class="px-6 py-3">Estado</th>
+            <th class="px-6 py-3">Candidatos</th>
+            <th class="px-6 py-3">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-elecciones" class="text-sm text-slate-600"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div id="panel-candidatos" class="hidden flex-col gap-6">
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <button onclick="cerrarPanelCandidatos()" class="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-[#004D33] mb-3">
+          <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+          Volver a elecciones
+        </button>
+        <h2 id="titulo-candidatos" class="text-2xl font-bold text-[#004D33] font-dm">Candidatos de:</h2>
+      </div>
+      <button onclick="abrirModalCandidato()" class="bg-[#004D33] text-white font-bold py-3 px-5 rounded-lg flex items-center gap-2 hover:opacity-90 transition-opacity">
+        <span class="material-symbols-outlined text-[18px]">person_add</span>
+        Agregar candidato
+      </button>
+    </div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+    <table class="w-full text-left">
+      <thead class="bg-[#F2F3F5] text-[11px] font-bold uppercase tracking-widest text-slate-400">
+        <tr>
+          <th class="px-6 py-3">Nº Camp.</th>
+          <th class="px-6 py-3">Nombre completo</th>
+          <th class="px-6 py-3">Cargo</th>
+          <th class="px-6 py-3">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tabla-candidatos" class="text-sm text-slate-600"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="panel-tarjeton" class="hidden flex-col gap-6">
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+    <button onclick="cerrarTarjeton()" class="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-slate-400 hover:text-[#004D33] mb-3">
+      <span class="material-symbols-outlined text-[16px]">arrow_back</span>
+      Volver
+    </button>
+    <h2 class="text-2xl font-bold text-[#004D33] font-dm">Vista previa del tarjetón</h2>
+  </div>
+  <div id="tarjeton-contenido" class="grid grid-cols-1 lg:grid-cols-2 gap-6"></div>
+</div>
+
+<div id="modal-eleccion" class="hidden fixed inset-0 z-[2000] bg-black/50 items-center justify-center p-6">
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] w-full max-w-lg p-6">
+    <h2 id="modal-eleccion-titulo" class="text-xl font-bold text-[#004D33] mb-5">Nueva Elección</h2>
+    <div id="modal-eleccion-error" class="hidden mb-4 bg-red-50 text-red-600 text-sm rounded-lg p-3"></div>
+    <div class="flex flex-col gap-4">
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Nombre de la elección *</span>
+        <input id="eleccion-nombre" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="text">
+      </label>
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Fecha y hora de inicio *</span>
+        <input id="eleccion-inicio" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="datetime-local">
+      </label>
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Fecha y hora de fin *</span>
+        <input id="eleccion-fin" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="datetime-local">
+      </label>
+      <div id="pesos-rol-section" class="bg-[#F2F3F5] rounded-xl p-4">
+        <div class="mb-3">
+          <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Peso de voto por rol</h3>
+          <p class="text-xs text-slate-400 mt-1">El peso determina cuanto vale el voto de cada tipo de participante en el resultado ponderado.</p>
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <label class="block">
+            <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Estudiante</span>
+            <input id="peso-estudiante" class="w-full bg-white border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="number" step="0.1" min="0.1" value="1.0">
+          </label>
+          <label class="block">
+            <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Docente</span>
+            <input id="peso-docente" class="w-full bg-white border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="number" step="0.1" min="0.1" value="2.0">
+          </label>
+          <label class="block">
+            <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Egresado</span>
+            <input id="peso-egresado" class="w-full bg-white border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="number" step="0.1" min="0.1" value="1.0">
+          </label>
+          <label class="block">
+            <span class="block text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Administrativo</span>
+            <input id="peso-admin" class="w-full bg-white border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="number" step="0.1" min="0.1" value="1.5">
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="flex justify-end gap-3 mt-6">
+      <button onclick="cerrarModal()" class="px-4 py-2 rounded-lg text-[#004D33] font-bold hover:bg-emerald-50">Cancelar</button>
+      <button onclick="guardarEleccion()" class="px-5 py-2 rounded-lg bg-[#004D33] text-white font-bold hover:opacity-90">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-candidato" class="hidden fixed inset-0 z-[2000] bg-black/50 items-center justify-center p-6">
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] w-full max-w-2xl p-6">
+    <h2 id="modal-candidato-titulo" class="text-xl font-bold text-[#004D33] mb-5">Agregar candidato</h2>
+    <div id="modal-candidato-error" class="hidden mb-4 bg-red-50 text-red-600 text-sm rounded-lg p-3"></div>
+    <div class="grid grid-cols-2 gap-4">
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Primer nombre *</span>
+        <input id="cand-primer-nombre" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="text">
+      </label>
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Segundo nombre</span>
+        <input id="cand-segundo-nombre" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="text">
+      </label>
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Primer apellido *</span>
+        <input id="cand-primer-apellido" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="text">
+      </label>
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Segundo apellido</span>
+        <input id="cand-segundo-apellido" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="text">
+      </label>
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Número de campaña *</span>
+        <input id="cand-numero" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="number" min="1">
+      </label>
+      <label class="block">
+        <span class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Cargo *</span>
+        <input id="cand-cargo" class="w-full bg-[#F2F3F5] border-[#C8CBD2] rounded-lg text-sm font-dm focus:border-[#004D33] focus:ring-[#004D33]/10" type="text">
+      </label>
+    </div>
+    <div class="flex justify-end gap-3 mt-6">
+      <button onclick="cerrarModalCandidato()" class="px-4 py-2 rounded-lg text-[#004D33] font-bold hover:bg-emerald-50">Cancelar</button>
+      <button onclick="guardarCandidato()" class="px-5 py-2 rounded-lg bg-[#004D33] text-white font-bold hover:opacity-90">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+{
+  let eleccionActual = null;
+  let modoEdicion = false;
+  let idEleccionCandidatos = null;
+  let listaElecciones = [];
+  let listaCandidatos = [];
+  let nombreEleccionCandidatos = '';
+  let idCandidatoActual = null;
+
+  function mostrarError(err) {
+    alert(err.message || 'Error inesperado');
+  }
+
+  function normalizarEstado(estado) {
+    return String(estado || '').toUpperCase().replace(/\s+/g, '_');
+  }
+
+  function nombreCompleto(c) {
+    return [c.primerNombre, c.segundoNombre, c.primerApellido, c.segundoApellido].filter(Boolean).join(' ');
+  }
+
+  function fechaColombia(value) {
+    if (!value) return '--';
+    return new Date(value).toLocaleDateString('es-CO', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  }
+
+  function valorDatetimeLocal(value) {
+    return value ? String(value).slice(0, 16) : '';
+  }
+
+  function badgeEstado(estado) {
+    const normalizado = normalizarEstado(estado);
+    if (normalizado === 'PROGRAMADA') {
+      return '<span class="bg-amber-100 text-amber-700 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">PROGRAMADA</span>';
+    }
+    if (normalizado === 'EN_CURSO') {
+      return '<span class="bg-[#4CAF7D]/20 text-[#004D33] text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">EN CURSO</span>';
+    }
+    return '<span class="bg-slate-100 text-slate-500 text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-widest">CERRADA</span>';
+  }
+
+  function boton(label, accion, tono = 'ghost') {
+    const clases = tono === 'primary'
+      ? 'bg-[#004D33] text-white hover:opacity-90'
+      : tono === 'danger'
+        ? 'bg-red-50 text-red-600 hover:bg-red-100'
+        : 'bg-slate-100 text-[#004D33] hover:bg-emerald-50';
+    return `<button onclick="${accion}" class="${clases} text-[11px] font-bold px-3 py-2 rounded-lg transition-all">${label}</button>`;
+  }
+
+  function accionesEleccion(e) {
+    const id = e.id;
+    const nombre = encodeURIComponent(e.nombre || '');
+    const estado = normalizarEstado(e.estado);
+    if (estado === 'PROGRAMADA') {
+      return [
+        boton('Editar', `abrirModalEditar(${id})`),
+        boton('Candidatos', `verCandidatos(${id}, decodeURIComponent('${nombre}'))`),
+        boton('Iniciar', `iniciarEleccion(${id})`, 'primary'),
+        boton('Eliminar', `eliminarEleccion(${id})`, 'danger')
+      ].join('');
+    }
+    if (estado === 'EN_CURSO') {
+      return [
+        boton('Candidatos', `verCandidatos(${id}, decodeURIComponent('${nombre}'))`),
+        boton('Ver tarjetón', `verTarjeton(${id})`),
+        boton('Cerrar', `cerrarEleccion(${id})`, 'danger')
+      ].join('');
+    }
+    return [
+      boton('Candidatos', `verCandidatos(${id}, decodeURIComponent('${nombre}'))`),
+      boton('Ver tarjetón', `verTarjeton(${id})`)
+    ].join('');
+  }
+
+  window.cargarElecciones = function cargarElecciones() {
+    ApiElecciones.listar()
+      .then(res => {
+        listaElecciones = res.data || [];
+        renderizarTablaElecciones(listaElecciones);
+      })
+      .catch(err => mostrarError(err));
+  };
+
+  window.renderizarTablaElecciones = function renderizarTablaElecciones(lista) {
+    const tbody = document.getElementById('tabla-elecciones');
+    if (!lista || lista.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="px-6 py-10 text-center text-slate-400">No hay elecciones registradas</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = lista.map(e => `
+      <tr class="bg-white odd:bg-slate-50/60">
+        <td class="px-6 py-4 font-bold text-[#111827]">${e.nombre || '--'}</td>
+        <td class="px-6 py-4">${fechaColombia(e.fechaHoraInicio)}</td>
+        <td class="px-6 py-4">${fechaColombia(e.fechaHoraFin)}</td>
+        <td class="px-6 py-4">${badgeEstado(e.estado)}</td>
+        <td class="px-6 py-4 font-mono text-[12px] text-slate-500">--</td>
+        <td class="px-6 py-4"><div class="flex flex-wrap gap-2">${accionesEleccion(e)}</div></td>
+      </tr>
+    `).join('');
+  };
+
+  window.abrirModalCrear = function abrirModalCrear() {
+    modoEdicion = false;
+    eleccionActual = null;
+    document.getElementById('modal-eleccion-titulo').textContent = 'Nueva Elección';
+    document.getElementById('eleccion-nombre').value = '';
+    document.getElementById('eleccion-inicio').value = '';
+    document.getElementById('eleccion-fin').value = '';
+    document.getElementById('peso-estudiante').value = '1.0';
+    document.getElementById('peso-docente').value = '2.0';
+    document.getElementById('peso-egresado').value = '1.0';
+    document.getElementById('peso-admin').value = '1.5';
+    document.getElementById('pesos-rol-section').classList.remove('hidden');
+    document.getElementById('modal-eleccion-error').classList.add('hidden');
+    document.getElementById('modal-eleccion').classList.replace('hidden', 'flex');
+  };
+
+  window.abrirModalEditar = function abrirModalEditar(id) {
+    modoEdicion = true;
+    eleccionActual = listaElecciones.find(e => Number(e.id) === Number(id));
+    if (!eleccionActual) return;
+    document.getElementById('modal-eleccion-titulo').textContent = 'Editar Elección';
+    document.getElementById('eleccion-nombre').value = eleccionActual.nombre || '';
+    document.getElementById('eleccion-inicio').value = valorDatetimeLocal(eleccionActual.fechaHoraInicio);
+    document.getElementById('eleccion-fin').value = valorDatetimeLocal(eleccionActual.fechaHoraFin);
+    document.getElementById('pesos-rol-section').classList.add('hidden');
+    document.getElementById('modal-eleccion-error').classList.add('hidden');
+    document.getElementById('modal-eleccion').classList.replace('hidden', 'flex');
+  };
+
+  window.cerrarModal = function cerrarModal() {
+    document.getElementById('modal-eleccion').classList.replace('flex', 'hidden');
+  };
+
+  window.guardarEleccion = function guardarEleccion() {
+    const error = document.getElementById('modal-eleccion-error');
+    const data = {
+      nombre: document.getElementById('eleccion-nombre').value.trim(),
+      fechaHoraInicio: document.getElementById('eleccion-inicio').value,
+      fechaHoraFin: document.getElementById('eleccion-fin').value
+    };
+
+    if (!data.nombre || !data.fechaHoraInicio || !data.fechaHoraFin) {
+      error.textContent = 'Todos los campos son requeridos';
+      error.classList.remove('hidden');
+      return;
+    }
+
+    const guardarPesos = (idEleccion) => {
+      const pesos = [
+        { idRol: 1, input: 'peso-estudiante' },
+        { idRol: 3, input: 'peso-docente' },
+        { idRol: 2, input: 'peso-egresado' },
+        { idRol: 4, input: 'peso-admin' }
+      ];
+      return Promise.all(pesos.map(({ idRol, input }) => {
+        const peso = Number(document.getElementById(input).value);
+        return ApiEleccionRoles.configurar(idEleccion, idRol, peso);
+      }));
+    };
+
+    const peticion = modoEdicion
+      ? ApiElecciones.editar(eleccionActual.id, data)
+      : ApiElecciones.crear(data).then(res => {
+          const idNuevaEleccion = res?.data?.id;
+          if (!idNuevaEleccion) {
+            throw new Error('No se recibio el ID de la eleccion creada');
+          }
+          return guardarPesos(idNuevaEleccion);
+        });
+
+    peticion
+      .then(() => {
+        cerrarModal();
+        cargarElecciones();
+      })
+      .catch(err => {
+        error.textContent = err.message || 'No fue posible guardar';
+        error.classList.remove('hidden');
+      });
+  };
+
+  window.iniciarEleccion = function iniciarEleccion(id) {
+    if (!window.confirm('¿Iniciar esta elección?')) return;
+    ApiElecciones.iniciar(id)
+      .then(() => cargarElecciones())
+      .catch(err => alert(err.message));
+  };
+
+  window.cerrarEleccion = function cerrarEleccion(id) {
+    if (!window.confirm('¿Cerrar esta elección? Esta acción no se puede deshacer.')) return;
+    ApiElecciones.cerrar(id)
+      .then(() => cargarElecciones())
+      .catch(err => alert(err.message));
+  };
+
+  window.eliminarEleccion = function eliminarEleccion(id) {
+    if (!window.confirm('¿Eliminar esta elección?')) return;
+    ApiElecciones.eliminar(id)
+      .then(() => cargarElecciones())
+      .catch(err => alert(err.message || 'No se puede eliminar'));
+  };
+
+  window.verCandidatos = function verCandidatos(idEleccion, nombreEleccion) {
+    idEleccionCandidatos = idEleccion;
+    nombreEleccionCandidatos = nombreEleccion;
+    document.getElementById('titulo-candidatos').textContent = 'Candidatos de: ' + nombreEleccion;
+    ApiElecciones.candidatos(idEleccion)
+      .then(res => {
+        listaCandidatos = res.data || [];
+        renderizarTablaCandidatos(listaCandidatos);
+        document.getElementById('vista-elecciones').classList.add('hidden');
+        document.getElementById('panel-tarjeton').classList.replace('flex', 'hidden');
+        document.getElementById('panel-candidatos').classList.replace('hidden', 'flex');
+      })
+      .catch(err => mostrarError(err));
+  };
+
+  window.renderizarTablaCandidatos = function renderizarTablaCandidatos(lista) {
+    const tbody = document.getElementById('tabla-candidatos');
+    if (!lista || lista.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-10 text-center text-slate-400">No hay candidatos registrados</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = lista.map(c => `
+      <tr class="bg-white odd:bg-slate-50/60">
+        <td class="px-6 py-4 font-mono text-[#004D33] font-bold">${c.numeroCampania}</td>
+        <td class="px-6 py-4 font-bold text-[#111827]">${nombreCompleto(c)}</td>
+        <td class="px-6 py-4">${c.cargo || '--'}</td>
+        <td class="px-6 py-4">
+          <div class="flex gap-2">
+            ${boton('Editar', `abrirModalCandidato(${c.id})`)}
+            ${boton('Eliminar', `eliminarCandidato(${c.id})`, 'danger')}
+          </div>
+        </td>
+      </tr>
+    `).join('');
+  };
+
+  window.cerrarPanelCandidatos = function cerrarPanelCandidatos() {
+    document.getElementById('panel-candidatos').classList.replace('flex', 'hidden');
+    document.getElementById('vista-elecciones').classList.remove('hidden');
+    cargarElecciones();
+  };
+
+  window.verTarjeton = function verTarjeton(idEleccion) {
+    ApiElecciones.candidatos(idEleccion)
+      .then(res => {
+        renderizarTarjeton(res.data || []);
+        document.getElementById('vista-elecciones').classList.add('hidden');
+        document.getElementById('panel-candidatos').classList.replace('flex', 'hidden');
+        document.getElementById('panel-tarjeton').classList.replace('hidden', 'flex');
+      })
+      .catch(err => mostrarError(err));
+  };
+
+  window.renderizarTarjeton = function renderizarTarjeton(candidatos) {
+    const contenedor = document.getElementById('tarjeton-contenido');
+    const grupos = candidatos.reduce((acc, c) => {
+      const cargo = c.cargo || 'Sin cargo';
+      acc[cargo] = acc[cargo] || [];
+      acc[cargo].push(c);
+      return acc;
+    }, {});
+
+    if (Object.keys(grupos).length === 0) {
+      contenedor.innerHTML = '<div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-10 text-center text-slate-400">No hay candidatos para mostrar</div>';
+      return;
+    }
+
+    contenedor.innerHTML = Object.entries(grupos).map(([cargo, items]) => `
+      <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
+        <h3 class="text-lg font-bold text-[#004D33] mb-4">${cargo}</h3>
+        <div class="flex flex-col gap-3">
+          ${items.map(c => `
+            <div class="bg-[#F2F3F5] rounded-xl p-4 flex items-center gap-4">
+              <div class="w-10 h-10 rounded-full bg-[#004D33] text-white flex items-center justify-center font-bold">${c.numeroCampania}</div>
+              <div>
+                <p class="font-bold text-[#111827]">${nombreCompleto(c)}</p>
+                <p class="text-sm text-slate-400">${c.cargo || '--'}</p>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  };
+
+  window.cerrarTarjeton = function cerrarTarjeton() {
+    document.getElementById('panel-tarjeton').classList.replace('flex', 'hidden');
+    document.getElementById('vista-elecciones').classList.remove('hidden');
+  };
+
+  window.abrirModalCandidato = function abrirModalCandidato(idCandidato) {
+    modoEdicion = Boolean(idCandidato);
+    idCandidatoActual = idCandidato || null;
+    const candidato = listaCandidatos.find(c => Number(c.id) === Number(idCandidato));
+    document.getElementById('modal-candidato-titulo').textContent = modoEdicion ? 'Editar candidato' : 'Agregar candidato';
+    document.getElementById('cand-primer-nombre').value = candidato?.primerNombre || '';
+    document.getElementById('cand-segundo-nombre').value = candidato?.segundoNombre || '';
+    document.getElementById('cand-primer-apellido').value = candidato?.primerApellido || '';
+    document.getElementById('cand-segundo-apellido').value = candidato?.segundoApellido || '';
+    document.getElementById('cand-numero').value = candidato?.numeroCampania || '';
+    document.getElementById('cand-cargo').value = candidato?.cargo || '';
+    document.getElementById('modal-candidato-error').classList.add('hidden');
+    document.getElementById('modal-candidato').classList.replace('hidden', 'flex');
+  };
+
+  window.cerrarModalCandidato = function cerrarModalCandidato() {
+    document.getElementById('modal-candidato').classList.replace('flex', 'hidden');
+  };
+
+  window.guardarCandidato = function guardarCandidato() {
+    const error = document.getElementById('modal-candidato-error');
+    const data = {
+      primerNombre: document.getElementById('cand-primer-nombre').value.trim(),
+      segundoNombre: document.getElementById('cand-segundo-nombre').value.trim(),
+      primerApellido: document.getElementById('cand-primer-apellido').value.trim(),
+      segundoApellido: document.getElementById('cand-segundo-apellido').value.trim(),
+      numeroCampania: document.getElementById('cand-numero').value,
+      cargo: document.getElementById('cand-cargo').value.trim()
+    };
+
+    if (!data.primerNombre || !data.primerApellido || !data.numeroCampania || !data.cargo) {
+      error.textContent = 'Completa los campos requeridos';
+      error.classList.remove('hidden');
+      return;
+    }
+
+    const peticion = modoEdicion
+      ? ApiCandidatos.editar(idEleccionCandidatos, idCandidatoActual, data)
+      : ApiCandidatos.agregar(idEleccionCandidatos, data);
+
+    peticion
+      .then(() => {
+        cerrarModalCandidato();
+        verCandidatos(idEleccionCandidatos, nombreEleccionCandidatos);
+      })
+      .catch(err => {
+        error.textContent = err.message || 'No fue posible guardar';
+        error.classList.remove('hidden');
+      });
+  };
+
+  window.eliminarCandidato = function eliminarCandidato(idCandidato) {
+    if (!window.confirm('¿Eliminar este candidato?')) return;
+    ApiCandidatos.eliminar(idEleccionCandidatos, idCandidato)
+      .then(() => verCandidatos(idEleccionCandidatos, nombreEleccionCandidatos))
+      .catch(err => alert(err.message));
+  };
+
+  cargarElecciones();
+}
+</script>
