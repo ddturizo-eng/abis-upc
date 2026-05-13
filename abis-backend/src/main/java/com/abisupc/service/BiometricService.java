@@ -1,5 +1,7 @@
 package com.abisupc.service;
 
+import com.abisupc.model.BiometriaVotante;
+import com.abisupc.repository.BiometriaVotanteRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -9,6 +11,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Map;
 
 public class BiometricService {
@@ -23,6 +26,7 @@ public class BiometricService {
             .version(HttpClient.Version.HTTP_1_1)
             .build();
     private final ObjectMapper mapper = new ObjectMapper();
+    private final BiometriaVotanteRepository biometriaRepo = new BiometriaVotanteRepository();
 
     private JsonNode safeParseJson(String body, int statusCode) {
         try {
@@ -56,7 +60,64 @@ public class BiometricService {
         var response = client.send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println("[BiometricService] FastAPI status: " + response.statusCode());
         System.out.println("[BiometricService] FastAPI response: " + response.body());
-        return safeParseJson(response.body(), response.statusCode());
+        JsonNode result = safeParseJson(response.body(), response.statusCode());
+        guardarBiometriaSiDisponible(identificacion, reEnroll, result);
+        return result;
+    }
+
+    private void guardarBiometriaSiDisponible(String identificacion, boolean reEnroll, JsonNode result) {
+        if (result == null || (result.path("success").isBoolean() && !result.path("success").asBoolean())) {
+            return;
+        }
+
+        String plantilla = firstText(result,
+                "plantilla",
+                "template",
+                "template_b64",
+                "plantillaBiometrica",
+                "plantilla_biometrica");
+        String hash = firstText(result,
+                "hash",
+                "hash_sha256",
+                "hashIntegridadBiometrica",
+                "hash_integridad_biometrica");
+
+        if (plantilla == null || hash == null) {
+            System.err.println("[BiometricService] FastAPI no devolvio plantilla/hash; no se guardo BIOMETRIA_VOTANTES.");
+            return;
+        }
+
+        if (reEnroll) {
+            biometriaRepo.desactivar(identificacion);
+        }
+
+        BiometriaVotante biometria = new BiometriaVotante();
+        biometria.setIdentificacion(identificacion);
+        biometria.setPlantillaBiometrica(toBytes(plantilla));
+        biometria.setHashIntegridadBiometrica(hash);
+        biometria.setActivo("S");
+        biometriaRepo.save(biometria);
+    }
+
+    private String firstText(JsonNode node, String... fieldNames) {
+        for (String fieldName : fieldNames) {
+            if (node.hasNonNull(fieldName)) {
+                return node.get(fieldName).asText();
+            }
+            JsonNode data = node.get("data");
+            if (data != null && data.hasNonNull(fieldName)) {
+                return data.get(fieldName).asText();
+            }
+        }
+        return null;
+    }
+
+    private byte[] toBytes(String value) {
+        try {
+            return Base64.getDecoder().decode(value);
+        } catch (IllegalArgumentException e) {
+            return value.getBytes(StandardCharsets.UTF_8);
+        }
     }
 
     public JsonNode verify() throws Exception {
