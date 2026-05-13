@@ -93,3 +93,7 @@ docs/**/*.log
 docs/**/*.out
 docs/**/*.toc
 docs/**/*.synctex.gz
+
+
+# ─── DOCUMENTACION PRIVADA ───────────────────────────────────────────────
+AGENTS.md
