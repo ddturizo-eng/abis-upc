@@ -2,39 +2,44 @@ package com.abisupc.repository;
 
 import com.abisupc.config.AppConfig;
 import com.abisupc.model.Candidato;
+import com.abisupc.model.CandidatoEleccion;
 
-import java.sql.*;
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 public class CandidatoRepository implements Repository<Candidato> {
 
-    private Candidato mapRow(ResultSet rs) throws SQLException {
-        Candidato candidato = new Candidato();
-
-        candidato.setId(rs.getLong("ID_CANDIDATO"));
-        candidato.setPrimerNombre(rs.getString("PRIMER_NOMBRE"));
-        candidato.setSegundoNombre(rs.getString("SEGUNDO_NOMBRE"));
-        candidato.setPrimerApellido(rs.getString("PRIMER_APELLIDO"));
-        candidato.setSegundoApellido(rs.getString("SEGUNDO_APELLIDO"));
-        candidato.setNumeroCampania(String.valueOf(rs.getInt("NUMERO_CAMPANIA")));
-        candidato.setCargo(rs.getString("CARGO"));
-        candidato.setIdEleccion(rs.getLong("ELECCIONES_IDELECCION"));
-
-        return candidato;
+    @Override
+    public List<Candidato> findAll() {
+        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO FROM Candidatos ORDER BY ID_CANDIDATO";
+        List<Candidato> lista = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapCandidato(rs));
+            }
+            return lista;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en CandidatoRepository.findAll", e);
+        }
     }
 
     @Override
     public Optional<Candidato> findById(Long id) {
-        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, " +
-                "SEGUNDO_APELLIDO, NUMERO_CAMPANIA, CARGO, ELECCIONES_IDELECCION " +
-                "FROM CANDIDATOS WHERE ID_CANDIDATO = ?";
+        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO FROM Candidatos WHERE ID_CANDIDATO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return Optional.of(mapRow(rs));
+                if (rs.next()) {
+                    return Optional.of(mapCandidato(rs));
+                }
                 return Optional.empty();
             }
         } catch (SQLException e) {
@@ -43,103 +48,94 @@ public class CandidatoRepository implements Repository<Candidato> {
     }
 
     @Override
-    public List<Candidato> findAll() {
-        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, " +
-                "SEGUNDO_APELLIDO, NUMERO_CAMPANIA, CARGO, ELECCIONES_IDELECCION " +
-                "FROM CANDIDATOS ORDER BY ID_CANDIDATO";
-        List<Candidato> lista = new ArrayList<>();
+    public void save(Candidato entity) {
+        Long id = savePersona(entity);
+        entity.setId(id);
+    }
+
+    public Long savePersona(Candidato c) {
+        String sql = "INSERT INTO Candidatos (ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO) " +
+                "VALUES (seq_candidatos.NEXTVAL, ?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) lista.add(mapRow(rs));
-            return lista;
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, c.getPrimerNombre());
+            ps.setString(2, c.getSegundoNombre());
+            ps.setString(3, c.getPrimerApellido());
+            ps.setString(4, c.getSegundoApellido());
+            ps.executeUpdate();
+            try (PreparedStatement seq = conn.prepareStatement("SELECT seq_candidatos.CURRVAL FROM dual");
+                 ResultSet rs = seq.executeQuery()) {
+                if (rs.next()) {
+                    Long id = rs.getLong(1);
+                    c.setId(id);
+                    return id;
+                }
+                throw new SQLException("No se pudo leer seq_candidatos.CURRVAL");
+            }
         } catch (SQLException e) {
-            throw new RuntimeException("Error en CandidatoRepository.findAll", e);
+            throw new RuntimeException("Error en CandidatoRepository.savePersona", e);
         }
     }
 
-    @Override
-    public void save(Candidato entity) {
-        String sql = "INSERT INTO CANDIDATOS (ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, " +
-                "SEGUNDO_APELLIDO, NUMERO_CAMPANIA, CARGO, ELECCIONES_IDELECCION) " +
-                "VALUES (SEQ_CANDIDATOS.NEXTVAL, ?, ?, ?, ?, ?, ?, ?) RETURNING ID_CANDIDATO INTO ?";
+    public void savePostulacion(Long idCandidato, Long idEleccion, Integer numeroCampania, String cargo) {
+        validarNumeroCampaniaDisponible(idEleccion, numeroCampania, null);
+        String sql = "INSERT INTO Candidatos_eleccion (ID_CANDIDATO, ID_ELECCION, NUMERO_CAMPANIA, CARGO) VALUES (?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setString(1, entity.getPrimerNombre());
-            cs.setString(2, entity.getSegundoNombre());
-            cs.setString(3, entity.getPrimerApellido());
-            cs.setString(4, entity.getSegundoApellido());
-            cs.setInt(5, Integer.parseInt(entity.getNumeroCampania()));
-            cs.setString(6, entity.getCargo());
-            cs.setLong(7, entity.getIdEleccion());
-            cs.registerOutParameter(8, Types.NUMERIC);
-            cs.execute();
-            entity.setId(cs.getLong(8));
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idCandidato);
+            ps.setLong(2, idEleccion);
+            ps.setInt(3, numeroCampania);
+            ps.setString(4, cargo);
+            ps.executeUpdate();
         } catch (SQLException e) {
-            if (e.getErrorCode() == 1) {
-                throw new RuntimeException("Ya existe un candidato con el mismo número de campaña en esa elección.", e);
-            }
-            throw new RuntimeException("Error en CandidatoRepository.save", e);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("NUMERO_CAMPANIA debe ser numérico para guardar el candidato.", e);
+            throw new RuntimeException("Error en CandidatoRepository.savePostulacion", e);
         }
     }
 
     @Override
     public void update(Candidato entity) {
-        String sql = "UPDATE CANDIDATOS SET PRIMER_NOMBRE = ?, SEGUNDO_NOMBRE = ?, PRIMER_APELLIDO = ?, " +
-                "SEGUNDO_APELLIDO = ?, NUMERO_CAMPANIA = ?, CARGO = ?, ELECCIONES_IDELECCION = ? " +
-                "WHERE ID_CANDIDATO = ?";
+        String sql = "UPDATE Candidatos SET PRIMER_NOMBRE = ?, SEGUNDO_NOMBRE = ?, PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ? WHERE ID_CANDIDATO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, entity.getPrimerNombre());
             ps.setString(2, entity.getSegundoNombre());
             ps.setString(3, entity.getPrimerApellido());
             ps.setString(4, entity.getSegundoApellido());
-            ps.setInt(5, Integer.parseInt(entity.getNumeroCampania()));
-            ps.setString(6, entity.getCargo());
-            ps.setLong(7, entity.getIdEleccion());
-            ps.setLong(8, entity.getId());
-
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontró el candidato con ID: " + entity.getId());
-            }
+            ps.setLong(5, entity.getId());
+            ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error en CandidatoRepository.update - id: " + entity.getId(), e);
-        } catch (NumberFormatException e) {
-            throw new RuntimeException("NUMERO_CAMPANIA debe ser numérico para actualizar el candidato.", e);
         }
     }
 
-    @Override
-    public void delete(Long id) {
-        String sql = "DELETE FROM CANDIDATOS WHERE ID_CANDIDATO = ?";
+    public void updatePostulacion(Long idCandidato, Long idEleccion, Integer numeroCampania, String cargo) {
+        validarNumeroCampaniaDisponible(idEleccion, numeroCampania, idCandidato);
+        String sql = "UPDATE Candidatos_eleccion SET NUMERO_CAMPANIA = ?, CARGO = ? WHERE ID_CANDIDATO = ? AND ID_ELECCION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, id);
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontró el candidato con ID: " + id);
-            }
+            ps.setInt(1, numeroCampania);
+            ps.setString(2, cargo);
+            ps.setLong(3, idCandidato);
+            ps.setLong(4, idEleccion);
+            ps.executeUpdate();
         } catch (SQLException e) {
-            if (e.getErrorCode() == 2292) {
-                throw new RuntimeException("No se puede eliminar el candidato ID " + id + " porque tiene votos asociados.", e);
-            }
-            throw new RuntimeException("Error en CandidatoRepository.delete - id: " + id, e);
+            throw new RuntimeException("Error en CandidatoRepository.updatePostulacion", e);
         }
     }
 
-    public List<Candidato> findByEleccion(Long idEleccion) {
-        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, " +
-                "SEGUNDO_APELLIDO, NUMERO_CAMPANIA, CARGO, ELECCIONES_IDELECCION " +
-                "FROM CANDIDATOS WHERE ELECCIONES_IDELECCION = ? ORDER BY CARGO, NUMERO_CAMPANIA";
-        List<Candidato> lista = new ArrayList<>();
+    public List<CandidatoEleccion> findByEleccion(Long idEleccion) {
+        String sql = "SELECT ce.ID_CANDIDATO, ce.ID_ELECCION, ce.NUMERO_CAMPANIA, ce.CARGO, " +
+                "c.PRIMER_NOMBRE, c.SEGUNDO_NOMBRE, c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO " +
+                "FROM Candidatos_eleccion ce JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
+                "WHERE ce.ID_ELECCION = ? ORDER BY ce.CARGO, ce.NUMERO_CAMPANIA";
+        List<CandidatoEleccion> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idEleccion);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
                 return lista;
             }
         } catch (SQLException e) {
@@ -147,37 +143,87 @@ public class CandidatoRepository implements Repository<Candidato> {
         }
     }
 
-    public List<Candidato> findByCargo(Long idEleccion, String cargo) {
-        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, " +
-                "SEGUNDO_APELLIDO, NUMERO_CAMPANIA, CARGO, ELECCIONES_IDELECCION " +
-                "FROM CANDIDATOS WHERE ELECCIONES_IDELECCION = ? AND CARGO = ? " +
-                "ORDER BY NUMERO_CAMPANIA";
-        List<Candidato> lista = new ArrayList<>();
+    public boolean tieneVotos(Long idCandidato, Long idEleccion) {
+        String sql = "SELECT COUNT(*) FROM Votos WHERE ID_CANDIDATO = ? AND ID_ELECCION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, idEleccion);
-            ps.setString(2, cargo);
+            ps.setLong(1, idCandidato);
+            ps.setLong(2, idEleccion);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) lista.add(mapRow(rs));
-                return lista;
+                return rs.next() && rs.getInt(1) > 0;
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error en CandidatoRepository.findByCargo - idEleccion: " + idEleccion + ", cargo: " + cargo, e);
+            throw new RuntimeException("Error en CandidatoRepository.tieneVotos", e);
         }
     }
 
-    public List<String> getCargosDistintos(Long idEleccion) {
-        String sql = "SELECT DISTINCT CARGO FROM CANDIDATOS WHERE ELECCIONES_IDELECCION = ? ORDER BY CARGO";
-        List<String> cargos = new ArrayList<>();
+    public void deletePostulacion(Long idCandidato, Long idEleccion) {
+        String sql = "DELETE FROM Candidatos_eleccion WHERE ID_CANDIDATO = ? AND ID_ELECCION = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idCandidato);
+            ps.setLong(2, idEleccion);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en CandidatoRepository.deletePostulacion", e);
+        }
+    }
+
+    @Override
+    public void delete(Long id) {
+        String sql = "DELETE FROM Candidatos WHERE ID_CANDIDATO = ?";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en CandidatoRepository.delete - id: " + id, e);
+        }
+    }
+
+    private void validarNumeroCampaniaDisponible(Long idEleccion, Integer numeroCampania, Long idExcluir) {
+        String sql = "SELECT COUNT(*) FROM Candidatos_eleccion WHERE ID_ELECCION = ? AND NUMERO_CAMPANIA = ?";
+        if (idExcluir != null) {
+            sql += " AND ID_CANDIDATO != ?";
+        }
+
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idEleccion);
+            ps.setInt(2, numeroCampania);
+            if (idExcluir != null) {
+                ps.setLong(3, idExcluir);
+            }
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) cargos.add(rs.getString("CARGO"));
-                return cargos;
+                if (rs.next() && rs.getInt(1) > 0) {
+                    throw new IllegalArgumentException("Número de campaña ya existe en esta elección");
+                }
             }
         } catch (SQLException e) {
-            throw new RuntimeException("Error en CandidatoRepository.getCargosDistintos - idEleccion: " + idEleccion, e);
+            throw new RuntimeException("Error en CandidatoRepository.validarNumeroCampaniaDisponible", e);
         }
+    }
+
+    private Candidato mapCandidato(ResultSet rs) throws SQLException {
+        Candidato c = new Candidato();
+        c.setId(rs.getLong("ID_CANDIDATO"));
+        c.setPrimerNombre(rs.getString("PRIMER_NOMBRE"));
+        c.setSegundoNombre(rs.getString("SEGUNDO_NOMBRE"));
+        c.setPrimerApellido(rs.getString("PRIMER_APELLIDO"));
+        c.setSegundoApellido(rs.getString("SEGUNDO_APELLIDO"));
+        return c;
+    }
+
+    private CandidatoEleccion mapRow(ResultSet rs) throws SQLException {
+        CandidatoEleccion ce = new CandidatoEleccion();
+        ce.setIdCandidato(rs.getLong("ID_CANDIDATO"));
+        ce.setIdEleccion(rs.getLong("ID_ELECCION"));
+        ce.setNumeroCampania(rs.getInt("NUMERO_CAMPANIA"));
+        ce.setCargo(rs.getString("CARGO"));
+        ce.setPrimerNombre(rs.getString("PRIMER_NOMBRE"));
+        ce.setSegundoNombre(rs.getString("SEGUNDO_NOMBRE"));
+        ce.setPrimerApellido(rs.getString("PRIMER_APELLIDO"));
+        ce.setSegundoApellido(rs.getString("SEGUNDO_APELLIDO"));
+        return ce;
     }
 }

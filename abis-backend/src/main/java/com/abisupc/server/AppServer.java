@@ -8,6 +8,8 @@ import com.abisupc.controller.AdminController;
 import com.abisupc.controller.PuestoController;
 import com.abisupc.controller.RegistroController;
 import com.abisupc.controller.FotoController;
+import com.abisupc.controller.EleccionController;
+import com.abisupc.controller.CandidatoController;
 import com.abisupc.security.AuthMiddleware;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
@@ -50,6 +52,20 @@ public class AppServer {
         // Auth (publica - login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
         app.post("/api/auth/logout", AdminController::logout);
+
+        // Elecciones y candidatos
+        app.get("/api/elecciones", EleccionController::getAll);
+        app.post("/api/elecciones", EleccionController::crear);
+        app.put("/api/elecciones/{id}", EleccionController::editar);
+        app.post("/api/elecciones/{id}/iniciar", EleccionController::iniciar);
+        app.post("/api/elecciones/{id}/cerrar", EleccionController::cerrar);
+        app.delete("/api/elecciones/{id}", EleccionController::eliminar);
+        app.get("/api/elecciones/{id}/roles", EleccionController::getRoles);
+        app.post("/api/elecciones/{id}/roles", EleccionController::configurarRol);
+        app.get("/api/elecciones/{id}/candidatos", CandidatoController::getByEleccion);
+        app.post("/api/elecciones/{id}/candidatos", CandidatoController::agregar);
+        app.put("/api/elecciones/{idEleccion}/candidatos/{idCandidato}", CandidatoController::editar);
+        app.delete("/api/elecciones/{idEleccion}/candidatos/{idCandidato}", CandidatoController::eliminar);
 
         // Rutas de administracion protegidas por token de sesion
         AuthMiddleware auth = new AuthMiddleware();

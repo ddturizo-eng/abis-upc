@@ -17,18 +17,17 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
 
         registro.setId(rs.getLong("ID_REGISTRO"));
         registro.setFechaHora(fechaHora != null ? fechaHora.toLocalDateTime() : null);
-        registro.setIdentificacion(rs.getString("VOTANTES_IDENTIFICACION"));
-        registro.setIdPuesto(rs.getLong("PUESTOS_VOTACION_IDPUESTOS"));
-        registro.setIdEleccion(rs.getLong("ELECCIONES_IDELECCION"));
+        registro.setIdentificacion(rs.getString("IDENTIFICACION"));
+        registro.setIdPuesto(rs.getLong("ID_PUESTO"));
+        registro.setIdEleccion(rs.getLong("ID_ELECCION"));
 
         return registro;
     }
 
     @Override
     public Optional<RegistroVoto> findById(Long id) {
-        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
-                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
-                "FROM REGISTRO_VOTOS WHERE ID_REGISTRO = ?";
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, IDENTIFICACION, ID_PUESTO, ID_ELECCION " +
+                "FROM Registro_votos WHERE ID_REGISTRO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -43,9 +42,8 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
 
     @Override
     public List<RegistroVoto> findAll() {
-        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
-                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
-                "FROM REGISTRO_VOTOS ORDER BY ID_REGISTRO";
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, IDENTIFICACION, ID_PUESTO, ID_ELECCION " +
+                "FROM Registro_votos ORDER BY ID_REGISTRO";
         List<RegistroVoto> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -59,8 +57,7 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
 
     @Override
     public void save(RegistroVoto entity) {
-        String sql = "INSERT INTO REGISTRO_VOTOS (ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
-                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION) " +
+        String sql = "INSERT INTO Registro_votos (ID_REGISTRO, FECHA_HORA, IDENTIFICACION, ID_PUESTO, ID_ELECCION) " +
                 "VALUES (SEQ_REGISTRO_VOTOS.NEXTVAL, ?, ?, ?, ?) RETURNING ID_REGISTRO INTO ?";
         try (Connection conn = AppConfig.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
@@ -78,8 +75,8 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
 
     @Override
     public void update(RegistroVoto entity) {
-        String sql = "UPDATE REGISTRO_VOTOS SET FECHA_HORA = ?, VOTANTES_IDENTIFICACION = ?, " +
-                "PUESTOS_VOTACION_IDPUESTOS = ?, ELECCIONES_IDELECCION = ? WHERE ID_REGISTRO = ?";
+        String sql = "UPDATE Registro_votos SET FECHA_HORA = ?, IDENTIFICACION = ?, ID_PUESTO = ?, ID_ELECCION = ? " +
+                "WHERE ID_REGISTRO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setTimestamp(1, entity.getFechaHora() != null ? Timestamp.valueOf(entity.getFechaHora()) : null);
@@ -99,7 +96,7 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
 
     @Override
     public void delete(Long id) {
-        String sql = "DELETE FROM REGISTRO_VOTOS WHERE ID_REGISTRO = ?";
+        String sql = "DELETE FROM Registro_votos WHERE ID_REGISTRO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
@@ -113,8 +110,8 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
     }
 
     public boolean yaVoto(String identificacion, Long idEleccion) {
-        String sql = "SELECT COUNT(*) FROM REGISTRO_VOTOS " +
-                "WHERE VOTANTES_IDENTIFICACION = ? AND ELECCIONES_IDELECCION = ?";
+        String sql = "SELECT COUNT(*) FROM Registro_votos " +
+                "WHERE IDENTIFICACION = ? AND ID_ELECCION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
@@ -130,9 +127,8 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
     }
 
     public List<RegistroVoto> findByEleccion(Long idEleccion) {
-        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
-                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
-                "FROM REGISTRO_VOTOS WHERE ELECCIONES_IDELECCION = ? ORDER BY FECHA_HORA DESC";
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, IDENTIFICACION, ID_PUESTO, ID_ELECCION " +
+                "FROM Registro_votos WHERE ID_ELECCION = ? ORDER BY FECHA_HORA DESC";
         List<RegistroVoto> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -147,9 +143,8 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
     }
 
     public List<RegistroVoto> findByIdentificacion(String identificacion) {
-        String sql = "SELECT ID_REGISTRO, FECHA_HORA, VOTANTES_IDENTIFICACION, " +
-                "PUESTOS_VOTACION_IDPUESTOS, ELECCIONES_IDELECCION " +
-                "FROM REGISTRO_VOTOS WHERE VOTANTES_IDENTIFICACION = ? ORDER BY FECHA_HORA DESC";
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, IDENTIFICACION, ID_PUESTO, ID_ELECCION " +
+                "FROM Registro_votos WHERE IDENTIFICACION = ? ORDER BY FECHA_HORA DESC";
         List<RegistroVoto> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -164,8 +159,8 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
     }
 
     public int countByPuesto(Long idPuesto, Long idEleccion) {
-        String sql = "SELECT COUNT(*) FROM REGISTRO_VOTOS " +
-                "WHERE PUESTOS_VOTACION_IDPUESTOS = ? AND ELECCIONES_IDELECCION = ?";
+        String sql = "SELECT COUNT(*) FROM Registro_votos " +
+                "WHERE ID_PUESTO = ? AND ID_ELECCION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idPuesto);
