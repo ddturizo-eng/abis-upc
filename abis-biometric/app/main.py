@@ -33,7 +33,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI, File, UploadFile, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
-from .routers import enroll, verify, vote
+from .routers import enroll, face, qr, verify, vote
 
 pytesseract.pytesseract.tesseract_cmd = r"C:\Program Files\Tesseract-OCR\tesseract.exe"
 
@@ -50,7 +50,14 @@ async def lifespan(app: FastAPI):
     yield
 
 
-enroll_step = 0
+enroll_progress_state = {
+    "state": "idle",
+    "step": 0,
+    "total": 4,
+    "current_sample": 0,
+    "message": "Listo para iniciar enrolamiento",
+    "error": None,
+}
 
 app = FastAPI(
     title="ABIS Biometric Service",
@@ -76,6 +83,8 @@ app.add_middleware(
 app.include_router(enroll.router, prefix="/enroll", tags=["Biometrico"])
 app.include_router(verify.router, prefix="/verify", tags=["Biometrico"])
 app.include_router(vote.router, prefix="/vote", tags=["Voto"])
+app.include_router(face.router, prefix="/face", tags=["Rostro"])
+app.include_router(qr.router, prefix="/qr", tags=["Documento"])
 
 
 # ═══════════════════════════════════════════════════════════════════════════
@@ -306,7 +315,7 @@ def status():
 
 @app.get("/enroll/progress")
 def enroll_progress():
-    return {"step": enroll_step, "total": 4}
+    return enroll_progress_state
 
 
 @app.post("/ocr/scan")
