@@ -1,0 +1,44 @@
+<header class="admin-topbar">
+  <div class="admin-brand">
+    <img src="/public/logo-upc.png" alt="Universidad Popular del Cesar" class="admin-brand-logo">
+    <div class="admin-brand-divider"></div>
+    <div>
+      <p class="admin-brand-title">ABIS-UPC</p>
+      <p class="admin-brand-subtitle">Sistema automatizado de autenticación biométrica</p>
+    </div>
+  </div>
+
+  <div class="admin-topbar-actions">
+    <span class="admin-status-pill admin-status-pill-active"><span>●</span> Sistema activo</span>
+    <span id="admin-oracle-status" class="admin-status-pill admin-status-pill-ghost">Oracle XE <span class="admin-status-dot">●</span></span>
+    <button type="button" class="admin-bell" aria-label="Notificaciones">
+      <span class="material-symbols-outlined">notifications</span>
+      <span class="admin-bell-count">3</span>
+    </button>
+
+    <div class="admin-profile-menu">
+      <button type="button" id="admin-profile-button" class="admin-profile" aria-label="Menú de administrador" aria-expanded="false" aria-controls="admin-profile-dropdown">
+        <span class="admin-avatar">AD</span>
+        <span class="admin-profile-name">Administrador</span>
+        <span class="material-symbols-outlined admin-profile-chevron">expand_more</span>
+      </button>
+      <div id="admin-profile-dropdown" class="admin-profile-dropdown" role="menu">
+        <div class="admin-profile-summary">
+          <span class="admin-avatar">AD</span>
+          <div>
+            <p class="admin-profile-summary-name">Administrador</p>
+            <p class="admin-profile-summary-role">Panel administrativo</p>
+          </div>
+        </div>
+        <button type="button" class="admin-profile-option" role="menuitem" onclick="verPerfilAdministrador()">
+          <span class="material-symbols-outlined">account_circle</span>
+          Ver perfil
+        </button>
+        <button type="button" class="admin-profile-option admin-profile-option-danger" role="menuitem" onclick="cerrarSesion()">
+          <span class="material-symbols-outlined">logout</span>
+          Cerrar sesión
+        </button>
+      </div>
+    </div>
+  </div>
+</header>
