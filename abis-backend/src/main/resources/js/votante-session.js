@@ -11,8 +11,14 @@
   getIdentificacion() {
     return sessionStorage.getItem('abis_identificacion');
   },
+  setConsentimiento(data) {
+    sessionStorage.setItem('abis_consentimiento', JSON.stringify(data));
+  },
+  getConsentimiento() {
+    return JSON.parse(sessionStorage.getItem('abis_consentimiento') || 'null');
+  },
   clear() {
-    ['abis_registro', 'abis_identificacion'].forEach((key) => sessionStorage.removeItem(key));
+    ['abis_registro', 'abis_identificacion', 'abis_consentimiento'].forEach((key) => sessionStorage.removeItem(key));
   }
 };
 
