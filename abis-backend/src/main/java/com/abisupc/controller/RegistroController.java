@@ -7,6 +7,7 @@ import com.abisupc.repository.VotanteRepository;
 import io.javalin.http.Context;
 
 import java.sql.Timestamp;
+import java.util.Map;
 
 public class RegistroController {
 
@@ -40,6 +41,7 @@ public class RegistroController {
                 ctx.status(400).json("{\"error\":\"id_puesto requerido\"}");
                 return;
             }
+            body.qrCedula = normalizarQrCedula(body.qrCedula);
 
             var existente = repository.findByIdentificacion(body.identificacion);
             if (existente.isPresent()) {
@@ -50,6 +52,10 @@ public class RegistroController {
             var porCorreo = repository.findByCorreo(body.correo);
             if (porCorreo.isPresent()) {
                 ctx.status(409).json("{\"error\":\"Correo ya registrado\"}");
+                return;
+            }
+            if (body.qrCedula != null && !body.qrCedula.isBlank() && repository.findByQrCedula(body.qrCedula).isPresent()) {
+                ctx.status(409).json("{\"error\":\"Código no reconocido\"}");
                 return;
             }
 
@@ -64,6 +70,7 @@ public class RegistroController {
             votante.setFechaConsentimiento(new Timestamp(System.currentTimeMillis()));
             votante.setIdRol(body.idRol);
             votante.setIdPuesto(body.idPuesto);
+            votante.setQrCedula(body.qrCedula);
 
             repository.save(votante);
 
@@ -83,11 +90,24 @@ public class RegistroController {
                        (e.getMessage() != null && e.getMessage().contains("CORREO"))) {
                 ctx.status(409).json("{\"error\":\"Correo ya registrado\"}");
             } else {
-                ctx.status(500).json("{\"error\":\"" + e.getMessage() + "\"}");
+                ctx.status(500).json(Map.of("error", "Error interno al registrar votante"));
             }
         } catch (Exception e) {
             System.err.println("[RegistroController] Error: " + e.getMessage());
-            ctx.status(500).json("{\"error\":\"" + e.getMessage() + "\"}");
+            ctx.status(500).json(Map.of("error", "Error interno al registrar votante"));
         }
+    }
+
+    private static String normalizarQrCedula(String value) {
+        if (value == null) {
+            return null;
+        }
+        String normalized = value
+                .replace("\r\n", "\n")
+                .replace('\r', '\n')
+                .replaceAll("[\\u200B-\\u200D\\uFEFF]", "")
+                .replaceAll("[^\\S\\n]+", " ")
+                .trim();
+        return normalized.substring(0, Math.min(normalized.length(), 500));
     }
 }
