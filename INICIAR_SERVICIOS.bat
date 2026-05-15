@@ -4,10 +4,10 @@ title ABIS-UPC - Iniciar Servicios
 
 net session >nul 2>&1
 if %errorlevel% neq 0 (
-    echo [ERROR] Ejecuta este script como ADMINISTRADOR
-    echo Clic derecho sobre el archivo ^> Ejecutar como administrador
-    pause
-    exit /b
+    echo [ADVERTENCIA] No se detectaron privilegios de administrador.
+    echo     Algunas acciones como iniciar DpHost o cerrar procesos previos pueden fallar.
+    echo     El script continuara de todos modos.
+    echo.
 )
 
 echo ==========================================
@@ -19,6 +19,15 @@ echo [1/7] Verificando Oracle XE...
 echo     Oracle se mantiene corriendo (no se toca)
 echo.
 
+echo     Liberando puertos ABIS anteriores...
+for %%p in (7000 8001 8002 8765) do (
+    for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%%p ^| findstr LISTENING') do (
+        taskkill /F /PID %%a >nul 2>&1
+    )
+)
+echo     Puertos ABIS listos
+echo.
+
 echo [2/7] Iniciando NativeService (huella digital, puerto 8765)...
 net start DpHost >nul 2>&1
 if %errorLevel% == 0 (
@@ -26,8 +35,13 @@ if %errorLevel% == 0 (
 ) else (
     echo     OK - DpHost ya estaba corriendo o no existe
 )
+cd /d "C:\PROYECTOS P3\abis-upc\abis-native\NativeService"
 if exist "C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\NativeService.exe" (
     start "ABIS-NativeService" /min "C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\NativeService.exe"
+    timeout /t 3 /nobreak >nul
+    echo     NativeService iniciado en puerto 8765
+) else if exist "C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48-patched\NativeService.exe" (
+    start "ABIS-NativeService" /min "C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48-patched\NativeService.exe"
     timeout /t 3 /nobreak >nul
     echo     NativeService iniciado en puerto 8765
 ) else (
@@ -35,15 +49,15 @@ if exist "C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\Nat
 )
 echo.
 
-echo [3/7] Verificando/instalando dependencias biom%'etricas...
+echo [3/7] Verificando/instalando dependencias biometricas...
 pip install python-dotenv httpx pymupdf --quiet 2>nul
 echo     Dependencias biometricas OK
 echo.
 
-echo [4/7] Iniciando Servicio Biom%'etrico (puerto 8001)...
+echo [4/7] Iniciando Servicio Biometrico (puerto 8001)...
 cd /d "C:\PROYECTOS P3\abis-upc\abis-biometric"
-start "ABIS-Biometric" cmd /k "cd /d "C:\PROYECTOS P3\abis-upc\abis-biometric" && venv\Scripts\activate && uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
-echo     Biom%'etrico iniciado en puerto 8001
+start "ABIS-Biometric" powershell -NoExit -ExecutionPolicy Bypass -Command "Set-Location 'C:\PROYECTOS P3\abis-upc\abis-biometric'; if (Test-Path '.\venv\Scripts\Activate.ps1') { . '.\venv\Scripts\Activate.ps1' }; python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
+echo     Biometrico iniciado en puerto 8001
 echo.
 
 echo [5/7] Verificando/instalando dependencias OCR...
@@ -53,7 +67,7 @@ echo.
 
 echo [6/7] Iniciando Servicio OCR (puerto 8002)...
 if exist "api\main.py" (
-    start "ABIS-OCR" cmd /k "cd /d "C:\PROYECTOS P3\abis-upc\abis-ocr" && venv\Scripts\activate && uvicorn api.main:app --host 0.0.0.0 --port 8002"
+    start "ABIS-OCR" powershell -NoExit -ExecutionPolicy Bypass -Command "Set-Location 'C:\PROYECTOS P3\abis-upc\abis-ocr'; if (Test-Path '.\venv\Scripts\Activate.ps1') { . '.\venv\Scripts\Activate.ps1' }; python -m uvicorn api.main:app --host 0.0.0.0 --port 8002"
     echo     OCR iniciado en puerto 8002
 ) else (
     echo     ADVERTENCIA: No se encontro api/main.py en abis-ocr
@@ -68,7 +82,7 @@ if not exist "abis-backend-1.0-SNAPSHOT.jar" (
     pause
     exit /b 1
 )
-start "ABIS-Backend" cmd /k "set ABIS_DB_URL=jdbc:oracle:thin:@localhost:1521/XEPDB1&&set ABIS_DB_USER=abisAdmin&&set ABIS_DB_PASSWORD=12345&&set BIOMETRIC_SERVICE_URL=http://localhost:8001&&set OCR_SERVICE_URL=http://localhost:8002&&java -jar abis-backend-1.0-SNAPSHOT.jar"
+start "ABIS-Backend" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:ABIS_DB_URL='jdbc:oracle:thin:@localhost:1521/XEPDB1'; $env:ABIS_DB_USER='abisAdmin'; $env:ABIS_DB_PASSWORD='12345'; $env:BIOMETRIC_SERVICE_URL='http://localhost:8001'; $env:OCR_SERVICE_URL='http://localhost:8002'; Set-Location 'C:\PROYECTOS P3\abis-upc\abis-backend\target'; java -jar abis-backend-1.0-SNAPSHOT.jar"
 echo     Backend Java iniciado en puerto 7000
 echo.
 
@@ -84,7 +98,11 @@ echo   OCR:       http://localhost:8002/health
 echo   NativeSvc: http://localhost:8765
 echo.
 echo Abriendo navegador con el frontend...
-timeout /t 5 /nobreak >nul
+echo     Esperando respuesta del backend...
+powershell -NoProfile -ExecutionPolicy Bypass -Command "for ($i = 0; $i -lt 20; $i++) { try { Invoke-WebRequest -UseBasicParsing 'http://localhost:7000/api/status' -TimeoutSec 1 | Out-Null; exit 0 } catch { Start-Sleep -Seconds 1 } }; exit 1"
+if %errorlevel% neq 0 (
+echo     ADVERTENCIA: Backend no respondio aun; revisa la ventana ABIS-Backend
+)
 start "" "http://localhost:7000/pages/auth/login.html"
 echo.
 echo Presiona cualquier tecla para verificar servicios...
