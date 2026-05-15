@@ -62,6 +62,15 @@
                     <button id="btn-close-camera" class="flex-1 border border-[#C8CBD2] text-[#6B7280] py-2 rounded-lg text-xs">Cerrar</button>
                 </div>
             </div>
+
+            <div class="mt-5 border-t border-slate-300 pt-4">
+                <h4 class="font-mono text-[10px] uppercase text-[#6B7280] mb-3">Lectura del reverso con lector USB</h4>
+                <button id="btn-qr-focus" type="button" class="w-full border border-[#004D33] text-[#004D33] py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-emerald-50">
+                    <span class="material-symbols-outlined text-[18px]">keyboard</span>
+                    Enfocar campo de lectura
+                </button>
+                <p id="qr-status" class="text-center font-mono text-[10px] text-[#9CA3AF] mt-2">QR_CEDULA pendiente</p>
+            </div>
         </div>
 
         <!-- Formulario (derecha) -->
@@ -121,6 +130,11 @@
                         <option value="">Seleccionar puesto...</option>
                     </select>
                 </div>
+                <div class="col-span-2">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">QR_CEDULA reverso</label>
+                    <textarea class="form-field min-h-[86px] resize-none font-mono text-xs" id="f-qr-cedula" maxlength="500" placeholder="Escanee el reverso de la cédula"></textarea>
+                    <p class="mt-1 text-[11px] text-slate-400">Opcional por ahora. El lector YHD-9601D escribe el contenido y finaliza con Enter.</p>
+                </div>
             </div>
 
             <div id="error-msg" class="hidden mx-6 mb-4 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600"></div>
@@ -131,7 +145,7 @@
                     Nuevo Escaneo
                 </button>
                 <button id="btn-continuar" class="flex-1 bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20">
-                    Continuar a Biometria
+                    Continuar a captura de rostro
                     <span class="material-symbols-outlined">arrow_forward</span>
                 </button>
             </div>
