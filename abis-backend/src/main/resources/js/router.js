@@ -1,26 +1,38 @@
 const Router = {
-  pasoActual: 1,
+  pasoActual: 0,
+  consentimientoCompleto: false,
   paso2Completo: false,
-  paso3Confirmado: false,
+  paso3Completo: false,
+  paso4Confirmado: false,
   fragmentos: {
+    0: 'consent-modal.html',
     1: 'paso1-documento.html',
-    2: 'paso2-biometria.html',
-    3: 'paso3-verificacion.html',
-    4: 'paso4-completado.html'
+    2: 'paso2-rostro.html',
+    3: 'fingerprint-step.html',
+    4: 'paso3-verificacion.html',
+    5: 'paso4-completado.html'
   },
   async irA(n) {
     let destino = n;
+
+    if (destino > 0 && !VotanteSession.getConsentimiento()) {
+      destino = 0;
+    }
 
     if (destino > 1 && !VotanteSession.getIdentificacion()) {
       destino = 1;
     }
 
-    if (destino === 3 && !Router.paso2Completo) {
+    if (destino > 2 && !Router.paso2Completo) {
       destino = 2;
     }
 
-    if (destino === 4 && !Router.paso3Confirmado) {
+    if (destino > 3 && !Router.paso3Completo) {
       destino = 3;
+    }
+
+    if (destino === 5 && !Router.paso4Confirmado) {
+      destino = 4;
     }
 
     const response = await fetch(Router.fragmentos[destino], { cache: 'no-store' });
@@ -33,7 +45,14 @@ const Router = {
     Router.pasoActual = destino;
     Router.actualizarSidebar(destino);
 
-    const inits = { 1: initPaso1, 2: initPaso2, 3: initPaso3, 4: initPaso4 };
+    const inits = {
+      0: () => ConsentStep.init(),
+      1: initPaso1,
+      2: () => FaceCapture.init(),
+      3: () => FingerprintUI.init(),
+      4: initPaso3,
+      5: initPaso4
+    };
     if (typeof inits[destino] === 'function') {
       inits[destino]();
     }
@@ -47,7 +66,12 @@ const Router = {
         state = 'completed';
       } else if (step === pasoActivo) {
         state = 'active';
-      } else if (step === 3 && pasoActivo === 1 && !Router.paso2Completo) {
+      } else if (
+        (step === 1 && !VotanteSession.getConsentimiento()) ||
+        (step > 1 && !VotanteSession.getIdentificacion()) ||
+        (step > 2 && !Router.paso2Completo) ||
+        (step > 3 && !Router.paso3Completo)
+      ) {
         state = 'locked';
       }
 
@@ -239,6 +263,9 @@ function resetForm() {
   const captureContent = document.getElementById('capture-content');
   const fileInput = document.getElementById('fileInput');
   if (fileInput) fileInput.value = '';
+  const qrStatus = document.getElementById('qr-status');
+  if (qrStatus) qrStatus.textContent = 'QR_CEDULA pendiente';
+  QrHandler.value = '';
   if (preview) {
     preview.src = '';
     preview.classList.add('hidden');
@@ -387,7 +414,8 @@ function hydratePaso1FromSession() {
     'f-segundoapellido': data.segundoApellido,
     'f-correo': data.correo,
     'f-rol': data.idRol,
-    'f-puesto': data.idPuesto
+    'f-puesto': data.idPuesto,
+    'f-qr-cedula': data.qrCedula
   };
 
   Object.entries(mappings).forEach(([id, value]) => {
@@ -408,7 +436,9 @@ async function enviarPreRegistro() {
     segundoApellido: document.getElementById('f-segundoapellido').value.trim(),
     correo: document.getElementById('f-correo').value.trim(),
     idRol: parseInt(document.getElementById('f-rol').value, 10) || null,
-    idPuesto: parseInt(document.getElementById('f-puesto').value, 10) || null
+    idPuesto: parseInt(document.getElementById('f-puesto').value, 10) || null,
+    qrCedula: ScannerHandler.normalize(document.getElementById('f-qr-cedula')?.value || ''),
+    consentimiento: VotanteSession.getConsentimiento()
   };
 
   if (!data.identificacion || !data.primerNombre || !data.primerApellido || !data.correo || !data.idRol || !data.idPuesto) {
@@ -428,13 +458,15 @@ async function enviarPreRegistro() {
     VotanteSession.setDatosRegistro(data);
     VotanteSession.setIdentificacion(data.identificacion);
     Router.paso2Completo = false;
+    Router.paso3Completo = false;
+    Router.paso4Confirmado = false;
     await Router.irA(2);
   } catch (error) {
     showPaso1Error('Error al registrar: ' + error.message);
   } finally {
     if (button) {
       button.disabled = false;
-      button.innerHTML = 'Continuar a Biometria<span class="material-symbols-outlined">arrow_forward</span>';
+      button.innerHTML = 'Continuar a captura de rostro<span class="material-symbols-outlined">arrow_forward</span>';
     }
   }
 }
@@ -498,6 +530,7 @@ const file = fileInput.files[0];
   });
 
   selectDocType('CC');
+  QrHandler.initPreRegistro();
   cargarPuestos().then(hydratePaso1FromSession);
 }
 
@@ -751,6 +784,7 @@ document.getElementById('summary-fullname').textContent = [data.primerNombre, da
   document.getElementById('summary-correo').textContent = data.correo || '--';
   document.getElementById('summary-rol').textContent = data.idRol ? String(data.idRol) : '--';
   document.getElementById('summary-puesto').textContent = data.idPuesto ? String(data.idPuesto) : '--';
+  QrHandler.renderSummary(data.qrCedula);
 
   const fotoPreview = document.getElementById('summary-foto');
   const fotoPlaceholder = document.getElementById('summary-foto-placeholder');
@@ -773,8 +807,8 @@ document.getElementById('summary-fullname').textContent = [data.primerNombre, da
 
     await new Promise(resolve => setTimeout(resolve, 1000));
 
-    Router.paso3Confirmado = true;
-    Router.irA(4);
+    Router.paso4Confirmado = true;
+    Router.irA(5);
   });
 }
 
@@ -795,7 +829,8 @@ function initPaso4() {
   document.getElementById('btn-otro-votante').addEventListener('click', async () => {
     VotanteSession.clear();
     Router.paso2Completo = false;
-    Router.paso3Confirmado = false;
+    Router.paso3Completo = false;
+    Router.paso4Confirmado = false;
     await Router.irA(1);
   });
 
