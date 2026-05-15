@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ABIS-UPC | Panel de Administración</title>
+  <title>ABIS-UPC | Panel de AdministraciÃ³n</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
   <script>
@@ -37,45 +37,7 @@
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link rel="stylesheet" href="../../styles/navbar.css">
   <link rel="stylesheet" href="../../styles/admin-dashboard.css">
-  <style>
-    .material-symbols-outlined {
-      font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-      line-height: 1;
-      vertical-align: middle;
-    }
-
-    .signature-input-shadow {
-      box-shadow: inset 3px 0 0 #C8CBD2;
-    }
-
-    .signature-input-shadow.filled {
-      box-shadow: inset 3px 0 0 #4CAF7D;
-    }
-
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
-
-    select {
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 14px center;
-      background-size: 16px;
-    }
-
-    .small-caps {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-    }
-  </style>
+  <link rel="stylesheet" href="../../styles/admin-shell.css">
 </head>
 <body class="bg-[#F2F3F5] font-dm text-on-surface min-h-screen flex flex-col">
   <div id="admin-header"></div>
@@ -84,129 +46,7 @@
 
   <script src="../../js/api.js"></script>
   <script src="../../js/admin-router.js"></script>
-  <script>
-    async function cargarComponente(id, url) {
-      const target = document.getElementById(id);
-      if (!target) return;
-      const response = await fetch(url);
-      target.innerHTML = await response.text();
-    }
-
-    async function cargarComponentesAdmin() {
-      await Promise.all([
-        cargarComponente('admin-header', '/components/header.html'),
-        cargarComponente('admin-bottom-nav', '/components/bottom-nav.html')
-      ]);
-
-      if (window.AdminRouter) {
-        const seccion = window.location.hash.replace('#', '') || 'dashboard';
-        AdminRouter.actualizarNavbar(seccion);
-      }
-
-      actualizarEstadoOracleHeader();
-      inicializarMenuAdministrador();
-    }
-
-    async function actualizarEstadoOracleHeader() {
-      try {
-        const data = await API.get('/api/health');
-        const ok = data.database === 'ok';
-        const badge = document.getElementById('admin-oracle-status');
-        if (badge) {
-          badge.innerHTML = `Oracle XE <span class="${ok ? 'admin-status-dot' : 'text-red-500'}">●</span>`;
-        }
-      } catch (error) {
-        const badge = document.getElementById('admin-oracle-status');
-        if (badge) {
-          badge.innerHTML = 'Oracle XE <span class="text-red-500">●</span>';
-        }
-      }
-    }
-
-    cargarComponentesAdmin();
-
-    function inicializarMenuAdministrador() {
-      const button = document.getElementById('admin-profile-button');
-      const dropdown = document.getElementById('admin-profile-dropdown');
-      if (!button || !dropdown) return;
-
-      const user = leerUsuarioAdmin();
-      document.querySelectorAll('.admin-profile-name, .admin-profile-summary-name').forEach((element) => {
-        element.textContent = user.nombre;
-      });
-      document.querySelectorAll('.admin-avatar').forEach((element) => {
-        element.textContent = user.iniciales;
-      });
-
-      button.addEventListener('click', (event) => {
-        event.stopPropagation();
-        const abierto = dropdown.classList.toggle('open');
-        button.setAttribute('aria-expanded', String(abierto));
-      });
-
-      dropdown.addEventListener('click', (event) => {
-        event.stopPropagation();
-      });
-
-      document.addEventListener('click', () => cerrarMenuAdministrador());
-      document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') cerrarMenuAdministrador();
-      });
-    }
-
-    function cerrarMenuAdministrador() {
-      const button = document.getElementById('admin-profile-button');
-      const dropdown = document.getElementById('admin-profile-dropdown');
-      if (!button || !dropdown) return;
-      dropdown.classList.remove('open');
-      button.setAttribute('aria-expanded', 'false');
-    }
-
-    function leerUsuarioAdmin() {
-      const fallback = { nombre: 'Administrador', iniciales: 'AD' };
-      try {
-        const raw = localStorage.getItem('abis_user');
-        const data = raw ? JSON.parse(raw) : {};
-        const nombre = data.nombre || data.usuario || localStorage.getItem('abis_admin_nombre') || fallback.nombre;
-        const iniciales = nombre
-          .split(/\s+/)
-          .filter(Boolean)
-          .slice(0, 2)
-          .map((parte) => parte.charAt(0).toUpperCase())
-          .join('') || fallback.iniciales;
-        return { nombre, iniciales };
-      } catch (error) {
-        return fallback;
-      }
-    }
-
-    function verPerfilAdministrador() {
-      cerrarMenuAdministrador();
-      alert('Perfil del administrador próximamente.');
-    }
-
-    async function cerrarSesion() {
-      cerrarMenuAdministrador();
-      const token = localStorage.getItem('abis_token');
-      if (token) {
-        try {
-          await fetch('/api/auth/logout', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer ' + token
-            },
-            body: JSON.stringify({ token })
-          });
-        } catch (error) {
-          console.warn('No fue posible cerrar la sesión en el servidor:', error);
-        }
-      }
-      localStorage.removeItem('abis_token');
-      localStorage.removeItem('abis_user');
-      localStorage.removeItem('abis_admin_nombre');
-      window.location.href = '/pages/auth/login.html';
-    }
-  </script>
+  <script src="../../js/admin-shell.js"></script>
 </body>
 </html>
+

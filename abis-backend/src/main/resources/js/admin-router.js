@@ -76,7 +76,12 @@ const AdminRouter = {
       });
       script.textContent = scriptOriginal.textContent;
       document.body.appendChild(script);
-      script.remove();
+      if (script.src) {
+        script.addEventListener('load', () => script.remove(), { once: true });
+        script.addEventListener('error', () => script.remove(), { once: true });
+      } else {
+        script.remove();
+      }
     });
   },
 
