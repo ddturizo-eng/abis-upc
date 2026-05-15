@@ -1,0 +1,46 @@
+<div class="min-h-[calc(100vh-180px)] flex items-center justify-center">
+    <section class="abis-card w-full max-w-5xl overflow-hidden">
+        <div class="bg-[#1a3a2a] text-white px-8 py-6 flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold">Autorización de tratamiento de datos personales</h1>
+                <p class="text-sm text-emerald-100 mt-1">Sistema ABIS-UPC v1.0.0-STABLE · Entorno de pruebas</p>
+            </div>
+            <span class="material-symbols-outlined text-[34px]">verified_user</span>
+        </div>
+
+        <div class="p-8 grid grid-cols-12 gap-6">
+            <div class="col-span-8">
+                <div id="consent-scroll" class="h-[420px] overflow-y-auto pr-4 text-sm leading-6 text-slate-700 border border-slate-200 rounded-lg p-5 bg-slate-50">
+                    <p><strong>Responsable:</strong> Daniel David Turizo Chacón · C.C. 1.052.041.109 · ddturizo@unicesar.edu.co</p>
+                    <p class="mt-3"><strong>Carácter:</strong> Proyecto de desarrollo académico — No producción · Mayo 2026</p>
+                    <p class="mt-3"><strong>Base legal:</strong> Ley 1581 de 2012 · Decreto 1377 de 2013 · Política interna de la institución.</p>
+                    <p class="mt-3"><strong>Datos recolectados:</strong> Nombre, cédula, correo, fotografía facial, plantilla de huella dactilar y código QR del documento.</p>
+                    <p class="mt-3"><strong>Finalidad exclusiva:</strong> Verificación de identidad en el proceso electoral universitario y validación del sistema biométrico en fase de pruebas.</p>
+                    <p class="mt-3"><strong>Datos sensibles:</strong> La fotografía y huella dactilar son datos sensibles conforme al Art. 6 de la Ley 1581 de 2012. Su captura es voluntaria. Negarse implica únicamente no poder continuar con el registro.</p>
+                    <p class="mt-3"><strong>Seguridad:</strong> Los datos se transmiten cifrados con AES-256 y se almacenan en una base de datos de acceso restringido al equipo de desarrollo.</p>
+                    <p class="mt-3"><strong>Retención:</strong> Los datos capturados durante esta fase de pruebas serán eliminados al finalizar el período de validación del sistema. Las plantillas biométricas no se comparten con terceros bajo ninguna circunstancia.</p>
+                    <p class="mt-3"><strong>Sus derechos:</strong> Acceso · Rectificación · Supresión · Revocación. Las solicitudes serán recibidas en ddturizo@unicesar.edu.co.</p>
+                    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
+                        <strong>Aviso de entorno de pruebas:</strong> Este sistema se encuentra en fase de desarrollo académico. Los datos recolectados se usan exclusivamente para validar el funcionamiento del sistema biométrico y no serán utilizados en ningún proceso electoral real.
+                    </div>
+                    <p class="mt-4">Al aceptar, declara haber leído y autorizado de forma libre e informada el tratamiento de sus datos personales y biométricos conforme a la legislación colombiana vigente.</p>
+                </div>
+            </div>
+
+            <aside class="col-span-4 flex flex-col gap-4">
+                <div class="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
+                    <p class="text-[11px] font-bold uppercase tracking-widest text-[#1a3a2a]">Condición de avance</p>
+                    <p class="text-sm text-slate-600 mt-2">Debe leer el documento completo para habilitar la aceptación.</p>
+                </div>
+                <label class="flex items-start gap-3 rounded-lg border border-slate-200 p-4 text-sm text-slate-700">
+                    <input id="consent-checkbox" type="checkbox" class="mt-1 h-4 w-4 accent-[#1a3a2a]" disabled>
+                    <span>He leído y acepto el tratamiento de mis datos personales y biométricos.</span>
+                </label>
+                <button id="btn-consent-accept" class="bg-[#1a3a2a] text-white font-bold py-4 rounded-lg opacity-50 cursor-not-allowed" disabled>
+                    Aceptar y continuar
+                </button>
+                <p id="consent-hint" class="text-xs text-slate-500">Desplace el texto legal hasta el final.</p>
+            </aside>
+        </div>
+    </section>
+</div>

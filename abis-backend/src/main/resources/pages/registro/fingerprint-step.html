@@ -1,0 +1,49 @@
+<div class="fingerprint-shell">
+    <section class="abis-card p-8 flex flex-col items-center justify-center gap-6">
+        <div id="fingerprint-orb" class="fingerprint-orb">
+            <svg class="fingerprint-svg" viewBox="0 0 200 240" aria-hidden="true">
+                <path d="M100 24c-44 0-76 34-76 78"></path>
+                <path d="M48 112c0-31 22-56 52-56s52 25 52 56"></path>
+                <path d="M72 118c0-18 12-34 28-34s28 16 28 34"></path>
+                <path d="M100 112c16 24-6 47-4 79"></path>
+                <path d="M128 126c5 25-7 45-9 72"></path>
+                <path d="M74 142c-2 22-7 37-17 54"></path>
+                <path d="M154 92c13 29 13 59 3 92"></path>
+                <path d="M36 144c-2 16-8 31-18 44"></path>
+            </svg>
+            <div id="minutia-layer" class="absolute inset-0"></div>
+        </div>
+        <div class="text-center">
+            <p id="fingerprint-count" class="text-lg font-bold text-[#004D33]">0 / 4 capturas</p>
+            <p id="fingerprint-instruction" class="text-sm text-slate-600 mt-2">Coloque su dedo indice sobre el lector</p>
+        </div>
+        <div class="w-full bg-slate-200 h-3 rounded-full overflow-hidden">
+            <div id="fingerprint-bar" class="h-full bg-[#4fc3f7] rounded-full transition-all" style="width:0%"></div>
+        </div>
+    </section>
+
+    <section class="abis-card p-8 flex flex-col gap-5">
+        <div>
+            <h2 class="text-xl font-bold text-[#004D33]">Enrolamiento de huella dactilar</h2>
+            <p class="text-sm text-slate-500 mt-1">Captura guiada con confirmacion real del lector biometrico.</p>
+        </div>
+        <div id="fingerprint-state-list" class="grid grid-cols-1 gap-3 text-sm">
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">1. Coloque el dedo sobre el lector cuando se indique.</div>
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">2. Mantenga el dedo quieto hasta que el sistema confirme la muestra.</div>
+            <div class="rounded-lg border border-slate-200 bg-slate-50 p-4">3. Levante el dedo y vuelva a colocarlo para la siguiente muestra.</div>
+        </div>
+        <div id="fingerprint-error" class="hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"></div>
+        <div class="mt-auto flex flex-col gap-3">
+            <button id="btn-fingerprint-start" class="bg-[#1a3a2a] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined">fingerprint</span>
+                Iniciar captura biometrica
+            </button>
+            <button id="btn-fingerprint-continue" class="hidden bg-[#4CAF7D] text-white font-bold py-4 rounded-lg">
+                Revisar y confirmar
+            </button>
+            <button id="btn-fingerprint-back" class="border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg">
+                Volver a captura de rostro
+            </button>
+        </div>
+    </section>
+</div>
