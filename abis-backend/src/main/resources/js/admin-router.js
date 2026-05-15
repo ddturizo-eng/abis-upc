@@ -1,5 +1,5 @@
 const AdminRouter = {
-  secciones: ['dashboard', 'votantes', 'elecciones', 'jurados', 'certificados'],
+  secciones: ['dashboard', 'votacion', 'votantes', 'elecciones', 'candidatos', 'jurados', 'certificados'],
 
   init() {
     const hash = window.location.hash.replace('#', '');
@@ -55,8 +55,10 @@ const AdminRouter = {
   actualizarTitulo(seccion) {
     const titulos = {
       dashboard: 'Dashboard',
+      votacion: 'Puesto de Votacion',
       votantes: 'Censo Electoral',
       elecciones: 'Gestión de Elecciones',
+      candidatos: 'Candidatos',
       jurados: 'Mesas y Jurados',
       certificados: 'Certificados de Participación'
     };
