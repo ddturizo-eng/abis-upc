@@ -4,15 +4,73 @@
     <div class="flex items-center justify-between">
       <div>
         <h1 class="text-2xl font-bold text-[#004D33] font-dm">Censo Electoral</h1>
-        <p class="text-sm text-slate-400 mt-1 font-dm">Gestión de votantes</p>
+        <p class="text-sm text-slate-400 mt-1 font-dm">Gestión de votantes y segunda llave QR</p>
       </div>
-      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase">EN DESARROLLO</span>
+      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase">QR CÉDULA</span>
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col items-center justify-center py-20 gap-4">
-    <span class="material-symbols-outlined text-[48px] text-[#C8CBD2]">groups</span>
-    <p class="font-dm text-sm text-slate-400">Módulo en desarrollo</p>
-    <p class="font-mono text-[10px] text-slate-300 uppercase tracking-widest">PRÓXIMAMENTE</p>
+  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+    <div class="px-6 py-4 bg-slate-50 border-b flex items-center justify-between">
+      <h2 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Votantes registrados</h2>
+      <span id="votantes-count" class="text-xs text-slate-500">Cargando...</span>
+    </div>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead class="bg-slate-50 text-[11px] uppercase tracking-widest text-slate-400">
+          <tr>
+            <th class="text-left px-6 py-3">Identificación</th>
+            <th class="text-left px-6 py-3">Nombre</th>
+            <th class="text-left px-6 py-3">Correo</th>
+            <th class="text-left px-6 py-3">Estado</th>
+            <th class="text-left px-6 py-3">QR cédula</th>
+          </tr>
+        </thead>
+        <tbody id="votantes-body" class="divide-y divide-slate-100"></tbody>
+      </table>
+    </div>
   </div>
 </div>
+
+<script>
+(async function cargarVotantes() {
+  const body = document.getElementById('votantes-body');
+  const count = document.getElementById('votantes-count');
+  const token = localStorage.getItem('abis_token');
+  try {
+    const response = await fetch('/api/votantes', {
+      headers: { Authorization: 'Bearer ' + token }
+    });
+    if (!response.ok) throw new Error('No fue posible cargar votantes');
+    const votantes = await response.json();
+    count.textContent = votantes.length + ' registros';
+    body.innerHTML = votantes.map((votante) => {
+      const nombre = [votante.primer_nombre, votante.segundo_nombre, votante.primer_apellido, votante.segundo_apellido].filter(Boolean).join(' ');
+      const qr = votante.qr_cedula || '';
+      const qrPreview = qr ? (qr.length > 32 ? qr.slice(0, 32) + '...' : qr) : 'No registrado';
+      return `
+        <tr>
+          <td class="px-6 py-4 font-mono text-xs text-slate-600">${votante.identificacion || '--'}</td>
+          <td class="px-6 py-4 font-bold text-slate-700">${nombre || '--'}</td>
+          <td class="px-6 py-4 text-slate-500">${votante.correo || '--'}</td>
+          <td class="px-6 py-4"><span class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-[#004D33]">${votante.estado_voto || '--'}</span></td>
+          <td class="px-6 py-4 max-w-[320px]">
+            <code class="block truncate rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-500" data-qr-full="${encodeURIComponent(qr)}">${qrPreview}</code>
+            ${qr ? '<button class="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#004D33]" data-show-qr>Ver completo</button>' : ''}
+          </td>
+        </tr>
+      `;
+    }).join('');
+    body.querySelectorAll('[data-show-qr]').forEach((button) => {
+      button.addEventListener('click', () => {
+        const code = button.previousElementSibling;
+        code.textContent = decodeURIComponent(code.dataset.qrFull || '');
+        button.remove();
+      });
+    });
+  } catch (error) {
+    count.textContent = 'Error';
+    body.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">No fue posible cargar el censo electoral.</td></tr>';
+  }
+})();
+</script>

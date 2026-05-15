@@ -36,6 +36,7 @@
   </script>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
   <link rel="stylesheet" href="../../styles/navbar.css">
+  <link rel="stylesheet" href="../../styles/admin-dashboard.css">
   <style>
     .material-symbols-outlined {
       font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
@@ -77,70 +78,133 @@
   </style>
 </head>
 <body class="bg-[#F2F3F5] font-dm text-on-surface min-h-screen flex flex-col">
-  <header class="bg-[#F2F3F5] flex justify-between items-center w-full px-8 py-4">
-    <div class="flex items-center gap-4">
-      <img src="../../public/logo-upc.png" alt="Logo UPC" class="h-8 w-auto">
-      <span class="text-xl font-bold text-[#004D33] tracking-tight">ABIS-UPC</span>
-    </div>
-
-    <span id="admin-section-title" class="text-xl font-bold text-[#004D33]">Panel de Administración</span>
-
-    <div class="flex items-center gap-3">
-      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded tracking-widest">SESIÓN ACTIVA</span>
-      <button type="button" onclick="cerrarSesion()" class="bg-white text-[#004D33] text-[12px] font-bold px-4 py-2 rounded-full shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex items-center gap-2 hover:bg-slate-50 transition-all">
-        <span class="material-symbols-outlined text-[18px]">logout</span>
-        Salir
-      </button>
-    </div>
-  </header>
-
-  <main id="admin-content" class="flex-grow p-6 mb-24"></main>
-
-  <nav class="admin-navbar fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex justify-between gap-8 items-center bg-gradient-to-r from-[#003421] to-[#004D33] backdrop-blur-lg rounded-full px-10 py-3 shadow-[0px_10px_30px_rgba(0,77,51,0.08)] min-w-[560px]">
-    <button type="button" data-section="dashboard" onclick="AdminRouter.irA('dashboard')" class="flex flex-col items-center text-[#93F7BF] scale-110 after:content-['•'] after:text-[#93F7BF] after:text-[14px] after:-mt-1 font-dm nav-item active">
-      <span class="material-symbols-outlined text-[24px]">dashboard</span>
-      <span class="text-[10px] font-medium mt-1">Dashboard</span>
-    </button>
-    <button type="button" data-section="registro" onclick="AdminRouter.irA('registro')" class="flex flex-col items-center text-white/60 hover:text-white transition-all font-dm nav-item">
-      <span class="material-symbols-outlined text-[24px]">how_to_reg</span>
-      <span class="text-[10px] font-medium mt-1">Registro</span>
-    </button>
-    <button type="button" data-section="votantes" onclick="AdminRouter.irA('votantes')" class="flex flex-col items-center text-white/60 hover:text-white transition-all font-dm nav-item">
-      <span class="material-symbols-outlined text-[24px]">groups</span>
-      <span class="text-[10px] font-medium mt-1">Votantes</span>
-    </button>
-    <button type="button" data-section="elecciones" onclick="AdminRouter.irA('elecciones')" class="flex flex-col items-center text-white/60 hover:text-white transition-all font-dm nav-item">
-      <span class="material-symbols-outlined text-[24px]">how_to_vote</span>
-      <span class="text-[10px] font-medium mt-1">Elecciones</span>
-    </button>
-    <button type="button" data-section="jurados" onclick="AdminRouter.irA('jurados')" class="flex flex-col items-center text-white/60 hover:text-white transition-all font-dm nav-item">
-      <span class="material-symbols-outlined text-[24px]">gavel</span>
-      <span class="text-[10px] font-medium mt-1">Jurados</span>
-    </button>
-    <button type="button" data-section="certificados" onclick="AdminRouter.irA('certificados')" class="flex flex-col items-center text-white/60 hover:text-white transition-all font-dm nav-item">
-      <span class="material-symbols-outlined text-[24px]">verified</span>
-      <span class="text-[10px] font-medium mt-1">Certificados</span>
-    </button>
-  </nav>
-
-  <footer class="fixed bottom-2 left-8 right-8 flex justify-between items-center text-[9px] font-bold text-slate-400 tracking-widest uppercase font-dm">
-    <div class="flex gap-4">
-      <span>INTEGRIDAD: ABIS-2026</span>
-      <span>STATUS: LISTO</span>
-    </div>
-    <div class="flex gap-4">
-      <span>TERMINAL ID: ADMIN-01</span>
-      <span>v4.2.0-STABLE</span>
-    </div>
-  </footer>
+  <div id="admin-header"></div>
+  <main id="admin-content" class="admin-shell-main"></main>
+  <div id="admin-bottom-nav"></div>
 
   <script src="../../js/api.js"></script>
   <script src="../../js/admin-router.js"></script>
   <script>
-    function cerrarSesion() {
+    async function cargarComponente(id, url) {
+      const target = document.getElementById(id);
+      if (!target) return;
+      const response = await fetch(url);
+      target.innerHTML = await response.text();
+    }
+
+    async function cargarComponentesAdmin() {
+      await Promise.all([
+        cargarComponente('admin-header', '/components/header.html'),
+        cargarComponente('admin-bottom-nav', '/components/bottom-nav.html')
+      ]);
+
+      if (window.AdminRouter) {
+        const seccion = window.location.hash.replace('#', '') || 'dashboard';
+        AdminRouter.actualizarNavbar(seccion);
+      }
+
+      actualizarEstadoOracleHeader();
+      inicializarMenuAdministrador();
+    }
+
+    async function actualizarEstadoOracleHeader() {
+      try {
+        const data = await API.get('/api/health');
+        const ok = data.database === 'ok';
+        const badge = document.getElementById('admin-oracle-status');
+        if (badge) {
+          badge.innerHTML = `Oracle XE <span class="${ok ? 'admin-status-dot' : 'text-red-500'}">●</span>`;
+        }
+      } catch (error) {
+        const badge = document.getElementById('admin-oracle-status');
+        if (badge) {
+          badge.innerHTML = 'Oracle XE <span class="text-red-500">●</span>';
+        }
+      }
+    }
+
+    cargarComponentesAdmin();
+
+    function inicializarMenuAdministrador() {
+      const button = document.getElementById('admin-profile-button');
+      const dropdown = document.getElementById('admin-profile-dropdown');
+      if (!button || !dropdown) return;
+
+      const user = leerUsuarioAdmin();
+      document.querySelectorAll('.admin-profile-name, .admin-profile-summary-name').forEach((element) => {
+        element.textContent = user.nombre;
+      });
+      document.querySelectorAll('.admin-avatar').forEach((element) => {
+        element.textContent = user.iniciales;
+      });
+
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const abierto = dropdown.classList.toggle('open');
+        button.setAttribute('aria-expanded', String(abierto));
+      });
+
+      dropdown.addEventListener('click', (event) => {
+        event.stopPropagation();
+      });
+
+      document.addEventListener('click', () => cerrarMenuAdministrador());
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') cerrarMenuAdministrador();
+      });
+    }
+
+    function cerrarMenuAdministrador() {
+      const button = document.getElementById('admin-profile-button');
+      const dropdown = document.getElementById('admin-profile-dropdown');
+      if (!button || !dropdown) return;
+      dropdown.classList.remove('open');
+      button.setAttribute('aria-expanded', 'false');
+    }
+
+    function leerUsuarioAdmin() {
+      const fallback = { nombre: 'Administrador', iniciales: 'AD' };
+      try {
+        const raw = localStorage.getItem('abis_user');
+        const data = raw ? JSON.parse(raw) : {};
+        const nombre = data.nombre || data.usuario || localStorage.getItem('abis_admin_nombre') || fallback.nombre;
+        const iniciales = nombre
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map((parte) => parte.charAt(0).toUpperCase())
+          .join('') || fallback.iniciales;
+        return { nombre, iniciales };
+      } catch (error) {
+        return fallback;
+      }
+    }
+
+    function verPerfilAdministrador() {
+      cerrarMenuAdministrador();
+      alert('Perfil del administrador próximamente.');
+    }
+
+    async function cerrarSesion() {
+      cerrarMenuAdministrador();
       const token = localStorage.getItem('abis_token');
-      if (token) ApiAuth.logout(token);
+      if (token) {
+        try {
+          await fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer ' + token
+            },
+            body: JSON.stringify({ token })
+          });
+        } catch (error) {
+          console.warn('No fue posible cerrar la sesión en el servidor:', error);
+        }
+      }
       localStorage.removeItem('abis_token');
+      localStorage.removeItem('abis_user');
+      localStorage.removeItem('abis_admin_nombre');
       window.location.href = '/pages/auth/login.html';
     }
   </script>
