@@ -1,7 +1,9 @@
 package com.abisupc.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RegistroRequest {
 
     @JsonProperty("identificacion")
@@ -27,4 +29,7 @@ public class RegistroRequest {
 
     @JsonProperty("id_puesto")
     public Long idPuesto;
+
+    @JsonProperty("qr_cedula")
+    public String qrCedula;
 }

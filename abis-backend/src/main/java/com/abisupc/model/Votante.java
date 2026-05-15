@@ -39,6 +39,9 @@ public class Votante extends Entity {
     @JsonProperty("puesto_id")
     private Long idPuesto;
 
+    @JsonProperty("qr_cedula")
+    private String qrCedula;
+
     public String getIdentificacion() {
         return identificacion;
     }
@@ -125,5 +128,13 @@ public class Votante extends Entity {
 
     public void setIdPuesto(Long idPuesto) {
         this.idPuesto = idPuesto;
+    }
+
+    public String getQrCedula() {
+        return qrCedula;
+    }
+
+    public void setQrCedula(String qrCedula) {
+        this.qrCedula = qrCedula;
     }
 }
