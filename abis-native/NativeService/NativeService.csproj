@@ -19,6 +19,7 @@
     <Reference Include="DPFPVerNET">
       <HintPath>DPFPVerNET.dll</HintPath>
     </Reference>
+    <Reference Include="System.Net.Http" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />

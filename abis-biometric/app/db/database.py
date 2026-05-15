@@ -41,11 +41,11 @@ def save_template(identificacion: str, template_b64: str, hash_sha256: str) -> b
         template_bytes = template_b64.encode("utf-8")
         cur.execute(
             """MERGE INTO BIOMETRIA_VOTANTES b
-               USING (SELECT :1 AS IDENTIFICACION FROM DUAL) src
+               USING (SELECT :identificacion AS IDENTIFICACION FROM DUAL) src
                ON (b.IDENTIFICACION = src.IDENTIFICACION)
                WHEN MATCHED THEN
-                 UPDATE SET b.PLANTILLA_BIOMETRICA = :2,
-                            b.HASHINTEGRIDADBIOMETRICA = :3,
+                 UPDATE SET b.PLANTILLA_BIOMETRICA = :template,
+                            b.HASHINTEGRIDADBIOMETRICA = :hash,
                             b.FECHA_ENROLAMIENTO = SYSDATE,
                             b.ACTIVO = 'S'
                WHEN NOT MATCHED THEN
@@ -56,12 +56,16 @@ def save_template(identificacion: str, template_b64: str, hash_sha256: str) -> b
                          FECHA_ENROLAMIENTO,
                          ACTIVO)
                  VALUES (seq_biometria_votantes.NEXTVAL,
-                         :1,
-                         :2,
-                         :3,
+                         :identificacion,
+                         :template,
+                         :hash,
                          SYSDATE,
                          'S')""",
-            [identificacion, template_bytes, hash_sha256],
+            {
+                "identificacion": identificacion,
+                "template": template_bytes,
+                "hash": hash_sha256,
+            },
         )
         cur.execute(
             """UPDATE VOTANTES
