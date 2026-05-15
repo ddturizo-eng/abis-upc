@@ -1,76 +1,141 @@
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<div class="flex flex-col gap-6">
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-[#004D33] font-dm">Censo Electoral</h1>
-        <p class="text-sm text-slate-400 mt-1 font-dm">Gestión de votantes y segunda llave QR</p>
+﻿<section class="voters-page">
+  <link rel="stylesheet" href="../../styles/votantes.css">
+
+  <div class="voters-header">
+    <div>
+      <h1 class="voters-title">Censo Electoral</h1>
+      <p class="voters-subtitle">Gestion integral de votantes, trazabilidad y autenticacion biometrica.</p>
+    </div>
+    <div class="voters-actions">
+      <button class="voters-btn voters-btn-ghost" id="voters-import">
+        <span class="material-symbols-outlined">upload</span>
+        Importar Excel
+      </button>
+      <button class="voters-btn voters-btn-ghost" id="voters-export">
+        <span class="material-symbols-outlined">download</span>
+        Exportar
+      </button>
+      <button class="voters-btn voters-btn-ghost" id="voters-audit-button">
+        <span class="material-symbols-outlined">assignment</span>
+        Ver auditoria
+      </button>
+      <button class="voters-btn voters-btn-primary" id="voters-new">
+        <span class="material-symbols-outlined">add</span>
+        Nuevo votante
+      </button>
+    </div>
+  </div>
+
+  <div class="voters-kpis" id="voters-kpis"></div>
+
+  <div class="voters-main-grid">
+    <div class="voters-left">
+      <div class="voters-toolbar">
+        <label class="search-wrap">
+          <span class="voters-field-label">Busqueda</span>
+          <span class="voters-search">
+            <input id="voters-search" type="search" placeholder="Identificacion, nombre o correo">
+            <span class="material-symbols-outlined">search</span>
+          </span>
+        </label>
+        <label>
+          <span class="voters-field-label">Estado</span>
+          <select class="voters-select" id="voters-filter-state">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">Rol</span>
+          <select class="voters-select" id="voters-filter-role">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">Puesto</span>
+          <select class="voters-select" id="voters-filter-place">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">Biometrico</span>
+          <select class="voters-select" id="voters-filter-bio">
+            <option value="">Todos</option>
+            <option value="enrolado">Enrolado</option>
+            <option value="no_enrolado">No enrolado</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">QR cedula</span>
+          <select class="voters-select" id="voters-filter-qr">
+            <option value="">Todos</option>
+            <option value="registrado">Registrado</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </label>
+        <button class="voters-btn voters-btn-ghost voters-filter-btn" id="voters-clear">
+          <span class="material-symbols-outlined">refresh</span>
+          Limpiar
+        </button>
+        <button class="voters-btn voters-btn-primary voters-filter-btn" id="voters-apply">
+          <span class="material-symbols-outlined">filter_alt</span>
+          Aplicar
+        </button>
       </div>
-      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase">QR CÉDULA</span>
+
+      <div class="voters-table-card">
+        <div class="voters-table-wrap">
+          <table class="voters-table">
+            <thead>
+              <tr>
+                <th>Votante</th>
+                <th>Identificacion</th>
+                <th>Nombre completo</th>
+                <th>Rol</th>
+                <th>Puesto de votacion</th>
+                <th>Biometrico</th>
+                <th>Estado</th>
+                <th>Ultima actividad</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="voters-table-body"></tbody>
+          </table>
+        </div>
+        <div class="voters-pagination">
+          <span id="voters-page-summary">Cargando censo electoral...</span>
+          <div class="voters-page-controls" id="voters-pagination"></div>
+        </div>
+      </div>
     </div>
+
+    <aside class="voters-audit-card">
+      <div class="audit-header">
+        <div class="audit-title">
+          <span class="material-symbols-outlined">history</span>
+          Auditoria reciente
+        </div>
+        <button class="audit-link" id="voters-audit-link">Ver toda</button>
+      </div>
+      <div class="audit-list" id="voters-audit-list"></div>
+    </aside>
   </div>
 
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
-    <div class="px-6 py-4 bg-slate-50 border-b flex items-center justify-between">
-      <h2 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Votantes registrados</h2>
-      <span id="votantes-count" class="text-xs text-slate-500">Cargando...</span>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-sm">
-        <thead class="bg-slate-50 text-[11px] uppercase tracking-widest text-slate-400">
-          <tr>
-            <th class="text-left px-6 py-3">Identificación</th>
-            <th class="text-left px-6 py-3">Nombre</th>
-            <th class="text-left px-6 py-3">Correo</th>
-            <th class="text-left px-6 py-3">Estado</th>
-            <th class="text-left px-6 py-3">QR cédula</th>
-          </tr>
-        </thead>
-        <tbody id="votantes-body" class="divide-y divide-slate-100"></tbody>
-      </table>
-    </div>
+  <div class="voter-drawer" id="voter-drawer" aria-hidden="true">
+    <section class="voter-drawer-panel">
+      <div class="drawer-header">
+        <div>
+          <p class="voters-field-label">Ficha del votante</p>
+          <h2 class="voters-title" style="font-size:22px">Detalle operativo</h2>
+        </div>
+        <button class="drawer-close" id="voter-drawer-close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div id="voter-drawer-content"></div>
+    </section>
   </div>
-</div>
 
-<script>
-(async function cargarVotantes() {
-  const body = document.getElementById('votantes-body');
-  const count = document.getElementById('votantes-count');
-  const token = localStorage.getItem('abis_token');
-  try {
-    const response = await fetch('/api/votantes', {
-      headers: { Authorization: 'Bearer ' + token }
-    });
-    if (!response.ok) throw new Error('No fue posible cargar votantes');
-    const votantes = await response.json();
-    count.textContent = votantes.length + ' registros';
-    body.innerHTML = votantes.map((votante) => {
-      const nombre = [votante.primer_nombre, votante.segundo_nombre, votante.primer_apellido, votante.segundo_apellido].filter(Boolean).join(' ');
-      const qr = votante.qr_cedula || '';
-      const qrPreview = qr ? (qr.length > 32 ? qr.slice(0, 32) + '...' : qr) : 'No registrado';
-      return `
-        <tr>
-          <td class="px-6 py-4 font-mono text-xs text-slate-600">${votante.identificacion || '--'}</td>
-          <td class="px-6 py-4 font-bold text-slate-700">${nombre || '--'}</td>
-          <td class="px-6 py-4 text-slate-500">${votante.correo || '--'}</td>
-          <td class="px-6 py-4"><span class="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-bold text-[#004D33]">${votante.estado_voto || '--'}</span></td>
-          <td class="px-6 py-4 max-w-[320px]">
-            <code class="block truncate rounded bg-slate-50 px-2 py-1 text-[11px] text-slate-500" data-qr-full="${encodeURIComponent(qr)}">${qrPreview}</code>
-            ${qr ? '<button class="mt-2 text-[10px] font-bold uppercase tracking-widest text-[#004D33]" data-show-qr>Ver completo</button>' : ''}
-          </td>
-        </tr>
-      `;
-    }).join('');
-    body.querySelectorAll('[data-show-qr]').forEach((button) => {
-      button.addEventListener('click', () => {
-        const code = button.previousElementSibling;
-        code.textContent = decodeURIComponent(code.dataset.qrFull || '');
-        button.remove();
-      });
-    });
-  } catch (error) {
-    count.textContent = 'Error';
-    body.innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-red-500">No fue posible cargar el censo electoral.</td></tr>';
-  }
-})();
-</script>
+  <input id="voters-import-input" type="file" accept=".csv,.xlsx,.xls" class="hidden">
+</section>
+<script src="../../js/votantes.js"></script>
+
