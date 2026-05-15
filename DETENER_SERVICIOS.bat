@@ -36,6 +36,12 @@ for /f "tokens=5" %%a in ('netstat -ano ^| findstr :7000 ^| findstr LISTENING') 
     echo     Detenido
 )
 
+echo [5] NativeService (puerto 8765)...
+for /f "tokens=5" %%a in ('netstat -ano ^| findstr :8765 ^| findstr LISTENING') do (
+    taskkill /F /PID %%a >nul 2>&1
+    echo     Detenido
+)
+
 echo.
 echo ==========================================
 echo   Servicios ABIS-UPC detenidos
