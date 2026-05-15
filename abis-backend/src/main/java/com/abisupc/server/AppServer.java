@@ -10,6 +10,9 @@ import com.abisupc.controller.RegistroController;
 import com.abisupc.controller.FotoController;
 import com.abisupc.controller.EleccionController;
 import com.abisupc.controller.CandidatoController;
+import com.abisupc.controller.VotanteController;
+import com.abisupc.controller.VotacionController;
+import com.abisupc.controller.BiometricProgressController;
 import com.abisupc.security.AuthMiddleware;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
@@ -23,10 +26,11 @@ public class AppServer {
             config.bundledPlugins.enableCors(cors ->
                 cors.addRule(it -> it.anyHost())
             );
-        }).start(7000);
+        });
 
         // Health check
         TestController.register(app);
+        BiometricProgressController.register(app);
 
         // Status
         app.get("/api/status", ctx ->
@@ -38,6 +42,8 @@ public class AppServer {
 
         // Biometrico
         app.post("/api/enroll", EnrollController::enroll);
+        app.get("/api/enroll/progress", EnrollController::progress);
+        app.post("/api/interno/reportar-progreso", BiometricProgressController::reportProgress);
         app.post("/api/verify", VerifyController::verify);
 
         // OCR
@@ -48,6 +54,10 @@ public class AppServer {
 
         // Foto del votante
         app.post("/api/votantes/foto", FotoController::subirFoto);
+        app.post("/api/votantes/segunda-llave", VotanteController::segundaLlave);
+        app.get("/api/votacion/activa", VotacionController::activa);
+        app.get("/api/votacion/votante", VotacionController::votante);
+        app.post("/api/votacion/registrar", VotacionController::registrar);
 
         // Auth (publica - login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
@@ -55,6 +65,8 @@ public class AppServer {
 
         // Elecciones y candidatos
         app.get("/api/elecciones", EleccionController::getAll);
+        app.get("/api/elecciones/stats", EleccionController::stats);
+        app.get("/api/elecciones/preparacion/{id}", EleccionController::preparacion);
         app.post("/api/elecciones", EleccionController::crear);
         app.put("/api/elecciones/{id}", EleccionController::editar);
         app.post("/api/elecciones/{id}/iniciar", EleccionController::iniciar);
@@ -70,6 +82,15 @@ public class AppServer {
         // Rutas de administracion protegidas por token de sesion
         AuthMiddleware auth = new AuthMiddleware();
         app.before("/api/admin/*", auth);
+        app.before("/api/auditoria/*", auth);
+        app.before("/api/votantes", auth);
+        app.before("/api/votantes/estadisticas", auth);
+        app.get("/api/admin/dashboard", AdminController::dashboard);
+        app.get("/api/auditoria/reciente", AdminController::auditoriaReciente);
+        app.get("/api/votantes", VotanteController::getAll);
+        app.get("/api/votantes/estadisticas", AdminController::estadisticasVotantes);
+
+        app.start(7000);
 
         System.out.println("ABIS Backend en http://localhost:7000");
         System.out.println("  GET  /api/health");

@@ -19,11 +19,23 @@ public class EnrollController {
             }
 
             var result = service.enroll(body.identificacion, body.re_enroll);
-            ctx.json(result.toString());
+            if (!result.path("success").asBoolean(false)) {
+                ctx.status(result.hasNonNull("detail") ? 503 : 502);
+            }
+            ctx.contentType("application/json").result(result.toString());
 
         } catch (Exception e) {
             System.err.println("[EnrollController] Error: " + e.getMessage());
             ctx.status(500).json("{\"error\":\"" + e.getMessage() + "\"}");
+        }
+    }
+
+    public static void progress(Context ctx) {
+        try {
+            ctx.contentType("application/json").result(service.enrollProgress().toString());
+        } catch (Exception e) {
+            System.err.println("[EnrollController] Progress error: " + e.getMessage());
+            ctx.status(503).json("{\"error\":\"No se pudo consultar el progreso biometrico\"}");
         }
     }
 }
