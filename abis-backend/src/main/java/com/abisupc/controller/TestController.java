@@ -1,7 +1,14 @@
 package com.abisupc.controller;
 
+import com.abisupc.config.AppConfig;
 import com.abisupc.integration.BiometricClient;
 import io.javalin.Javalin;
+
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.sql.Connection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * ABIS-UPC | Capa de Controladores
@@ -14,11 +21,38 @@ public class TestController {
         app.get("/api/health", ctx -> {
             boolean pythonAlive = BiometricClient.isAlive();
             boolean ocrAlive = BiometricClient.isOcrAlive();
-            String status = (pythonAlive && ocrAlive)
-                ? "{\"backend\":\"ok\",\"biometric\":\"ok\",\"ocr\":\"ok\",\"mensaje\":\"Todos los sistemas operativos\"}"
-                : "{\"backend\":\"ok\",\"biometric\":\"" + (pythonAlive ? "ok" : "offline") + "\",\"ocr\":\"" + (ocrAlive ? "ok" : "offline") + "\",\"mensaje\":\"Verificar puertos 8001 (biometrico) y 8002 (OCR)\"}";
+            boolean databaseAlive = isDatabaseAlive();
+            boolean nativeAlive = isPortOpen("localhost", 8765);
 
-            ctx.contentType("application/json").result(status);
+            Map<String, Object> status = new LinkedHashMap<>();
+            status.put("java", "ok");
+            status.put("backend", "ok");
+            status.put("biometric", pythonAlive ? "ok" : "offline");
+            status.put("ocr", ocrAlive ? "ok" : "offline");
+            status.put("native", nativeAlive ? "ok" : "offline");
+            status.put("database", databaseAlive ? "ok" : "offline");
+            status.put("mensaje", (pythonAlive && ocrAlive && nativeAlive && databaseAlive)
+                    ? "Todos los sistemas operativos"
+                    : "Verificar servicios externos y Oracle XE");
+
+            ctx.json(status);
         });
+    }
+
+    private static boolean isDatabaseAlive() {
+        try (Connection ignored = AppConfig.getConnection()) {
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
+
+    private static boolean isPortOpen(String host, int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), 800);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
