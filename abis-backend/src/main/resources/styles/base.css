@@ -85,6 +85,21 @@ body {
   line-height: 1.5;
 }
 
+button,
+input,
+select,
+textarea {
+  font-family: var(--font-dm);
+}
+
+.font-dm {
+  font-family: var(--font-dm) !important;
+}
+
+.font-mono {
+  font-family: var(--font-mono) !important;
+}
+
 /* --- Typography --- */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-dm);
