@@ -1,9 +1,24 @@
 package com.abisupc.controller;
 
+import com.abisupc.config.AppConfig;
+import com.abisupc.dto.ApiResponse;
+import com.abisupc.model.Administrador;
 import com.abisupc.service.AdminService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.javalin.http.Context;
+
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 public class AdminController {
 
@@ -73,6 +88,222 @@ public class AdminController {
             System.err.println("[AdminController] Error logout: " + e.getMessage());
             ctx.status(500).json(errorJson("Error interno del servidor"));
         }
+    }
+
+    public static void dashboard(Context ctx) {
+        try (Connection conn = AppConfig.getConnection()) {
+            Long idAdmin = ctx.attribute("idAdmin");
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("admin", getAdmin(ctx, idAdmin));
+            Map<String, Object> censo = getCenso(conn);
+            response.put("censo", censo);
+
+            Map<String, Object> eleccionActiva = getEleccionActiva(conn);
+            response.put("eleccionActiva", eleccionActiva);
+            response.put("proximaEleccion", getProximaEleccion(conn));
+            response.put("votosEmitidos", eleccionActiva != null
+                    ? countById(conn, "SELECT COUNT(*) FROM Registro_votos WHERE ID_ELECCION = ?",
+                    ((Number) eleccionActiva.get("id")).longValue())
+                    : 0L);
+
+            ctx.json(response);
+        } catch (Exception e) {
+            System.err.println("[AdminController] Error dashboard: " + e.getMessage());
+            ctx.status(500).json(ApiResponse.error("Error al cargar dashboard: " + e.getMessage()));
+        }
+    }
+
+    public static void auditoriaReciente(Context ctx) {
+        int limite = 10;
+        try {
+            String limiteParam = ctx.queryParam("limit");
+            if (limiteParam == null) {
+                limiteParam = ctx.queryParam("limite");
+            }
+            limite = Math.max(1, Math.min(50, Integer.parseInt(limiteParam != null ? limiteParam : "10")));
+        } catch (NumberFormatException ignored) {
+        }
+
+        String sql = "SELECT * FROM (" +
+                "SELECT av.ID_AUDITORIA, av.IDENTIFICACION, av.ID_ADMIN, av.CAMPO_MODIFICADO, " +
+                "av.VALOR_ANTERIOR, av.VALOR_NUEVO, av.MOTIVO, av.ACCION, av.FECHA_HORA, " +
+                "a.NOMBRE AS NOMBRE_ADMIN " +
+                "FROM Auditoria_votantes av " +
+                "JOIN Administradores a ON a.ID_ADMIN = av.ID_ADMIN " +
+                "WHERE TRUNC(av.FECHA_HORA) = TRUNC(SYSDATE) " +
+                "ORDER BY av.FECHA_HORA DESC) WHERE ROWNUM <= ?";
+        List<Map<String, Object>> data = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, limite);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    Map<String, Object> row = new LinkedHashMap<>();
+                    row.put("idAuditoria", rs.getLong("ID_AUDITORIA"));
+                    row.put("identificacion", rs.getString("IDENTIFICACION"));
+                    row.put("idAdmin", rs.getLong("ID_ADMIN"));
+                    row.put("campoModificado", rs.getString("CAMPO_MODIFICADO"));
+                    row.put("valorAnterior", rs.getString("VALOR_ANTERIOR"));
+                    row.put("valorNuevo", rs.getString("VALOR_NUEVO"));
+                    row.put("motivo", rs.getString("MOTIVO"));
+                    row.put("accion", rs.getString("ACCION"));
+                    row.put("fechaHora", toIso(rs.getTimestamp("FECHA_HORA")));
+                    row.put("nombreAdmin", rs.getString("NOMBRE_ADMIN"));
+                    data.add(row);
+                }
+            }
+            ctx.json(ApiResponse.success(data));
+        } catch (Exception e) {
+            System.err.println("[AdminController] Error auditoria reciente: " + e.getMessage());
+            ctx.status(500).json(ApiResponse.error("Error al cargar auditoria: " + e.getMessage()));
+        }
+    }
+
+    public static void estadisticasVotantes(Context ctx) {
+        String sql = "SELECT " +
+                "SUM(CASE WHEN UPPER(ESTADO_VOTO) IN ('PENDIENTE', 'EJERCIDO') THEN 1 ELSE 0 END) AS TOTAL, " +
+                "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'EJERCIDO' THEN 1 ELSE 0 END) AS VOTARON, " +
+                "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'PENDIENTE' THEN 1 ELSE 0 END) AS PENDIENTES, " +
+                "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'INHABILITADO' THEN 1 ELSE 0 END) AS INHABILITADOS " +
+                "FROM Votantes";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            Map<String, Object> data = new LinkedHashMap<>();
+            if (rs.next()) {
+                long total = rs.getLong("TOTAL");
+                long votaron = rs.getLong("VOTARON");
+                long pendientes = rs.getLong("PENDIENTES");
+                long inhabilitados = rs.getLong("INHABILITADOS");
+                data.put("total", total);
+                data.put("votaron", votaron);
+                data.put("ejercidos", votaron);
+                data.put("pendientes", pendientes);
+                data.put("inhabilitados", inhabilitados);
+                data.put("participacion", total > 0 ? Math.round((votaron * 100.0) / total) : 0);
+            } else {
+                data.put("total", 0);
+                data.put("votaron", 0);
+                data.put("ejercidos", 0);
+                data.put("pendientes", 0);
+                data.put("inhabilitados", 0);
+                data.put("participacion", 0);
+            }
+            ctx.json(data);
+        } catch (Exception e) {
+            System.err.println("[AdminController] Error estadisticas votantes: " + e.getMessage());
+            ctx.status(500).json(ApiResponse.error("Error al cargar estadisticas: " + e.getMessage()));
+        }
+    }
+
+    private static Map<String, Object> getAdmin(Context ctx, Long idAdmin) {
+        String token = ctx.attribute("token");
+        Optional<Administrador> optAdmin = idAdmin != null
+                ? service.getAdminByToken(token)
+                : Optional.empty();
+        Map<String, Object> admin = new LinkedHashMap<>();
+        admin.put("nombre", optAdmin.map(Administrador::getNombre).orElse("Administrador"));
+        admin.put("usuario", optAdmin.map(Administrador::getUsuario).orElse(""));
+        return admin;
+    }
+
+    private static Map<String, Object> getCenso(Connection conn) throws SQLException {
+        Map<String, Object> censo = new LinkedHashMap<>();
+        long total = count(conn, "SELECT COUNT(*) FROM Votantes");
+        long conBiometria = count(conn, "SELECT COUNT(*) FROM Biometria_votantes WHERE ACTIVO = 'S'");
+        censo.put("total", total);
+        censo.put("porRol", getCensoPorRol(conn));
+        censo.put("conBiometria", conBiometria);
+        censo.put("sinBiometria", Math.max(0, total - conBiometria));
+        censo.put("pendientes", count(conn, "SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'PENDIENTE'"));
+        censo.put("ejercidos", count(conn, "SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'EJERCIDO'"));
+        censo.put("inhabilitados", count(conn, "SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'INHABILITADO'"));
+        return censo;
+    }
+
+    private static List<Map<String, Object>> getCensoPorRol(Connection conn) throws SQLException {
+        String sql = "SELECT r.ID_ROL, r.NOMBRE, COUNT(v.IDENTIFICACION) AS TOTAL " +
+                "FROM Roles r LEFT JOIN Votantes v ON v.ID_ROL = r.ID_ROL " +
+                "GROUP BY r.ID_ROL, r.NOMBRE ORDER BY r.ID_ROL";
+        List<Map<String, Object>> roles = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                Map<String, Object> rol = new LinkedHashMap<>();
+                rol.put("idRol", rs.getLong("ID_ROL"));
+                rol.put("nombre", rs.getString("NOMBRE"));
+                rol.put("total", rs.getLong("TOTAL"));
+                roles.add(rol);
+            }
+        }
+        return roles;
+    }
+
+    private static Map<String, Object> getEleccionActiva(Connection conn) throws SQLException {
+        return getEleccionBySql(conn, "EN_CURSO", false);
+    }
+
+    private static Map<String, Object> getProximaEleccion(Connection conn) throws SQLException {
+        return getEleccionBySql(conn, "PROGRAMADA", true);
+    }
+
+    private static Map<String, Object> getEleccionBySql(Connection conn, String estado, boolean asc) throws SQLException {
+        String inicioCol = columnExists(conn, "ELECCIONES", "FECHAHORA_INICIO") ? "FECHAHORA_INICIO" : "FECHA_HORA_INICIO";
+        String finCol = columnExists(conn, "ELECCIONES", "FECHAHORA_FIN") ? "FECHAHORA_FIN" : "FECHA_HORA_FIN";
+        String sql = "SELECT * FROM (SELECT ID_ELECCION, NOMBRE, " + inicioCol + " AS FECHA_INICIO, " +
+                finCol + " AS FECHA_FIN, ESTADO FROM Elecciones WHERE ESTADO = ? ORDER BY " +
+                inicioCol + (asc ? " ASC" : " DESC") + ") WHERE ROWNUM <= 1";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, estado);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (!rs.next()) {
+                    return null;
+                }
+                Map<String, Object> eleccion = new LinkedHashMap<>();
+                eleccion.put("id", rs.getLong("ID_ELECCION"));
+                eleccion.put("idEleccion", rs.getLong("ID_ELECCION"));
+                eleccion.put("nombre", rs.getString("NOMBRE"));
+                eleccion.put("fechaHoraInicio", toIso(rs.getTimestamp("FECHA_INICIO")));
+                eleccion.put("fechaHoraFin", toIso(rs.getTimestamp("FECHA_FIN")));
+                eleccion.put("estado", rs.getString("ESTADO"));
+                return eleccion;
+            }
+        }
+    }
+
+    private static long count(Connection conn, String sql) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            return rs.next() ? rs.getLong(1) : 0L;
+        }
+    }
+
+    private static long countById(Connection conn, String sql, long id) throws SQLException {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? rs.getLong(1) : 0L;
+            }
+        }
+    }
+
+    private static boolean columnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
+    }
+
+    private static String toIso(Timestamp timestamp) {
+        if (timestamp == null) {
+            return null;
+        }
+        LocalDateTime dateTime = timestamp.toLocalDateTime();
+        return dateTime.toString();
     }
 
     private static String errorJson(String message) {
