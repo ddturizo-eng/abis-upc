@@ -3,6 +3,8 @@ package com.abisupc.controller;
 import com.abisupc.service.OcrPythonService;
 import io.javalin.http.Context;
 
+import java.io.InputStream;
+
 public class OcrController {
 
     private static final OcrPythonService ocrService = new OcrPythonService();
@@ -14,12 +16,17 @@ public class OcrController {
                 ctx.status(400).json("{\"error\":\"Archivo front requerido\"}");
                 return;
             }
-            byte[] frontBytes = frontFile.content().readAllBytes();
+            byte[] frontBytes;
+            try (InputStream input = frontFile.content()) {
+                frontBytes = input.readAllBytes();
+            }
 
             byte[] backBytes = null;
             var backFile = ctx.uploadedFile("back");
             if (backFile != null) {
-                backBytes = backFile.content().readAllBytes();
+                try (InputStream input = backFile.content()) {
+                    backBytes = input.readAllBytes();
+                }
             }
 
             String docType = ctx.formParam("doc_type");

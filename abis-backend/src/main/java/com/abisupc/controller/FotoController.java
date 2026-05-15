@@ -5,6 +5,7 @@ import io.javalin.http.Context;
 import io.javalin.http.UploadedFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,7 +35,9 @@ public class FotoController {
 
             String nombreArchivo = identificacion + "_" + UUID.randomUUID().toString().substring(0, 8) + ".jpg";
             Path destino = dir.resolve(nombreArchivo);
-            Files.copy(archivo.content(), destino, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            try (InputStream input = archivo.content()) {
+                Files.copy(input, destino, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            }
 
             String fotoUrl = "/assets/fotos/" + nombreArchivo;
 
