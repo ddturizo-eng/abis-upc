@@ -26,10 +26,16 @@ const API = {
 
         try {
             const response = await fetch(url, config);
-            const data = await response.json();
+            const text = await response.text();
+            let data = {};
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch (parseError) {
+                data = { error: text || `HTTP ${response.status}` };
+            }
             
             if (!response.ok) {
-                throw new Error(data.error || data.message || `HTTP ${response.status}`);
+                throw new Error(data.error || data.detail || data.message || `HTTP ${response.status}`);
             }
             
             return data;
@@ -112,12 +118,23 @@ const ApiEnrollment = {
             identificacion,
             re_enroll: reEnroll
         });
+    },
+
+    async progress() {
+        return await API.get('/api/enroll/progress');
     }
 };
 
 const ApiVerification = {
     async verify(identificacion) {
         return await API.post('/api/verify', {
+            identificacion
+        });
+    },
+
+    async segundaLlave(qrCedula, identificacion) {
+        return await API.post('/api/votantes/segunda-llave', {
+            qr_cedula: ScannerHandler.normalize(qrCedula),
             identificacion
         });
     }
@@ -148,6 +165,9 @@ const ApiPreRegistro = {
             id_rol: parseInt(data.idRol),
             id_puesto: parseInt(data.idPuesto)
         };
+        if (data.qrCedula) {
+            payload.qr_cedula = data.qrCedula;
+        }
         return await API.post('/api/registro/preregistro', payload);
     }
 };
