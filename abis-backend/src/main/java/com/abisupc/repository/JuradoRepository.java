@@ -11,8 +11,8 @@ public class JuradoRepository {
 
     private Jurado mapRow(ResultSet rs) throws SQLException {
         Jurado j = new Jurado();
-        j.setIdMesa(rs.getLong("MESA_JURADOS_IDMESA"));
-        j.setIdentificacion(rs.getString("VOTANTES_IDENTIFICACION"));
+        j.setIdMesa(rs.getLong("ID_MESA"));
+        j.setIdentificacion(rs.getString("IDENTIFICACION"));
         java.sql.Date fechaAsignacion = rs.getDate("FECHA_ASIGNACION");
         j.setFechaAsignacion(fechaAsignacion != null ? fechaAsignacion.toLocalDate() : null);
         j.setCargo(rs.getString("CARGO"));
@@ -20,7 +20,7 @@ public class JuradoRepository {
     }
 
     public void save(Jurado jurado) {
-        String sql = "INSERT INTO JURADOS (MESA_JURADOS_IDMESA, VOTANTES_IDENTIFICACION, FECHA_ASIGNACION, CARGO) " +
+        String sql = "INSERT INTO JURADOS (ID_MESA, IDENTIFICACION, FECHA_ASIGNACION, CARGO) " +
                 "VALUES (?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -41,8 +41,8 @@ public class JuradoRepository {
     }
 
     public List<Jurado> findByMesa(Long idMesa) {
-        String sql = "SELECT MESA_JURADOS_IDMESA, VOTANTES_IDENTIFICACION, FECHA_ASIGNACION, CARGO " +
-                "FROM JURADOS WHERE MESA_JURADOS_IDMESA = ?";
+        String sql = "SELECT ID_MESA, IDENTIFICACION, FECHA_ASIGNACION, CARGO " +
+                "FROM JURADOS WHERE ID_MESA = ?";
         List<Jurado> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -57,8 +57,8 @@ public class JuradoRepository {
     }
 
     public List<Jurado> findByIdentificacion(String identificacion) {
-        String sql = "SELECT MESA_JURADOS_IDMESA, VOTANTES_IDENTIFICACION, FECHA_ASIGNACION, CARGO " +
-                "FROM JURADOS WHERE VOTANTES_IDENTIFICACION = ?";
+        String sql = "SELECT ID_MESA, IDENTIFICACION, FECHA_ASIGNACION, CARGO " +
+                "FROM JURADOS WHERE IDENTIFICACION = ?";
         List<Jurado> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -73,7 +73,7 @@ public class JuradoRepository {
     }
 
     public boolean esJurado(String identificacion) {
-        String sql = "SELECT COUNT(*) FROM JURADOS WHERE VOTANTES_IDENTIFICACION = ?";
+        String sql = "SELECT COUNT(*) FROM JURADOS WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
@@ -87,7 +87,7 @@ public class JuradoRepository {
     }
 
     public void asignarAMesa(String identificacion, Long idMesa, String cargo) {
-        String sql = "UPDATE JURADOS SET MESA_JURADOS_IDMESA = ?, CARGO = ? WHERE VOTANTES_IDENTIFICACION = ?";
+        String sql = "UPDATE JURADOS SET ID_MESA = ?, CARGO = ? WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idMesa);
