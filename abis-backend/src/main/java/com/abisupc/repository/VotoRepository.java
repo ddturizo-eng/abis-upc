@@ -3,13 +3,10 @@ package com.abisupc.repository;
 import com.abisupc.config.AppConfig;
 import com.abisupc.model.Voto;
 
-import java.sql.CallableStatement;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -65,56 +62,17 @@ public class VotoRepository implements Repository<Voto> {
 
     @Override
     public void save(Voto entity) {
-        String sql = "INSERT INTO Votos (ID_VOTO, FECHA_HORA, PESO_VOTO_APLICADO, ID_ELECCION, ID_CANDIDATO) " +
-                "VALUES (seq_votos.NEXTVAL, ?, ?, ?, ?) RETURNING ID_VOTO INTO ?";
-        try (Connection conn = AppConfig.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setTimestamp(1, entity.getFechaHora() != null ? entity.getFechaHora() : new Timestamp(System.currentTimeMillis()));
-            cs.setDouble(2, entity.getPesoVotoAplicado());
-            cs.setLong(3, entity.getIdEleccion());
-            setNullableLong(cs, 4, entity.getIdCandidato());
-            cs.registerOutParameter(5, Types.NUMERIC);
-            cs.execute();
-            entity.setId(cs.getLong(5));
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en VotoRepository.save", e);
-        }
+        throw new UnsupportedOperationException("Los votos solo se registran mediante prc_registrar_voto");
     }
 
     @Override
     public void update(Voto entity) {
-        String sql = "UPDATE Votos SET FECHA_HORA = ?, PESO_VOTO_APLICADO = ?, ID_ELECCION = ?, ID_CANDIDATO = ? " +
-                "WHERE ID_VOTO = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setTimestamp(1, entity.getFechaHora());
-            ps.setDouble(2, entity.getPesoVotoAplicado());
-            ps.setLong(3, entity.getIdEleccion());
-            setNullableLong(ps, 4, entity.getIdCandidato());
-            ps.setLong(5, entity.getId());
-
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontro el voto con ID: " + entity.getId());
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en VotoRepository.update - id: " + entity.getId(), e);
-        }
+        throw new UnsupportedOperationException("Los votos son inmutables y no se actualizan desde Java");
     }
 
     @Override
     public void delete(Long id) {
-        String sql = "DELETE FROM Votos WHERE ID_VOTO = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, id);
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontro el voto con ID: " + id);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en VotoRepository.delete - id: " + id, e);
-        }
+        throw new UnsupportedOperationException("Los votos son inmutables y no se eliminan desde Java");
     }
 
     public List<Voto> findByEleccion(Long idEleccion) {
@@ -195,11 +153,4 @@ public class VotoRepository implements Repository<Voto> {
         return new HashMap<>();
     }
 
-    private void setNullableLong(PreparedStatement ps, int index, Long value) throws SQLException {
-        if (value == null) {
-            ps.setNull(index, Types.NUMERIC);
-        } else {
-            ps.setLong(index, value);
-        }
-    }
 }
