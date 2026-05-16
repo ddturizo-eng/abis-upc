@@ -5,20 +5,47 @@ import com.abisupc.model.Votante;
 import com.abisupc.repository.EleccionRepository;
 import com.abisupc.repository.RegistroVotoRepository;
 import com.abisupc.repository.VotanteRepository;
+import com.abisupc.service.AdminService;
+import com.abisupc.service.VotacionService;
+import com.abisupc.util.OracleErrorHandler;
 import io.javalin.http.Context;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class VotanteController {
 
     private static final VotanteRepository repository = new VotanteRepository();
     private static final RegistroVotoRepository registroVotoRepository = new RegistroVotoRepository();
     private static final EleccionRepository eleccionRepository = new EleccionRepository();
+    private static final AdminService adminService = new AdminService();
+    private static final VotacionService votacionService = new VotacionService();
 
     public static void getAll(Context ctx) {
-        ctx.json(repository.findAll());
+        List<Votante> votantes = repository.findAll();
+        String rol = ctx.queryParam("rol");
+        String estado = ctx.queryParam("estado");
+        String biometrico = ctx.queryParam("biometrico");
+        if (rol != null && !rol.isBlank()) {
+            votantes = votantes.stream()
+                    .filter(v -> rol.equalsIgnoreCase(rolNombre(v.getIdRol())))
+                    .collect(Collectors.toList());
+        }
+        if (estado != null && !estado.isBlank()) {
+            votantes = votantes.stream()
+                    .filter(v -> estado.equalsIgnoreCase(v.getEstadoVoto()))
+                    .collect(Collectors.toList());
+        }
+        if (biometrico != null && !biometrico.isBlank()) {
+            boolean requerido = Boolean.parseBoolean(biometrico) || "S".equalsIgnoreCase(biometrico) || "true".equalsIgnoreCase(biometrico);
+            votantes = votantes.stream()
+                    .filter(v -> (v.getFechaConsentimiento() != null) == requerido)
+                    .collect(Collectors.toList());
+        }
+        ctx.json(votantes);
     }
 
     public static void segundaLlave(Context ctx) {
@@ -69,6 +96,29 @@ public class VotanteController {
         }
     }
 
+    public static void puedeVotar(Context ctx) {
+        try {
+            String identificacion = ctx.pathParam("id");
+            Long idEleccion = longValue(ctx.queryParam("idEleccion"));
+            ctx.json(votacionService.votantePuedeVotar(identificacion, idEleccion));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            if (handleOracle(ctx, e)) {
+                return;
+            }
+            ctx.status(500).json(Map.of("error", "No fue posible validar el votante"));
+        }
+    }
+
+    public static void inhabilitar(Context ctx) {
+        cambiarEstadoAdministrativo(ctx, true);
+    }
+
+    public static void habilitar(Context ctx) {
+        cambiarEstadoAdministrativo(ctx, false);
+    }
+
     private static String normalizarQrCedula(String value) {
         if (value == null) {
             return null;
@@ -98,5 +148,51 @@ public class VotanteController {
         data.put("rol_id", votante.getIdRol());
         data.put("puesto_id", votante.getIdPuesto());
         return data;
+    }
+
+    private static String rolNombre(Long idRol) {
+        if (idRol == null) return "";
+        if (idRol == 1L) return "ESTUDIANTE";
+        if (idRol == 2L) return "DOCENTE";
+        if (idRol == 3L) return "EGRESADO";
+        if (idRol == 4L) return "ADMINISTRATIVO";
+        return String.valueOf(idRol);
+    }
+
+    private static void cambiarEstadoAdministrativo(Context ctx, boolean inhabilitar) {
+        try {
+            String identificacion = ctx.pathParam("id");
+            Long idAdmin = ctx.attribute("idAdmin");
+            Map<?, ?> body = ctx.bodyAsClass(Map.class);
+            String motivo = body.get("motivo") != null ? String.valueOf(body.get("motivo")).trim() : null;
+            if (inhabilitar) {
+                adminService.inhabilitarVotante(identificacion, idAdmin, motivo);
+                ctx.json(Map.of("success", true, "message", "Votante inhabilitado"));
+            } else {
+                adminService.habilitarVotante(identificacion, idAdmin, motivo);
+                ctx.json(Map.of("success", true, "message", "Votante habilitado"));
+            }
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            if (handleOracle(ctx, e)) {
+                return;
+            }
+            ctx.status(500).json(Map.of("error", "No fue posible actualizar el votante"));
+        }
+    }
+
+    private static Long longValue(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return Long.parseLong(value);
+    }
+
+    private static boolean handleOracle(Context ctx, Throwable e) {
+        return OracleErrorHandler.from(e).map(error -> {
+            ctx.status(error.statusCode()).json(Map.of("error", error.message(), "oraCode", error.oraCode()));
+            return true;
+        }).orElse(false);
     }
 }
