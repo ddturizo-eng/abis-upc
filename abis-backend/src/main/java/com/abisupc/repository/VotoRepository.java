@@ -23,7 +23,8 @@ public class VotoRepository implements Repository<Voto> {
 
         voto.setId(rs.getLong("ID_VOTO"));
         voto.setIdEleccion(rs.getLong("ID_ELECCION"));
-        voto.setIdCandidato(rs.getLong("ID_CANDIDATO"));
+        Long idCandidato = rs.getLong("ID_CANDIDATO");
+        voto.setIdCandidato(rs.wasNull() ? null : idCandidato);
         voto.setFechaHora(rs.getTimestamp("FECHA_HORA"));
         voto.setPesoVotoAplicado(rs.getDouble("PESO_VOTO_APLICADO"));
 
@@ -71,7 +72,7 @@ public class VotoRepository implements Repository<Voto> {
             cs.setTimestamp(1, entity.getFechaHora() != null ? entity.getFechaHora() : new Timestamp(System.currentTimeMillis()));
             cs.setDouble(2, entity.getPesoVotoAplicado());
             cs.setLong(3, entity.getIdEleccion());
-            cs.setLong(4, entity.getIdCandidato());
+            setNullableLong(cs, 4, entity.getIdCandidato());
             cs.registerOutParameter(5, Types.NUMERIC);
             cs.execute();
             entity.setId(cs.getLong(5));
@@ -89,7 +90,7 @@ public class VotoRepository implements Repository<Voto> {
             ps.setTimestamp(1, entity.getFechaHora());
             ps.setDouble(2, entity.getPesoVotoAplicado());
             ps.setLong(3, entity.getIdEleccion());
-            ps.setLong(4, entity.getIdCandidato());
+            setNullableLong(ps, 4, entity.getIdCandidato());
             ps.setLong(5, entity.getId());
 
             int filas = ps.executeUpdate();
@@ -135,10 +136,14 @@ public class VotoRepository implements Repository<Voto> {
     }
 
     public int countByCandidato(Long idCandidato) {
-        String sql = "SELECT COUNT(*) FROM Votos WHERE ID_CANDIDATO = ?";
+        String sql = idCandidato == null
+                ? "SELECT COUNT(*) FROM Votos WHERE ID_CANDIDATO IS NULL"
+                : "SELECT COUNT(*) FROM Votos WHERE ID_CANDIDATO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, idCandidato);
+            if (idCandidato != null) {
+                ps.setLong(1, idCandidato);
+            }
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
                 return rs.getInt(1);
@@ -157,7 +162,8 @@ public class VotoRepository implements Repository<Voto> {
             ps.setLong(1, idEleccion);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    resultados.put(rs.getLong("ID_CANDIDATO"), rs.getInt("TOTAL_VOTOS"));
+                    Long idCandidato = rs.getLong("ID_CANDIDATO");
+                    resultados.put(rs.wasNull() ? null : idCandidato, rs.getInt("TOTAL_VOTOS"));
                 }
                 return resultados;
             }
@@ -175,7 +181,8 @@ public class VotoRepository implements Repository<Voto> {
             ps.setLong(1, idEleccion);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
-                    resultados.put(rs.getLong("ID_CANDIDATO"), rs.getDouble("TOTAL_PONDERADO"));
+                    Long idCandidato = rs.getLong("ID_CANDIDATO");
+                    resultados.put(rs.wasNull() ? null : idCandidato, rs.getDouble("TOTAL_PONDERADO"));
                 }
                 return resultados;
             }
@@ -186,5 +193,13 @@ public class VotoRepository implements Repository<Voto> {
 
     public Map<String, Integer> obtenerResultadosPorRol(Long idEleccion) {
         return new HashMap<>();
+    }
+
+    private void setNullableLong(PreparedStatement ps, int index, Long value) throws SQLException {
+        if (value == null) {
+            ps.setNull(index, Types.NUMERIC);
+        } else {
+            ps.setLong(index, value);
+        }
     }
 }
