@@ -6,6 +6,9 @@ import com.abisupc.model.Eleccion;
 import com.abisupc.model.EstadoEleccion;
 import com.abisupc.repository.EleccionRepository;
 import com.abisupc.repository.EleccionRolRepository;
+import com.abisupc.service.AdminService;
+import com.abisupc.service.ResultadosService;
+import com.abisupc.util.OracleErrorHandler;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.Context;
@@ -24,6 +27,8 @@ public class EleccionController {
 
     private static final EleccionRepository eleccionRepo = new EleccionRepository();
     private static final EleccionRolRepository eleccionRolRepo = new EleccionRolRepository();
+    private static final AdminService adminService = new AdminService();
+    private static final ResultadosService resultadosService = new ResultadosService();
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static void getAll(Context ctx) {
@@ -143,6 +148,36 @@ public class EleccionController {
             eleccionRepo.cambiarEstado(id, "CERRADA");
             ctx.json(ApiResponse.success("Elección cerrada"));
         } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    public static void cerrarAdmin(Context ctx) {
+        try {
+            Long id = Long.parseLong(ctx.pathParam("id"));
+            Long idAdmin = ctx.attribute("idAdmin");
+            adminService.cerrarEleccion(id, idAdmin);
+            ctx.json(ApiResponse.success("Eleccion cerrada"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            if (handleOracle(ctx, e)) {
+                return;
+            }
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    public static void resultados(Context ctx) {
+        try {
+            Long id = Long.parseLong(ctx.pathParam("id"));
+            ctx.json(ApiResponse.success(resultadosService.resultadosEleccion(id)));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            if (handleOracle(ctx, e)) {
+                return;
+            }
             ctx.status(500).json(ApiResponse.error(e.getMessage()));
         }
     }
@@ -279,5 +314,12 @@ public class EleccionController {
                 return rs.next() ? rs.getLong(1) : 0L;
             }
         }
+    }
+
+    private static boolean handleOracle(Context ctx, Throwable e) {
+        return OracleErrorHandler.from(e).map(error -> {
+            ctx.status(error.statusCode()).json(ApiResponse.error(error.message()));
+            return true;
+        }).orElse(false);
     }
 }
