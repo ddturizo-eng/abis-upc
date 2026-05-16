@@ -12,7 +12,9 @@ import java.util.Optional;
 public class BiometriaVotanteRepository {
 
     public Optional<BiometriaVotante> findByIdentificacion(String identificacion) {
-        String sql = "SELECT * FROM Biometria_votantes WHERE IDENTIFICACION = ? AND ACTIVO = 'S'";
+        String sql = "SELECT * FROM (" +
+                "SELECT * FROM Biometria_votantes WHERE IDENTIFICACION = ? AND ACTIVO = 'S' " +
+                "ORDER BY ID_BIOMETRIA DESC) WHERE ROWNUM = 1";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
@@ -43,7 +45,7 @@ public class BiometriaVotanteRepository {
     }
 
     public void desactivar(String identificacion) {
-        String sql = "UPDATE Biometria_votantes SET ACTIVO = 'N' WHERE IDENTIFICACION = ?";
+        String sql = "UPDATE Biometria_votantes SET ACTIVO = 'N' WHERE IDENTIFICACION = ? AND ACTIVO = 'S'";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
