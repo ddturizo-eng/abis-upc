@@ -13,9 +13,12 @@ import com.abisupc.controller.CandidatoController;
 import com.abisupc.controller.VotanteController;
 import com.abisupc.controller.VotacionController;
 import com.abisupc.controller.BiometricProgressController;
+import com.abisupc.controller.JuradoController;
+import com.abisupc.controller.BiometriaController;
 import com.abisupc.security.AuthMiddleware;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
+import java.nio.charset.StandardCharsets;
 
 public class AppServer {
 
@@ -26,6 +29,14 @@ public class AppServer {
             config.bundledPlugins.enableCors(cors ->
                 cors.addRule(it -> it.anyHost())
             );
+        });
+
+        app.before(ctx -> ctx.res().setCharacterEncoding(StandardCharsets.UTF_8.name()));
+        app.after(ctx -> {
+            String contentType = ctx.res().getContentType();
+            if (ctx.path().endsWith(".html") || (contentType != null && contentType.startsWith("text/html"))) {
+                ctx.res().setContentType("text/html; charset=UTF-8");
+            }
         });
 
         // Health check
@@ -55,9 +66,11 @@ public class AppServer {
         // Foto del votante
         app.post("/api/votantes/foto", FotoController::subirFoto);
         app.post("/api/votantes/segunda-llave", VotanteController::segundaLlave);
+        app.get("/api/votantes/{id}/puede-votar", VotanteController::puedeVotar);
         app.get("/api/votacion/activa", VotacionController::activa);
         app.get("/api/votacion/votante", VotacionController::votante);
         app.post("/api/votacion/registrar", VotacionController::registrar);
+        app.post("/api/votos/registrar", VotacionController::registrar);
 
         // Auth (publica - login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
@@ -67,10 +80,12 @@ public class AppServer {
         app.get("/api/elecciones", EleccionController::getAll);
         app.get("/api/elecciones/stats", EleccionController::stats);
         app.get("/api/elecciones/preparacion/{id}", EleccionController::preparacion);
+        app.get("/api/elecciones/{id}/resultados", EleccionController::resultados);
         app.post("/api/elecciones", EleccionController::crear);
         app.put("/api/elecciones/{id}", EleccionController::editar);
         app.post("/api/elecciones/{id}/iniciar", EleccionController::iniciar);
         app.post("/api/elecciones/{id}/cerrar", EleccionController::cerrar);
+        app.put("/api/elecciones/{id}/cerrar", EleccionController::cerrarAdmin);
         app.delete("/api/elecciones/{id}", EleccionController::eliminar);
         app.get("/api/elecciones/{id}/roles", EleccionController::getRoles);
         app.post("/api/elecciones/{id}/roles", EleccionController::configurarRol);
@@ -79,16 +94,37 @@ public class AppServer {
         app.put("/api/elecciones/{idEleccion}/candidatos/{idCandidato}", CandidatoController::editar);
         app.delete("/api/elecciones/{idEleccion}/candidatos/{idCandidato}", CandidatoController::eliminar);
 
+        // Mesas y jurados
+        app.get("/api/jurados", JuradoController::getAll);
+        app.get("/api/jurados/mesas", JuradoController::mesas);
+        app.get("/api/jurados/mesas/{id}", JuradoController::mesaDetalle);
+        app.post("/api/jurados/mesas", JuradoController::crearMesa);
+        app.put("/api/jurados/mesas/{id}", JuradoController::editarMesa);
+        app.delete("/api/jurados/mesas/{id}", JuradoController::eliminarMesa);
+        app.post("/api/jurados/asignar", JuradoController::asignar);
+        app.post("/api/jurados/asignar-aleatorio", JuradoController::asignarAleatorio);
+        app.delete("/api/jurados/{identificacion}/{idMesa}", JuradoController::remover);
+        app.get("/api/jurados/exportar/pdf", JuradoController::exportarPdf);
+        app.post("/api/biometria/enrolar", BiometriaController::enrolar);
+
         // Rutas de administracion protegidas por token de sesion
         AuthMiddleware auth = new AuthMiddleware();
         app.before("/api/admin/*", auth);
         app.before("/api/auditoria/*", auth);
+        app.before("/api/jurados", auth);
+        app.before("/api/jurados/*", auth);
+        app.before("/api/biometria/enrolar", auth);
         app.before("/api/votantes", auth);
         app.before("/api/votantes/estadisticas", auth);
+        app.before("/api/votantes/{id}/inhabilitar", auth);
+        app.before("/api/votantes/{id}/habilitar", auth);
+        app.before("/api/elecciones/{id}/cerrar", auth);
         app.get("/api/admin/dashboard", AdminController::dashboard);
         app.get("/api/auditoria/reciente", AdminController::auditoriaReciente);
         app.get("/api/votantes", VotanteController::getAll);
         app.get("/api/votantes/estadisticas", AdminController::estadisticasVotantes);
+        app.put("/api/votantes/{id}/inhabilitar", VotanteController::inhabilitar);
+        app.put("/api/votantes/{id}/habilitar", VotanteController::habilitar);
 
         app.start(7000);
 
