@@ -18,13 +18,13 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
         Timestamp horaSalida = rs.getTimestamp("HORA_SALIDA");
         if (horaSalida != null) m.setHoraSalida(horaSalida.toLocalDateTime());
         m.setCargo(rs.getString("CARGO"));
-        m.setIdPuesto(rs.getLong("PUESTOS_VOTACION_IDPUESTOS"));
+        m.setIdPuesto(rs.getLong("ID_PUESTO"));
         return m;
     }
 
     @Override
     public Optional<MesaJurado> findById(Long id) {
-        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, PUESTOS_VOTACION_IDPUESTOS " +
+        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, ID_PUESTO " +
                 "FROM MESA_JURADOS WHERE ID_MESA = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -40,7 +40,7 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
 
     @Override
     public List<MesaJurado> findAll() {
-        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, PUESTOS_VOTACION_IDPUESTOS " +
+        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, ID_PUESTO " +
                 "FROM MESA_JURADOS ORDER BY ID_MESA";
         List<MesaJurado> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
@@ -55,16 +55,25 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
 
     @Override
     public void save(MesaJurado entity) {
-        String sql = "INSERT INTO MESA_JURADOS (ID_MESA, HORA_INGRESO, CARGO, PUESTOS_VOTACION_IDPUESTOS) " +
-                "VALUES (SEQ_MESA_JURADOS.NEXTVAL, ?, ?, ?) RETURNING ID_MESA INTO ?";
+        String seqSql = "SELECT seq_mesa_jurados.NEXTVAL FROM dual";
+        String sql = "INSERT INTO MESA_JURADOS (ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, ID_PUESTO) " +
+                "VALUES (?, ?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection();
-             CallableStatement cs = conn.prepareCall(sql)) {
-            cs.setTimestamp(1, Timestamp.valueOf(entity.getHoraIngreso()));
-            cs.setString(2, entity.getCargo());
-            cs.setLong(3, entity.getIdPuesto());
-            cs.registerOutParameter(4, Types.NUMERIC);
-            cs.execute();
-            entity.setId(cs.getLong(4));
+             PreparedStatement seq = conn.prepareStatement(seqSql);
+             ResultSet rs = seq.executeQuery()) {
+            if (!rs.next()) {
+                throw new SQLException("No se pudo leer seq_mesa_jurados.NEXTVAL");
+            }
+            long id = rs.getLong(1);
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, id);
+                ps.setTimestamp(2, Timestamp.valueOf(entity.getHoraIngreso()));
+                ps.setTimestamp(3, entity.getHoraSalida() != null ? Timestamp.valueOf(entity.getHoraSalida()) : null);
+                ps.setString(4, entity.getCargo());
+                ps.setLong(5, entity.getIdPuesto());
+                ps.executeUpdate();
+                entity.setId(id);
+            }
         } catch (SQLException e) {
             if (e.getErrorCode() == 2291)
                 throw new RuntimeException("No existe el puesto con ID: " + entity.getIdPuesto(), e);
@@ -75,7 +84,7 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
     @Override
     public void update(MesaJurado entity) {
         String sql = "UPDATE MESA_JURADOS SET HORA_INGRESO = ?, HORA_SALIDA = ?, CARGO = ?, " +
-                "PUESTOS_VOTACION_IDPUESTOS = ? WHERE ID_MESA = ?";
+                "ID_PUESTO = ? WHERE ID_MESA = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setTimestamp(1, Timestamp.valueOf(entity.getHoraIngreso()));
@@ -108,8 +117,8 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
     }
 
     public List<MesaJurado> findByPuesto(Long idPuesto) {
-        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, PUESTOS_VOTACION_IDPUESTOS " +
-                "FROM MESA_JURADOS WHERE PUESTOS_VOTACION_IDPUESTOS = ?";
+        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, ID_PUESTO " +
+                "FROM MESA_JURADOS WHERE ID_PUESTO = ?";
         List<MesaJurado> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -124,7 +133,7 @@ public class MesaJuradoRepository implements Repository<MesaJurado> {
     }
 
     public List<MesaJurado> findActivas() {
-        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, PUESTOS_VOTACION_IDPUESTOS " +
+        String sql = "SELECT ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, ID_PUESTO " +
                 "FROM MESA_JURADOS WHERE HORA_SALIDA IS NULL";
         List<MesaJurado> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
