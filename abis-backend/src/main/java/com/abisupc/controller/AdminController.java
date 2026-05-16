@@ -3,6 +3,8 @@ package com.abisupc.controller;
 import com.abisupc.config.AppConfig;
 import com.abisupc.dto.ApiResponse;
 import com.abisupc.model.Administrador;
+import com.abisupc.model.AuditoriaVotante;
+import com.abisupc.repository.AuditoriaVotanteRepository;
 import com.abisupc.service.AdminService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -23,6 +25,7 @@ import java.util.Optional;
 public class AdminController {
 
     private static final AdminService service = new AdminService();
+    private static final AuditoriaVotanteRepository auditoriaRepo = new AuditoriaVotanteRepository();
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static void login(Context ctx) {
@@ -124,34 +127,10 @@ public class AdminController {
         } catch (NumberFormatException ignored) {
         }
 
-        String sql = "SELECT * FROM (" +
-                "SELECT av.ID_AUDITORIA, av.IDENTIFICACION, av.ID_ADMIN, av.CAMPO_MODIFICADO, " +
-                "av.VALOR_ANTERIOR, av.VALOR_NUEVO, av.MOTIVO, av.ACCION, av.FECHA_HORA, " +
-                "a.NOMBRE AS NOMBRE_ADMIN " +
-                "FROM Auditoria_votantes av " +
-                "JOIN Administradores a ON a.ID_ADMIN = av.ID_ADMIN " +
-                "WHERE TRUNC(av.FECHA_HORA) = TRUNC(SYSDATE) " +
-                "ORDER BY av.FECHA_HORA DESC) WHERE ROWNUM <= ?";
-        List<Map<String, Object>> data = new ArrayList<>();
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setInt(1, limite);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Map<String, Object> row = new LinkedHashMap<>();
-                    row.put("idAuditoria", rs.getLong("ID_AUDITORIA"));
-                    row.put("identificacion", rs.getString("IDENTIFICACION"));
-                    row.put("idAdmin", rs.getLong("ID_ADMIN"));
-                    row.put("campoModificado", rs.getString("CAMPO_MODIFICADO"));
-                    row.put("valorAnterior", rs.getString("VALOR_ANTERIOR"));
-                    row.put("valorNuevo", rs.getString("VALOR_NUEVO"));
-                    row.put("motivo", rs.getString("MOTIVO"));
-                    row.put("accion", rs.getString("ACCION"));
-                    row.put("fechaHora", toIso(rs.getTimestamp("FECHA_HORA")));
-                    row.put("nombreAdmin", rs.getString("NOMBRE_ADMIN"));
-                    data.add(row);
-                }
-            }
+        try {
+            List<Map<String, Object>> data = auditoriaRepo.findRecientesDelDia(limite).stream()
+                    .map(AdminController::auditoriaToResponse)
+                    .toList();
             ctx.json(ApiResponse.success(data));
         } catch (Exception e) {
             System.err.println("[AdminController] Error auditoria reciente: " + e.getMessage());
@@ -205,6 +184,21 @@ public class AdminController {
         admin.put("nombre", optAdmin.map(Administrador::getNombre).orElse("Administrador"));
         admin.put("usuario", optAdmin.map(Administrador::getUsuario).orElse(""));
         return admin;
+    }
+
+    private static Map<String, Object> auditoriaToResponse(AuditoriaVotante auditoria) {
+        Map<String, Object> row = new LinkedHashMap<>();
+        row.put("idAuditoria", auditoria.getId());
+        row.put("identificacion", auditoria.getIdentificacion());
+        row.put("idAdmin", auditoria.getIdAdmin());
+        row.put("campoModificado", auditoria.getCampoModificado());
+        row.put("valorAnterior", auditoria.getValorAnterior());
+        row.put("valorNuevo", auditoria.getValorNuevo());
+        row.put("motivo", auditoria.getMotivo());
+        row.put("accion", auditoria.getAccion());
+        row.put("fechaHora", toIso(auditoria.getFechaHora()));
+        row.put("nombreAdmin", auditoria.getNombreAdmin());
+        return row;
     }
 
     private static Map<String, Object> getCenso(Connection conn) throws SQLException {
