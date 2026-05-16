@@ -3,11 +3,14 @@ package com.abisupc.service;
 import com.abisupc.model.Administrador;
 import com.abisupc.model.Sesion;
 import com.abisupc.repository.AdministradorRepository;
+import com.abisupc.repository.EleccionAdminRepository;
 import com.abisupc.repository.SesionRepository;
+import com.abisupc.repository.VotanteAdminRepository;
 
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.sql.SQLException;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
@@ -16,15 +19,18 @@ public class AdminService {
 
     private final AdministradorRepository adminRepo;
     private final SesionRepository sesionRepo;
+    private final VotanteAdminRepository votanteAdminRepo;
+    private final EleccionAdminRepository eleccionAdminRepo;
 
     public AdminService() {
-        this.adminRepo = new AdministradorRepository();
-        this.sesionRepo = new SesionRepository();
+        this(new AdministradorRepository(), new SesionRepository());
     }
 
     public AdminService(AdministradorRepository adminRepo, SesionRepository sesionRepo) {
         this.adminRepo = adminRepo;
         this.sesionRepo = sesionRepo;
+        this.votanteAdminRepo = new VotanteAdminRepository();
+        this.eleccionAdminRepo = new EleccionAdminRepository();
     }
 
     public LoginResult login(String usuario, String password) {
@@ -82,6 +88,26 @@ public class AdminService {
         return adminRepo.findById(optSesion.get().getIdAdministrador());
     }
 
+    public void inhabilitarVotante(String identificacion, Long idAdmin, String motivo) throws SQLException {
+        validarOperacionAdmin(identificacion, idAdmin, motivo);
+        votanteAdminRepo.inhabilitarVotante(identificacion, idAdmin, motivo);
+    }
+
+    public void habilitarVotante(String identificacion, Long idAdmin, String motivo) throws SQLException {
+        validarOperacionAdmin(identificacion, idAdmin, motivo);
+        votanteAdminRepo.habilitarVotante(identificacion, idAdmin, motivo);
+    }
+
+    public void cerrarEleccion(Long idEleccion, Long idAdmin) throws SQLException {
+        if (idEleccion == null || idEleccion <= 0) {
+            throw new IllegalArgumentException("idEleccion requerido");
+        }
+        if (idAdmin == null || idAdmin <= 0) {
+            throw new IllegalArgumentException("Administrador autenticado requerido");
+        }
+        eleccionAdminRepo.cerrarEleccion(idEleccion, idAdmin);
+    }
+
     public static String sha256(String input) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -89,6 +115,18 @@ public class AdminService {
             return HexFormat.of().formatHex(hash);
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 no disponible", e);
+        }
+    }
+
+    private void validarOperacionAdmin(String identificacion, Long idAdmin, String motivo) {
+        if (identificacion == null || identificacion.isBlank()) {
+            throw new IllegalArgumentException("identificacion requerida");
+        }
+        if (idAdmin == null || idAdmin <= 0) {
+            throw new IllegalArgumentException("Administrador autenticado requerido");
+        }
+        if (motivo == null || motivo.isBlank()) {
+            throw new IllegalArgumentException("motivo requerido");
         }
     }
 
