@@ -100,4 +100,15 @@ public class JuradoRepository {
             throw new RuntimeException("Error en JuradoRepository.asignarAMesa — id: " + identificacion, e);
         }
     }
+
+    public void asignarJurado(Long idMesa, String identificacion, String cargo) throws SQLException {
+        String sql = "{ call prc_asignar_jurado(?, ?, ?) }";
+        try (Connection conn = AppConfig.getConnection();
+             CallableStatement cs = conn.prepareCall(sql)) {
+            cs.setLong(1, idMesa);
+            cs.setString(2, identificacion);
+            cs.setString(3, cargo);
+            cs.execute();
+        }
+    }
 }
