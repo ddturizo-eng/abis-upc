@@ -12,6 +12,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.sql.DatabaseMetaData;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -57,6 +58,71 @@ public class JuradoController {
         }
     }
 
+    public static void resumenAsignacion(Context ctx) {
+        try (Connection conn = AppConfig.getConnection()) {
+            Map<?, ?> body = ctx.bodyAsClass(Map.class);
+            Map<?, ?> configuracion = map(body.get("configuracion"));
+            Map<?, ?> poolConfig = map(configuracion.get("poolConfig"));
+            Map<?, ?> distribucionConfig = map(configuracion.get("distribucionConfig"));
+            Long idEleccion = optionalLong(body.get("idEleccion"));
+
+            List<Map<String, Object>> pool = poolElegibles(conn, poolConfig, idEleccion);
+            List<Map<String, Object>> mesas = mesasCompletas(conn, null);
+            int mesasConfiguradas = mesas.size();
+            int puestosConfigurados = puestos(conn).size();
+            int baseMesas = mesasConfiguradas > 0 ? mesasConfiguradas : puestosConfigurados;
+            int juradosPorMesa = intValue(distribucionConfig.get("valorFijo"), 3);
+            int juradosRequeridos = calcularTotalRequerido(distribucionConfig, pool.size(), baseMesas);
+            int asignables = Math.min(pool.size(), juradosRequeridos);
+            int cobertura = juradosRequeridos > 0 ? Math.round((asignables * 100f) / juradosRequeridos) : 0;
+            int completas = juradosPorMesa > 0 ? Math.min(baseMesas, asignables / juradosPorMesa) : 0;
+            int restantes = Math.max(0, asignables - (completas * Math.max(juradosPorMesa, 1)));
+            int incompletas = restantes > 0 ? 1 : 0;
+            int criticas = Math.max(0, baseMesas - completas - incompletas);
+
+            Map<String, Integer> roles = new LinkedHashMap<>();
+            roles.put("ESTUDIANTE", 0);
+            roles.put("DOCENTE", 0);
+            roles.put("ADMINISTRATIVO", 0);
+            roles.put("EGRESADO", 0);
+            for (Map<String, Object> votante : pool) {
+                String rol = String.valueOf(votante.getOrDefault("rol", ""));
+                roles.put(rol, roles.getOrDefault(rol, 0) + 1);
+            }
+
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("pool", pool.size());
+            response.put("mesas", baseMesas);
+            response.put("mesasRegistradas", mesasConfiguradas);
+            response.put("puestos", puestosConfigurados);
+            response.put("juradosPorMesa", juradosPorMesa);
+            response.put("juradosRequeridos", juradosRequeridos);
+            response.put("asignables", asignables);
+            response.put("cobertura", cobertura);
+            response.put("completas", completas);
+            response.put("incompletas", incompletas);
+            response.put("criticas", criticas);
+            response.put("conflictos", Math.max(0, juradosRequeridos - pool.size()));
+            response.put("roles", roles);
+            ctx.json(ApiResponse.success(response));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    public static void poolElegible(Context ctx) {
+        try (Connection conn = AppConfig.getConnection()) {
+            Map<?, ?> body = ctx.bodyAsClass(Map.class);
+            Map<?, ?> configuracion = map(body.get("configuracion"));
+            Long idEleccion = optionalLong(body.get("idEleccion"));
+            ctx.json(ApiResponse.success(poolElegibles(conn, map(configuracion.get("poolConfig")), idEleccion)));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     public static void mesaDetalle(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -87,7 +153,8 @@ public class JuradoController {
         try (Connection conn = AppConfig.getConnection()) {
             Long id = Long.parseLong(ctx.pathParam("id"));
             Map<String, Object> mesa = parseMesa(ctx.bodyAsClass(Map.class));
-            String sql = "UPDATE Mesa_jurados SET HORA_INGRESO = ?, HORA_SALIDA = ?, CARGO = ?, ID_PUESTO = ? WHERE ID_MESA = ?";
+            String sql = "UPDATE Mesa_jurados SET HORA_INGRESO = ?, HORA_SALIDA = ?, CARGO = ?, " +
+                    mesaPuestoColumn(conn) + " = ? WHERE ID_MESA = ?";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setTimestamp(1, (Timestamp) mesa.get("horaIngreso"));
                 ps.setTimestamp(2, (Timestamp) mesa.get("horaSalida"));
@@ -118,7 +185,7 @@ public class JuradoController {
             }
             conn.setAutoCommit(false);
             try {
-                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Jurados WHERE ID_MESA = ?")) {
+                try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Jurados WHERE " + juradoMesaColumn(conn) + " = ?")) {
                     ps.setLong(1, id);
                     ps.executeUpdate();
                 }
@@ -144,12 +211,16 @@ public class JuradoController {
     }
 
     public static void asignar(Context ctx) {
-        try {
+        try (Connection conn = AppConfig.getConnection()) {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
             String identificacion = requiredText(body, "identificacion");
             Long idMesa = requiredLong(body, "idMesa");
             String cargo = requiredText(body, "cargo").toUpperCase();
-            juradoRepo.asignarJurado(idMesa, identificacion, cargo);
+            if (juradoExistente(conn, identificacion)) {
+                ctx.status(409).json(ApiResponse.error("El votante ya está asignado como jurado"));
+                return;
+            }
+            insertarJurado(conn, idMesa, identificacion, cargo, LocalDate.now());
             ctx.status(201).json(ApiResponse.success("Jurado asignado"));
         } catch (IllegalArgumentException e) {
             ctx.status(400).json(ApiResponse.error(e.getMessage()));
@@ -187,7 +258,7 @@ public class JuradoController {
         try (Connection conn = AppConfig.getConnection()) {
             String identificacion = ctx.pathParam("identificacion");
             Long idMesa = Long.parseLong(ctx.pathParam("idMesa"));
-            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Jurados WHERE IDENTIFICACION = ? AND ID_MESA = ?")) {
+            try (PreparedStatement ps = conn.prepareStatement("DELETE FROM Jurados WHERE " + juradoIdentificacionColumn(conn) + " = ? AND " + juradoMesaColumn(conn) + " = ?")) {
                 ps.setString(1, identificacion);
                 ps.setLong(2, idMesa);
                 if (ps.executeUpdate() == 0) {
@@ -215,11 +286,13 @@ public class JuradoController {
     }
 
     private static List<Map<String, Object>> mesasCompletas(Connection conn, Long idMesa) throws SQLException {
-        String sql = "SELECT m.ID_MESA, m.HORA_INGRESO, m.HORA_SALIDA, m.CARGO, m.ID_PUESTO, " +
+        String puestoId = puestoIdColumn(conn);
+        String mesaPuesto = mesaPuestoColumn(conn);
+        String sql = "SELECT m.ID_MESA, m.HORA_INGRESO, m.HORA_SALIDA, m.CARGO, m." + mesaPuesto + " AS ID_PUESTO, " +
                 "p.NOMBRE_PUESTO, p.CIUDAD, p.SEDE FROM Mesa_jurados m " +
-                "JOIN Puestos_votacion p ON p.ID_PUESTO = m.ID_PUESTO " +
+                "JOIN Puestos_votacion p ON p." + puestoId + " = m." + mesaPuesto + " " +
                 (idMesa != null ? "WHERE m.ID_MESA = ? " : "") +
-                "ORDER BY p.ID_PUESTO, m.ID_MESA";
+                "ORDER BY p." + puestoId + ", m.ID_MESA";
         List<Map<String, Object>> mesas = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             if (idMesa != null) ps.setLong(1, idMesa);
@@ -244,18 +317,22 @@ public class JuradoController {
     }
 
     private static List<Map<String, Object>> juradosCompletos(Connection conn, Long idMesa) throws SQLException {
-        String sql = "SELECT j.ID_MESA, j.IDENTIFICACION, j.FECHA_ASIGNACION, j.CARGO, " +
+        String puestoId = puestoIdColumn(conn);
+        String mesaPuesto = mesaPuestoColumn(conn);
+        String juradoMesa = juradoMesaColumn(conn);
+        String juradoIdent = juradoIdentificacionColumn(conn);
+        String sql = "SELECT j." + juradoMesa + " AS ID_MESA, j." + juradoIdent + " AS IDENTIFICACION, j.FECHA_ASIGNACION, j.CARGO, " +
                 "v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE, v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, " +
                 "v.ESTADO_VOTO, v.ID_ROL, v.ID_PUESTO AS PUESTO_HABITUAL_ID, " +
                 "ph.NOMBRE_PUESTO AS PUESTO_HABITUAL, ph.CIUDAD AS CIUDAD_HABITUAL, ph.SEDE AS SEDE_HABITUAL, " +
-                "m.ID_PUESTO AS PUESTO_ASIGNADO_ID, pa.NOMBRE_PUESTO AS PUESTO_ASIGNADO, pa.CIUDAD AS CIUDAD_ASIGNADA, pa.SEDE AS SEDE_ASIGNADA " +
+                "m." + mesaPuesto + " AS PUESTO_ASIGNADO_ID, pa.NOMBRE_PUESTO AS PUESTO_ASIGNADO, pa.CIUDAD AS CIUDAD_ASIGNADA, pa.SEDE AS SEDE_ASIGNADA " +
                 "FROM Jurados j " +
-                "JOIN Votantes v ON v.IDENTIFICACION = j.IDENTIFICACION " +
-                "JOIN Mesa_jurados m ON m.ID_MESA = j.ID_MESA " +
-                "LEFT JOIN Puestos_votacion ph ON ph.ID_PUESTO = v.ID_PUESTO " +
-                "LEFT JOIN Puestos_votacion pa ON pa.ID_PUESTO = m.ID_PUESTO " +
-                (idMesa != null ? "WHERE j.ID_MESA = ? " : "") +
-                "ORDER BY j.ID_MESA, j.CARGO, v.PRIMER_APELLIDO";
+                "JOIN Votantes v ON v.IDENTIFICACION = j." + juradoIdent + " " +
+                "JOIN Mesa_jurados m ON m.ID_MESA = j." + juradoMesa + " " +
+                "LEFT JOIN Puestos_votacion ph ON ph." + puestoId + " = v.ID_PUESTO " +
+                "LEFT JOIN Puestos_votacion pa ON pa." + puestoId + " = m." + mesaPuesto + " " +
+                (idMesa != null ? "WHERE j." + juradoMesa + " = ? " : "") +
+                "ORDER BY j." + juradoMesa + ", j.CARGO, v.PRIMER_APELLIDO";
         List<Map<String, Object>> jurados = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             if (idMesa != null) ps.setLong(1, idMesa);
@@ -377,6 +454,27 @@ public class JuradoController {
         return slots;
     }
 
+    private static int calcularTotalRequerido(Map<?, ?> dist, int poolSize, int mesas) {
+        String modo = text(dist, "modo");
+        if (modo == null || modo.isBlank()) modo = "fijo_por_puesto";
+        if ("porcentaje".equals(modo)) {
+            int porcentaje = intValue(dist.get("porcentaje"), 5);
+            return poolSize > 0 ? Math.max(1, (int) Math.ceil(poolSize * (porcentaje / 100.0))) : 0;
+        }
+        if ("total_manual".equals(modo)) {
+            return Math.max(0, intValue(dist.get("totalManual"), 0));
+        }
+        if ("por_cargo".equals(modo)) {
+            Map<?, ?> cargos = map(dist.get("cargos"));
+            int porMesa = 0;
+            for (Object value : cargos.values()) {
+                porMesa += intValue(value, 0);
+            }
+            return Math.max(0, porMesa * mesas);
+        }
+        return Math.max(0, intValue(dist.get("valorFijo"), 3) * mesas);
+    }
+
     private static Map<String, Object> slot(Map<String, Object> puesto, String cargo, Map<String, Object> turno) {
         Map<String, Object> slot = new LinkedHashMap<>();
         slot.put("idMesa", null);
@@ -416,6 +514,8 @@ public class JuradoController {
     }
 
     private static List<Map<String, Object>> poolElegibles(Connection conn, Map<?, ?> poolConfig, Long idEleccion) throws SQLException {
+        String puestoId = puestoIdColumn(conn);
+        String juradoIdent = juradoIdentificacionColumn(conn);
         List<String> roles = listOfStrings(poolConfig.get("roles"));
         List<String> estados = listOfStrings(poolConfig.get("estados"));
         boolean biometrico = Boolean.TRUE.equals(poolConfig.get("requerirBiometrico"));
@@ -423,7 +523,7 @@ public class JuradoController {
         StringBuilder sql = new StringBuilder("SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE, v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, " +
                 "v.ESTADO_VOTO, v.ID_ROL, v.ID_PUESTO, p.NOMBRE_PUESTO, p.CIUDAD, p.SEDE, " +
                 "CASE WHEN bv.ID_BIOMETRIA IS NULL THEN 0 ELSE 1 END AS TIENE_BIOMETRICO " +
-                "FROM Votantes v JOIN Puestos_votacion p ON p.ID_PUESTO = v.ID_PUESTO " +
+                "FROM Votantes v JOIN Puestos_votacion p ON p." + puestoId + " = v.ID_PUESTO " +
                 "LEFT JOIN Biometria_votantes bv ON bv.IDENTIFICACION = v.IDENTIFICACION AND bv.ACTIVO = 'S' " +
                 "WHERE 1=1 ");
         List<Object> params = new ArrayList<>();
@@ -438,7 +538,7 @@ public class JuradoController {
         if (biometrico) {
             sql.append("AND bv.ID_BIOMETRIA IS NOT NULL ");
         }
-        sql.append("AND NOT EXISTS (SELECT 1 FROM Jurados j WHERE j.IDENTIFICACION = v.IDENTIFICACION) ");
+        sql.append("AND NOT EXISTS (SELECT 1 FROM Jurados j WHERE j.").append(juradoIdent).append(" = v.IDENTIFICACION) ");
         // El esquema actual no relaciona Candidatos con Votantes. La bandera se conserva
         // en la API para conectar esa exclusión cuando exista esa relación de datos.
         List<Map<String, Object>> pool = new ArrayList<>();
@@ -465,8 +565,9 @@ public class JuradoController {
     }
 
     private static List<Map<String, Object>> puestos(Connection conn) throws SQLException {
+        String puestoId = puestoIdColumn(conn);
         List<Map<String, Object>> puestos = new ArrayList<>();
-        try (PreparedStatement ps = conn.prepareStatement("SELECT ID_PUESTO, NOMBRE_PUESTO, CIUDAD, SEDE FROM Puestos_votacion ORDER BY ID_PUESTO");
+        try (PreparedStatement ps = conn.prepareStatement("SELECT " + puestoId + " AS ID_PUESTO, NOMBRE_PUESTO, CIUDAD, SEDE FROM Puestos_votacion ORDER BY " + puestoId);
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 Map<String, Object> puesto = new LinkedHashMap<>();
@@ -541,7 +642,7 @@ public class JuradoController {
             rs.next();
             id = rs.getLong(1);
         }
-        String sql = "INSERT INTO Mesa_jurados (ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, ID_PUESTO) VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Mesa_jurados (ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, " + mesaPuestoColumn(conn) + ") VALUES (?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.setTimestamp(2, (Timestamp) mesa.get("horaIngreso"));
@@ -554,7 +655,7 @@ public class JuradoController {
     }
 
     private static void insertarJurado(Connection conn, Long idMesa, String identificacion, String cargo, LocalDate fecha) throws SQLException {
-        String sql = "INSERT INTO Jurados (ID_MESA, IDENTIFICACION, FECHA_ASIGNACION, CARGO) VALUES (?, ?, ?, ?)";
+        String sql = "INSERT INTO Jurados (" + juradoMesaColumn(conn) + ", " + juradoIdentificacionColumn(conn) + ", FECHA_ASIGNACION, CARGO) VALUES (?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idMesa);
             ps.setString(2, identificacion);
@@ -565,7 +666,7 @@ public class JuradoController {
     }
 
     private static boolean juradoExistente(Connection conn, String identificacion) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Jurados WHERE IDENTIFICACION = ?")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Jurados WHERE " + juradoIdentificacionColumn(conn) + " = ?")) {
             ps.setString(1, identificacion);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
@@ -575,7 +676,7 @@ public class JuradoController {
     }
 
     private static int countJuradosMesa(Connection conn, Long idMesa) throws SQLException {
-        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Jurados WHERE ID_MESA = ?")) {
+        try (PreparedStatement ps = conn.prepareStatement("SELECT COUNT(*) FROM Jurados WHERE " + juradoMesaColumn(conn) + " = ?")) {
             ps.setLong(1, idMesa);
             try (ResultSet rs = ps.executeQuery()) {
                 rs.next();
@@ -613,6 +714,43 @@ public class JuradoController {
     private static String ts(ResultSet rs, String field) throws SQLException {
         Timestamp ts = rs.getTimestamp(field);
         return ts != null ? ts.toLocalDateTime().toString() : null;
+    }
+
+    private static String puestoIdColumn(Connection conn) throws SQLException {
+        return firstColumn(conn, "PUESTOS_VOTACION", "ID_PUESTO", "ID_PUESTOS", "IDPUESTOS");
+    }
+
+    private static String mesaPuestoColumn(Connection conn) throws SQLException {
+        return firstColumn(conn, "MESA_JURADOS", "ID_PUESTO", "ID_PUESTOS", "PUESTOS_VOTACION_IDPUESTOS");
+    }
+
+    private static String juradoMesaColumn(Connection conn) throws SQLException {
+        return firstColumn(conn, "JURADOS", "ID_MESA", "MESA_JURADOS_IDMESA");
+    }
+
+    private static String juradoIdentificacionColumn(Connection conn) throws SQLException {
+        return firstColumn(conn, "JURADOS", "IDENTIFICACION", "VOTANTES_IDENTIFICACION");
+    }
+
+    private static String firstColumn(Connection conn, String table, String... candidates) throws SQLException {
+        for (String candidate : candidates) {
+            if (columnExists(conn, table, candidate)) {
+                return candidate;
+            }
+        }
+        throw new SQLException("No se encontró columna compatible en " + table);
+    }
+
+    private static boolean columnExists(Connection conn, String table, String column) throws SQLException {
+        DatabaseMetaData meta = conn.getMetaData();
+        try (ResultSet rs = meta.getColumns(null, conn.getSchema(), table.toUpperCase(), column.toUpperCase())) {
+            if (rs.next()) {
+                return true;
+            }
+        }
+        try (ResultSet rs = meta.getColumns(null, null, table.toUpperCase(), column.toUpperCase())) {
+            return rs.next();
+        }
     }
 
     private static Map<?, ?> map(Object value) {
