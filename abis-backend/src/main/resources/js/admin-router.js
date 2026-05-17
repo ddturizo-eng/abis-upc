@@ -1,5 +1,5 @@
 const AdminRouter = {
-  secciones: ['dashboard', 'votacion', 'votantes', 'elecciones', 'candidatos', 'jurados', 'certificados'],
+  secciones: ['dashboard', 'votantes', 'elecciones', 'candidatos', 'jurados', 'certificados'],
 
   init() {
     const hash = window.location.hash.replace('#', '');
@@ -44,7 +44,7 @@ const AdminRouter = {
   },
 
   actualizarNavbar(seccion) {
-    const activeClass = "flex flex-col items-center text-[#93F7BF] scale-110 after:content-['•'] after:text-[#93F7BF] after:text-[14px] after:-mt-1 font-dm nav-item active";
+    const activeClass = "flex flex-col items-center text-[#edfaf3] scale-110 after:content-['•'] after:text-[#edfaf3] after:text-[14px] after:-mt-1 font-dm nav-item active";
     const inactiveClass = "flex flex-col items-center text-white/60 hover:text-white transition-all font-dm nav-item";
 
     document.querySelectorAll('.admin-navbar .nav-item').forEach((item) => {
@@ -55,7 +55,6 @@ const AdminRouter = {
   actualizarTitulo(seccion) {
     const titulos = {
       dashboard: 'Dashboard',
-      votacion: 'Puesto de Votacion',
       votantes: 'Censo Electoral',
       elecciones: 'Gestión de Elecciones',
       candidatos: 'Candidatos',

@@ -26,12 +26,14 @@
         const ok = data.database === 'ok';
         const badge = document.getElementById('admin-oracle-status');
         if (badge) {
-          badge.innerHTML = `Oracle XE <span class="${ok ? 'admin-status-dot' : 'text-red-500'}">â—</span>`;
+          badge.innerHTML = ok
+            ? 'Oracle XE <span class="admin-status-dot">●</span>'
+            : 'Oracle XE <span style="color:#0a4a31">●</span>';
         }
       } catch (error) {
         const badge = document.getElementById('admin-oracle-status');
         if (badge) {
-          badge.innerHTML = 'Oracle XE <span class="text-red-500">â—</span>';
+          badge.innerHTML = 'Oracle XE <span style="color:#0a4a31">●</span>';
         }
       }
     }
@@ -95,7 +97,7 @@
 
     function verPerfilAdministrador() {
       cerrarMenuAdministrador();
-      alert('Perfil del administrador prÃ³ximamente.');
+      alert('Perfil del administrador próximamente.');
     }
 
     async function cerrarSesion() {
@@ -112,7 +114,7 @@
             body: JSON.stringify({ token })
           });
         } catch (error) {
-          console.warn('No fue posible cerrar la sesiÃ³n en el servidor:', error);
+          console.warn('No fue posible cerrar la sesión en el servidor:', error);
         }
       }
       localStorage.removeItem('abis_token');

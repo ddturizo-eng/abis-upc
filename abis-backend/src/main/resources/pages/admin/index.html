@@ -3,25 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ABIS-UPC | Panel de AdministraciÃ³n</title>
+  <title>ABIS-UPC | Panel de Administración</title>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
   <script>
     window.tailwind = window.tailwind || {};
     tailwind.config = {
       theme: {
         extend: {
           colors: {
-            primary: '#004D33',
-            'primary-dark': '#003421',
-            secondary: '#4CAF7D',
-            background: '#F2F3F5',
+            primary: '#158759',
+            'primary-dark': '#0f6644',
+            secondary: '#a5e9c9',
+            background: '#f0f4f2',
             surface: '#FFFFFF',
-            'surface-container': '#EBEEF5',
-            'surface-container-high': '#E5E8EF',
-            'on-surface': '#111827',
-            'on-surface-variant': '#404943',
-            outline: '#C8CBD2'
+            'surface-container': '#edfaf3',
+            'surface-container-high': '#d0f4e2',
+            'on-surface': '#0a2e1f',
+            'on-surface-variant': '#4a6b5a',
+            outline: '#e3ebe6'
           },
           fontFamily: {
             dm: ['DM Sans', 'sans-serif'],
@@ -34,7 +35,9 @@
       }
     };
   </script>
+  <!-- TODO Tailwind CLI: reemplazar este CDN por el CSS compilado local. -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link rel="stylesheet" href="../../styles/base.css">
   <link rel="stylesheet" href="../../styles/navbar.css">
   <link rel="stylesheet" href="../../styles/admin-dashboard.css">
   <link rel="stylesheet" href="../../styles/admin-shell.css">
