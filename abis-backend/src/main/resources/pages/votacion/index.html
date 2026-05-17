@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABIS-UPC | Modo Votación</title>
+  <script>
+    window.tailwind = window.tailwind || {};
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: { sans: ['DM Sans', 'sans-serif'] },
+          colors: {
+            brand: {
+              50: '#edfaf3', 100: '#d0f4e2', 200: '#a5e9c9', 300: '#6dd8aa',
+              400: '#3cbf88', 500: '#1fa86e', 600: '#158759', 700: '#0f6644',
+              800: '#0a4a31', 900: '#0a2e1f'
+            },
+            surface: {
+              50: '#f4f7f5', 100: '#f0f9f5', 200: '#e3ebe6',
+              300: '#c9d8ce', 400: '#8aab99', 500: '#4a6b5a'
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="../../styles/base.css">
+  <link rel="stylesheet" href="../../styles/votacion-kiosk.css">
+</head>
+<body class="votacion-kiosk-body">
+  <header class="kiosk-topbar">
+    <div class="kiosk-brand">
+      <img src="../../images/logo-shield.png" alt="Escudo ABIS UPC">
+      <span class="kiosk-brand-separator"></span>
+      <span>Sistema de Gestión Electoral</span>
+    </div>
+    <div class="kiosk-system-badge"><span></span>Sistema activo</div>
+  </header>
+
+  <svg class="kiosk-shape kiosk-shape-left" viewBox="0 0 300 800" aria-hidden="true">
+    <path d="M0,0 Q150,200 0,400 Q150,600 0,800 L0,0Z" fill="#158759" opacity="0.06"/>
+  </svg>
+  <svg class="kiosk-shape kiosk-shape-right" viewBox="0 0 300 800" aria-hidden="true">
+    <path d="M300,0 Q130,210 300,410 Q140,610 300,800 L300,0Z" fill="#158759" opacity="0.06"/>
+  </svg>
+
+  <main class="kiosk-shell" aria-label="Modo kiosko de votación">
+    <section id="screen-welcome" class="kiosk-screen kiosk-welcome-screen">
+      <div class="welcome-backdrop" aria-hidden="true"></div>
+      <div class="welcome-panel">
+        <div class="welcome-illustration" aria-hidden="true">
+          <img src="../../images/logo-shield.png" alt="">
+          <span></span><span></span><span></span><span></span>
+        </div>
+        <p class="kiosk-eyebrow">ABIS-UPC</p>
+        <h1>Bienvenido a la <span id="welcome-election-name">jornada electoral</span></h1>
+        <div class="kiosk-title-rule"></div>
+        <p class="welcome-copy">Para continuar, confirma tu identidad mediante verificación dactilar.</p>
+        <button id="btn-go-verify" type="button" class="kiosk-primary-action">
+          <i class="ti ti-fingerprint" aria-hidden="true"></i>
+          Ir a confirmar mi identidad
+          <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
+        <div class="welcome-features" aria-label="Características del sistema">
+          <article><i class="ti ti-shield-check"></i><strong>Seguro</strong><span>Tus datos están protegidos</span></article>
+          <article><i class="ti ti-circle-check"></i><strong>Confiable</strong><span>Sistema transparente y auditado</span></article>
+          <article><i class="ti ti-users-group"></i><strong>Participativo</strong><span>Tu voto construye el futuro</span></article>
+        </div>
+        <div id="welcome-error" class="kiosk-message kiosk-message-error hidden"></div>
+      </div>
+    </section>
+
+    <section id="screen-verify" class="kiosk-screen hidden">
+      <div class="verify-panel">
+        <aside class="verify-steps" aria-label="Pasos de verificación">
+          <div class="verify-step active"><span><i class="ti ti-fingerprint"></i></span><div><strong>Colocar dedo</strong><small>Pon tu dedo en el lector</small></div></div>
+          <div class="verify-step"><span><i class="ti ti-search"></i></span><div><strong>Verificando</strong><small>Buscando coincidencia</small></div></div>
+          <div class="verify-step"><span><i class="ti ti-circle-check"></i></span><div><strong>Confirmando</strong><small>Validando identidad</small></div></div>
+          <div class="verify-step"><span><i class="ti ti-lock"></i></span><div><strong>Completado</strong><small>Acceso al tarjetón</small></div></div>
+        </aside>
+        <section class="verify-scan">
+          <p class="kiosk-eyebrow">Verificación dactilar</p>
+          <h2>Por favor, coloca tu dedo en el lector</h2>
+          <p class="verify-copy">Asegúrate de colocar el dedo plano y mantenerlo quieto durante la lectura.</p>
+          <div class="fingerprint-stage" aria-hidden="true">
+            <span class="sonar-ring"></span>
+            <span class="sonar-ring sonar-ring-delay"></span>
+            <svg class="fingerprint-progress" viewBox="0 0 240 240">
+              <circle cx="120" cy="120" r="106"></circle>
+              <circle cx="120" cy="120" r="106"></circle>
+            </svg>
+            <div class="fingerprint-core"><i class="ti ti-fingerprint"></i></div>
+          </div>
+          <p id="verify-status">Cuando estés listo, inicia la verificación.</p>
+          <span class="verify-substatus">No muevas tu dedo durante la lectura</span>
+          <div class="verify-tips">
+            <article><i class="ti ti-fingerprint"></i><span>Coloca plano</span></article>
+            <article><i class="ti ti-clock"></i><span>No lo muevas</span></article>
+            <article><i class="ti ti-shield-check"></i><span>Mantén limpio</span></article>
+          </div>
+          <div class="verify-actions">
+            <button id="btn-start-verify" type="button" class="kiosk-primary-action">
+              <i class="ti ti-fingerprint" aria-hidden="true"></i>
+              Iniciar verificación
+              <i class="ti ti-arrow-right" aria-hidden="true"></i>
+            </button>
+            <button id="btn-cancel-verify" type="button" class="kiosk-secondary-action"><i class="ti ti-arrow-left"></i> Volver</button>
+          </div>
+          <div id="verify-error" class="kiosk-message kiosk-message-error hidden"></div>
+        </section>
+        <footer class="verify-foot"><span><i class="ti ti-shield-check"></i> Tu información está protegida con encriptación de nivel electoral</span><span>Tiempo estimado: 5-10s</span></footer>
+      </div>
+    </section>
+
+    <section id="screen-identity" class="kiosk-screen hidden">
+      <div class="identity-layout">
+        <article class="identity-card">
+          <div class="identity-photo">
+            <img id="identity-photo" class="hidden" alt="Foto del votante">
+            <i id="identity-photo-empty" class="ti ti-user"></i>
+          </div>
+          <div class="identity-copy">
+            <p class="kiosk-eyebrow">Datos personales</p>
+            <h2 id="identity-name">--</h2>
+            <dl>
+              <div><dt>Identificación</dt><dd id="identity-id">--</dd></div>
+              <div><dt>Estado del voto</dt><dd id="identity-status">--</dd></div>
+              <div><dt>Puesto asignado</dt><dd id="identity-place">--</dd></div>
+            </dl>
+          </div>
+        </article>
+        <article class="jury-confirm-card">
+          <p class="kiosk-eyebrow">Confirmación del jurado</p>
+          <h2>¿La persona coincide con los datos mostrados?</h2>
+          <label class="kiosk-confirm">
+            <input id="jury-confirm-identity" type="checkbox">
+            <span>Confirmo que la identidad visual corresponde al votante.</span>
+          </label>
+          <button id="btn-go-ballot" type="button" class="kiosk-primary-action" disabled>
+            <i class="ti ti-ballot"></i>
+            Ir a tarjetón
+            <i class="ti ti-arrow-right"></i>
+          </button>
+          <button id="btn-retry-identity" type="button" class="kiosk-secondary-action">Verificar otra huella</button>
+          <div id="identity-error" class="kiosk-message kiosk-message-error hidden"></div>
+        </article>
+      </div>
+    </section>
+
+    <section id="screen-ballot" class="kiosk-screen hidden">
+      <section class="kiosk-ballot-panel" aria-label="Tarjetón electoral">
+        <div class="ballot-header">
+          <img src="../../images/logo-shield.png" alt="" aria-hidden="true">
+          <h2 id="ballot-election-name">Seleccione su candidato</h2>
+          <p>Tarjetón Electrónico</p>
+          <div class="kiosk-title-rule"></div>
+        </div>
+        <div class="ballot-instruction"><i class="ti ti-info-circle"></i><span id="vote-selection-status">Seleccione una opción de voto</span></div>
+        <div id="vote-ballot" class="kiosk-ballot"></div>
+        <div class="ballot-security"><i class="ti ti-shield-check"></i> Tu voto es secreto y está protegido por encriptación de nivel electoral.</div>
+        <div class="ballot-footer">
+          <button id="btn-ballot-back" type="button" class="kiosk-secondary-action"><i class="ti ti-arrow-left"></i> Volver</button>
+          <button id="btn-vote-submit" type="button" disabled>
+            <i class="ti ti-circle-check"></i>
+            Confirmar voto
+          </button>
+        </div>
+      </section>
+    </section>
+
+    <section id="screen-success" class="kiosk-screen kiosk-success-screen hidden">
+      <div class="success-panel">
+        <span class="success-icon" aria-hidden="true"><i class="ti ti-circle-check"></i></span>
+        <h2>Su voto se ha ejercido correctamente</h2>
+        <p>El sistema volverá a la pantalla de bienvenida para el siguiente votante.</p>
+        <button id="btn-return-welcome" type="button" class="kiosk-primary-action">
+          Volver al inicio
+          <i class="ti ti-arrow-right"></i>
+        </button>
+      </div>
+    </section>
+  </main>
+
+  <footer class="kiosk-global-footer">
+    <img src="../../images/logo-shield.png" alt="">
+    <span>ABIS-UPC — Transparencia, Seguridad y Confianza</span>
+    <span>Elecciones Universitarias 2027</span>
+  </footer>
+
+  <script src="../../js/api.js"></script>
+  <script src="../../js/votacion.js"></script>
+  <script src="../../js/votacion-visual.js"></script>
+</body>
+</html>
