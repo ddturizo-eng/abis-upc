@@ -1,78 +1,87 @@
 /* =========================================
    ABIS-UPC | Base Styles
-   Design System: "The Digital Registrar"
+   Design tokens institucionales
    ========================================= */
 
-/* --- Variables CSS (Design Tokens) --- */
+/* Centraliza la paleta permitida y evita colores fuera de marca. */
 :root {
-  /* Core Palette */
-  --primary: #004D33;
-  --primary-dark: #003421;
-  --secondary: #4CAF7D;
-  --secondary-dim: #93d4b2;
-  --background: #F2F3F5;
-  
-  /* Neutrals */
-  --surface: #F8F9FF;
-  --surface-container: #EBEEF5;
-  --surface-container-high: #E5E8EF;
-  --surface-container-highest: #E0E2EA;
-  --surface-container-low: #F1F3FB;
-  --surface-dim: #D7DAE1;
-  
-  /* Borders */
-  --border-default: #C8CBD2;
-  --border-subtle: rgba(200, 203, 210, 0.4);
-  
-  /* Text */
-  --text-primary: #111827;
-  --text-secondary: #181C21;
-  --text-tertiary: #404943;
-  --text-muted: #9CA3AF;
-  --text-placeholder: #9CA3AF;
-  
-  /* States */
-  --success: #4CAF7D;
-  --error: #BA1A1A;
-  --warning: #F59E0B;
-  
-  /* Spacing */
+  --green-900: #0f3d28;
+  --green-800: #145332;
+  --green-700: #1a6b3c;
+  --green-600: #2d8653;
+  --green-100: #e8f5ed;
+  --green-50: #f2fbf6;
+
+  --white: #ffffff;
+  --gray-50: #f8f9fa;
+  --gray-100: #f0f2f1;
+  --gray-200: #e2e8e4;
+  --gray-300: #cfd8d2;
+  --gray-500: #6b7a71;
+  --gray-700: #34483d;
+  --gray-900: #1f2d26;
+
+  --warning-bg: #f5f0e0;
+  --warning-text: #8a7000;
+
+  --primary: var(--green-700);
+  --primary-dark: var(--green-900);
+  --secondary: var(--green-600);
+  --secondary-dim: var(--green-100);
+  --background: var(--gray-100);
+  --surface: var(--white);
+  --surface-container: var(--gray-100);
+  --surface-container-high: var(--gray-200);
+  --surface-container-highest: var(--gray-300);
+  --surface-container-low: var(--gray-50);
+  --surface-dim: var(--gray-200);
+  --border-default: var(--gray-200);
+  --border-subtle: rgba(31, 45, 38, 0.08);
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-900);
+  --text-tertiary: var(--gray-700);
+  --text-muted: var(--gray-500);
+  --text-placeholder: var(--gray-500);
+  --success: var(--green-600);
+  --error: var(--gray-700);
+  --warning: var(--warning-text);
+
   --space-xs: 0.25rem;
   --space-sm: 0.5rem;
   --space-md: 1rem;
-  --space-lg: 1.5rem;
-  --space-xl: 2rem;
-  --space-2xl: 3rem;
-  
-  /* Border Radius */
-  --radius-sm: 0.25rem;
-  --radius-md: 0.5rem;
-  --radius-lg: 0.75rem;
+  --space-lg: 1.15rem;
+  --space-xl: 1.5rem;
+  --space-2xl: 2.25rem;
+
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-modal: 12px;
   --radius-full: 9999px;
-  
-  /* Shadows */
-  --shadow-card: 0px 10px 30px rgba(0, 77, 51, 0.08);
-  --shadow-float: 0px 10px 30px rgba(0, 77, 51, 0.12);
-  
-  /* Typography */
+
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-float: 0 8px 22px rgba(31, 45, 38, 0.10);
+  --shadow-drawer: -18px 0 42px rgba(31, 45, 38, 0.16);
+  --overlay-backdrop: rgba(31, 45, 38, 0.42);
+  --focus-ring: rgba(45, 134, 83, 0.14);
+
   --font-dm: 'DM Sans', sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
-  
-  /* Transitions */
+
   --transition-fast: 150ms ease;
   --transition-normal: 200ms ease;
   --transition-slow: 300ms ease;
 }
 
-/* --- Reset & Base --- */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
+/* Corrige escala visual sobredimensionada al 100% de zoom. */
 html {
-  font-size: 16px;
+  font-size: 14px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -92,15 +101,20 @@ textarea {
   font-family: var(--font-dm);
 }
 
+button {
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
 .font-dm {
-  font-family: var(--font-dm) !important;
+  font-family: var(--font-dm);
 }
 
 .font-mono {
-  font-family: var(--font-mono) !important;
+  font-family: var(--font-mono);
 }
 
-/* --- Typography --- */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-dm);
   font-weight: 700;
@@ -108,29 +122,28 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1.2;
 }
 
-h1 { font-size: 2rem; }
-h2 { font-size: 1.5rem; }
-h3 { font-size: 1.25rem; }
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.1rem; }
 h4 { font-size: 1rem; }
 
-/* Labels (Documentary feel) */
-.label {
-  font-size: 0.6875rem;
+.label,
+.label-sm {
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
   color: var(--text-muted);
+}
+
+.label {
+  font-size: 0.7rem;
+  letter-spacing: 0.06em;
 }
 
 .label-sm {
-  font-size: 0.625rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: var(--text-muted);
+  font-size: 0.65rem;
+  letter-spacing: 0.08em;
 }
 
-/* Body text */
 .body-md {
   font-size: 0.875rem;
   font-weight: 400;
@@ -140,14 +153,12 @@ h4 { font-size: 1rem; }
   font-size: 0.8125rem;
 }
 
-/* Mono (for data) */
 .mono {
   font-family: var(--font-mono);
-  font-size: 0.6875rem;
+  font-size: 0.72rem;
 }
 
-/* --- Utility Classes --- */
-.hidden { display: none !important; }
+.hidden { display: none; }
 .flex { display: flex; }
 .flex-col { flex-direction: column; }
 .items-center { align-items: center; }
@@ -157,14 +168,15 @@ h4 { font-size: 1rem; }
 .gap-4 { gap: 1rem; }
 .gap-6 { gap: 1.5rem; }
 
-/* --- Form Fields (Signature Validation Style) --- */
+/* Compacta inputs y mantiene foco dentro de la paleta. */
 .form-field {
   width: 100%;
-  background: var(--background);
-  border: 1.5px solid var(--border-default);
-  border-left: 3px solid var(--border-default);
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-left: 3px solid var(--gray-200);
   border-radius: var(--radius-md);
-  padding: 0.75rem 0.875rem;
+  padding: 0 0.85rem;
+  min-height: 36px;
   font-family: var(--font-dm);
   font-size: 0.875rem;
   color: var(--text-primary);
@@ -174,13 +186,12 @@ h4 { font-size: 1rem; }
 
 .form-field::placeholder {
   color: var(--text-placeholder);
-  font-style: italic;
 }
 
 .form-field:focus {
   border-color: var(--primary);
   border-left-color: var(--primary);
-  box-shadow: 0 0 0 3px rgba(0, 77, 51, 0.1);
+  box-shadow: 0 0 0 3px rgba(26, 107, 60, 0.10);
 }
 
 .form-field.filled {
@@ -189,72 +200,70 @@ h4 { font-size: 1rem; }
   font-weight: 600;
 }
 
-/* --- Buttons --- */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.65rem 1.15rem;
   font-family: var(--font-dm);
   font-size: 0.8125rem;
   font-weight: 700;
   border-radius: var(--radius-md);
   cursor: pointer;
-  transition: all var(--transition-normal);
+  transition: background var(--transition-normal), box-shadow var(--transition-normal), transform var(--transition-normal);
   border: none;
   text-decoration: none;
 }
 
 .btn-primary {
   background: linear-gradient(to right, var(--primary-dark), var(--primary));
-  color: white;
+  color: var(--white);
   box-shadow: var(--shadow-card);
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
   transform: translateY(-1px);
+  box-shadow: var(--shadow-float);
 }
 
 .btn-secondary {
-  background: white;
+  background: var(--white);
   color: var(--primary);
-  border: 2px solid var(--primary);
+  border: 1px solid var(--primary);
 }
 
 .btn-secondary:hover {
-  background: rgba(0, 77, 51, 0.05);
+  background: var(--green-50);
 }
 
 .btn-ghost {
   background: transparent;
   color: var(--text-tertiary);
-  border: 1.5px solid var(--border-default);
+  border: 1px solid var(--border-default);
 }
 
 .btn-ghost:hover {
-  background: rgba(0, 0, 0, 0.05);
+  background: var(--gray-50);
 }
 
-/* --- Cards --- */
+/* Reduce padding de cards globales de 24px aprox. a 16px. */
 .card {
-  background: white;
+  background: var(--white);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
-  padding: var(--space-lg);
+  padding: 16px;
 }
 
-/* --- Scrollbar --- */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-/* --- Status Indicators --- */
 .status-dot {
   width: 8px;
   height: 8px;
@@ -264,20 +273,19 @@ h4 { font-size: 1rem; }
 
 .status-dot.success {
   background: var(--success);
-  box-shadow: 0 0 6px rgba(76, 175, 125, 0.5);
+  box-shadow: 0 0 6px rgba(45, 134, 83, 0.45);
 }
 
 .status-dot.error {
   background: var(--error);
-  box-shadow: 0 0 6px rgba(186, 26, 26, 0.5);
+  box-shadow: 0 0 6px rgba(52, 72, 61, 0.35);
 }
 
 .status-dot.warning {
   background: var(--warning);
-  box-shadow: 0 0 6px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 6px rgba(138, 112, 0, 0.35);
 }
 
-/* --- Loading Animation --- */
 @keyframes pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.5; }
@@ -287,21 +295,18 @@ h4 { font-size: 1rem; }
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
-/* --- Icon Styles --- */
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
   font-size: 1.25rem;
   vertical-align: middle;
 }
 
-/* --- Container --- */
 .container {
   max-width: 1400px;
   margin: 0 auto;
   padding: var(--space-lg);
 }
 
-/* --- Grid System --- */
 .grid {
   display: grid;
 }

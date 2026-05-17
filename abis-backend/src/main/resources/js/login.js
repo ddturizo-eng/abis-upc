@@ -7,7 +7,7 @@
         togglePassword.addEventListener('click', () => {
             const visible = passwordInput.type === 'text';
             passwordInput.type = visible ? 'password' : 'text';
-            togglePassword.setAttribute('aria-label', visible ? 'Mostrar contraseÃ±a' : 'Ocultar contraseÃ±a');
+            togglePassword.setAttribute('aria-label', visible ? 'Mostrar contraseña' : 'Ocultar contraseña');
             togglePassword.querySelector('.material-symbols-outlined').textContent = visible ? 'visibility' : 'visibility_off';
         });
 
@@ -38,7 +38,7 @@
                 errorMsg.textContent = data.message || data.error || 'Credenciales incorrectas';
                 errorMsg.classList.add('show');
             } catch (error) {
-                errorMsg.textContent = 'Error de conexiÃ³n con el servidor';
+                errorMsg.textContent = 'Error de conexión con el servidor';
                 errorMsg.classList.add('show');
             } finally {
                 btnSubmit.disabled = false;
