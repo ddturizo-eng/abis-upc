@@ -8,9 +8,11 @@ const API = {
 
     async request(endpoint, options = {}) {
         const url = this.baseUrl + endpoint;
+        const token = localStorage.getItem('abis_token');
         const config = {
             headers: {
                 'Content-Type': 'application/json',
+                ...(token ? { Authorization: 'Bearer ' + token } : {}),
                 ...options.headers
             },
             ...options
@@ -185,7 +187,7 @@ const ApiElecciones = {
     crear: (data) => API.post('/api/elecciones', data),
     editar: (id, data) => API.request(`/api/elecciones/${id}`, { method: 'PUT', body: data }),
     iniciar: (id) => API.post(`/api/elecciones/${id}/iniciar`, {}),
-    cerrar: (id) => API.post(`/api/elecciones/${id}/cerrar`, {}),
+    cerrar: (id) => API.request(`/api/elecciones/${id}/cerrar`, { method: 'PUT', body: {} }),
     eliminar: (id) => API.request(`/api/elecciones/${id}`, { method: 'DELETE' }),
     candidatos: (id) => API.get(`/api/elecciones/${id}/candidatos`),
 };
