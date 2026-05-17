@@ -1,18 +1,331 @@
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<div class="flex flex-col gap-6">
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-[#004D33] font-dm">Mesas y Jurados</h1>
-        <p class="text-sm text-slate-400 mt-1 font-dm">Asignación por puesto</p>
+<section class="jurados-page">
+  <link rel="stylesheet" href="../../styles/jurados.css">
+
+  <nav class="jurados-tabs" aria-label="Secciones de jurados">
+    <button class="jurados-tab active" type="button" data-tab="asignacion">Asignación aleatoria</button>
+    <button class="jurados-tab" type="button" data-tab="mesas">Mesas y jurados</button>
+    <button class="jurados-tab" type="button" data-tab="planillas">Planillas</button>
+  </nav>
+
+  <section class="jurados-tab-panel active" id="tab-asignacion">
+    <article class="assignment-engine">
+      <header class="engine-hero">
+        <div class="engine-title-wrap">
+          <span class="engine-icon" aria-hidden="true"><i class="ti ti-users-group"></i></span>
+          <div>
+            <h1>Motor Inteligente de Asignación de Jurados</h1>
+            <p>Automatización y distribución inteligente de jurados para mesas electorales</p>
+          </div>
+        </div>
+        <div class="engine-actions">
+          <button class="btn-soft" type="button">Pools <i class="ti ti-chevron-down"></i></button>
+          <button class="btn-soft" type="button">Mesas <i class="ti ti-chevron-down"></i></button>
+        </div>
+      </header>
+
+      <div class="metrics-grid">
+        <article class="metric-card" style="--delay: 80ms">
+          <span><i class="ti ti-users-group"></i></span>
+          <div><strong id="metricPool">—</strong><small>Votantes en pool</small><em id="metricPoolHint">Sin datos aún</em></div>
+        </article>
+        <article class="metric-card" style="--delay: 160ms">
+          <span><i class="ti ti-clipboard-list"></i></span>
+          <div><strong id="metricJurados">—</strong><small>Jurados requeridos</small><em id="metricJuradosHint">Sin datos aún</em></div>
+        </article>
+        <article class="metric-card" style="--delay: 240ms">
+          <span><i class="ti ti-building"></i></span>
+          <div><strong id="metricMesas">—</strong><small>Mesas configuradas</small><em id="metricMesasHint">Sin datos aún</em></div>
+        </article>
+        <article class="metric-card" style="--delay: 320ms">
+          <span><i class="ti ti-chart-donut"></i></span>
+          <div><strong><span id="metricCobertura">—</span><span id="metricCoberturaUnit"></span></strong><small>Cobertura estimada</small><em id="metricCoberturaHint">Sin datos aún</em></div>
+        </article>
       </div>
-      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase">EN DESARROLLO</span>
+
+      <ol class="assignment-stepper" aria-label="Progreso de configuración">
+        <li class="active"><span>1</span><div><strong>Elegibles</strong><small>Definir pool y filtros</small></div></li>
+        <li><span>2</span><div><strong>Distribución</strong><small>Cantidad y reglas</small></div></li>
+        <li><span>3</span><div><strong>Restricciones</strong><small>Preferencias y exclusiones</small></div></li>
+        <li><span>4</span><div><strong>Turnos</strong><small>Horarios y jornadas</small></div></li>
+      </ol>
+
+      <div class="assignment-layout">
+        <div class="wizard-column">
+          <section class="wizard-card" style="--delay: 120ms">
+            <h2><span>1.</span> Definir pool de votantes elegibles</h2>
+            <div class="wizard-grid">
+              <div>
+                <label class="field-label">Roles incluidos</label>
+                <div class="role-chip-grid" id="rolesPool">
+                  <button class="role-chip active" type="button" data-value="ESTUDIANTE"><input type="checkbox" value="ESTUDIANTE" checked><i class="ti ti-school"></i><span>Estudiante</span></button>
+                  <button class="role-chip active" type="button" data-value="DOCENTE"><input type="checkbox" value="DOCENTE" checked><i class="ti ti-school"></i><span>Docente</span></button>
+                  <button class="role-chip active" type="button" data-value="ADMINISTRATIVO"><input type="checkbox" value="ADMINISTRATIVO" checked><i class="ti ti-id-badge-2"></i><span>Administrativo</span></button>
+                  <button class="role-chip" type="button" data-value="EGRESADO"><input type="checkbox" value="EGRESADO"><i class="ti ti-certificate"></i><span>Egresado</span></button>
+                </div>
+
+                <div class="switch-list">
+                  <label class="switch-row">
+                    <input id="excluirCandidatos" type="checkbox" checked>
+                    <span class="switch-ui"></span>
+                    <span>Excluir candidatos inscritos cuando exista vínculo con votantes <i class="ti ti-info-circle" title="Evita conflictos de interés directos"></i></span>
+                  </label>
+                  <label class="switch-row">
+                    <input id="requerirBiometrico" type="checkbox" checked>
+                    <span class="switch-ui"></span>
+                    <span>Solo votantes con huella registrada <i class="ti ti-info-circle" title="Garantiza verificación biométrica disponible"></i></span>
+                  </label>
+                  <label class="switch-row">
+                    <input id="soloNoVotaron" type="checkbox">
+                    <span class="switch-ui"></span>
+                    <span>Solo votantes que no hayan votado <i class="ti ti-info-circle" title="Filtro recomendado durante jornada activa"></i></span>
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <label class="field-label">Estado del votante</label>
+                <div class="state-card-group" id="estadosPool">
+                  <button class="state-card active" type="button" data-value="PENDIENTE">
+                    <input type="radio" name="estadoPool" value="PENDIENTE" checked>
+                    <span class="radio-dot"></span>
+                    <div><strong>Pendiente</strong><small>No han sido asignados</small></div>
+                  </button>
+                  <button class="state-card" type="button" data-value="EJERCIDO">
+                    <input type="radio" name="estadoPool" value="EJERCIDO">
+                    <span class="radio-dot"></span>
+                    <div><strong>Ya votó</strong><small>Excluir del pool</small></div>
+                  </button>
+                </div>
+                <p class="info-note"><i class="ti ti-info-circle"></i> Se recomienda solo PENDIENTE para garantizar que el jurado pueda votar</p>
+              </div>
+            </div>
+
+            <button class="pool-link" id="btnVerPool" type="button"><i class="ti ti-list"></i> Ver lista completa de votantes elegibles en el pool <i class="ti ti-chevron-right"></i></button>
+          </section>
+
+          <section class="wizard-card" style="--delay: 200ms">
+            <h2><span>2.</span> Definir cantidad y distribución</h2>
+            <div class="distribution-grid">
+              <div>
+                <label class="field-label">Jurados por mesa</label>
+                <div class="stepper-input">
+                  <button type="button" id="decrementJurados">−</button>
+                  <input type="number" min="1" max="20" value="3" id="juradosPorPuesto" aria-label="Jurados por mesa">
+                  <button type="button" id="incrementJurados">+</button>
+                  <span>jurados estimados por mesa</span>
+                  <em>Recomendado</em>
+                </div>
+              </div>
+
+              <div>
+                <label class="field-label">Modo de asignación</label>
+                <div class="mode-card-group" id="modoAsignacionGroup">
+                  <button class="mode-card active" type="button" data-value="fijo_por_puesto">
+                    <span class="mode-card-top"><input type="radio" name="modoAsignacion" value="fijo_por_puesto" checked><i class="ti ti-settings-2"></i></span>
+                    <strong>Automático (recomendado)</strong><small>El sistema distribuye automáticamente</small>
+                  </button>
+                  <button class="mode-card" type="button" data-value="total_manual">
+                    <span class="mode-card-top"><input type="radio" name="modoAsignacion" value="total_manual"><i class="ti ti-clipboard-list"></i></span>
+                    <strong>Manual</strong><small>Asignación manual mesa por mesa</small>
+                  </button>
+                  <button class="mode-card" type="button" data-value="porcentaje">
+                    <span class="mode-card-top"><input type="radio" name="modoAsignacion" value="porcentaje"><i class="ti ti-circle-half"></i></span>
+                    <strong>Mixto</strong><small>Automático con ajustes manuales</small>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="distribution-table">
+              <div><small>Total jurados requeridos</small><strong id="totalEstimado">—</strong></div>
+              <div><small>Mesas con 3 jurados</small><strong id="distMesas3">—</strong></div>
+              <div><small>Mesas con 2 jurados</small><strong id="distMesas2">—</strong></div>
+              <div><small>Mesas con 1 jurado</small><strong id="distMesas1">0</strong></div>
+            </div>
+
+            <input type="hidden" id="porcentajeJurados" value="5">
+            <input type="hidden" id="totalManual" value="0">
+            <select class="hidden" id="distribucionPuestos"><option value="equitativa">Equitativa</option></select>
+            <div class="hidden" id="config-por_cargo"></div>
+            <input type="radio" class="hidden" name="puestoAsignado" value="distinto" checked>
+          </section>
+
+          <section class="wizard-card" style="--delay: 280ms">
+            <h2><span>3.</span> Configurar turnos y jornadas</h2>
+            <div class="turnos-grid" id="turnosGrid"></div>
+          </section>
+        </div>
+
+        <aside class="summary-panel" aria-label="Resumen en tiempo real">
+          <div class="summary-head">
+            <h2>Resumen en tiempo real</h2>
+            <button type="button" id="btnRefreshSummary" aria-label="Actualizar resumen"><i class="ti ti-refresh"></i></button>
+          </div>
+
+          <section class="summary-card">
+            <small>Cobertura estimada</small>
+            <strong><span id="summaryCoverage">—</span><span id="summaryCoverageUnit"></span></strong>
+            <div class="progress-track"><span id="coverageBar" style="--target: 0%"></span></div>
+            <p><span id="summaryAssignable">—</span> de <span id="summaryRequired">—</span> jurados asignables</p>
+          </section>
+
+          <section class="summary-card">
+            <h3>Estado de mesas</h3>
+            <ul class="summary-list">
+              <li><span class="dot success"></span>Completas (3 jurados)<strong><span id="summaryComplete">—</span></strong></li>
+              <li><span class="dot warning"></span>Incompletas (2 jurados)<strong><span id="summaryIncomplete">—</span></strong></li>
+              <li><span class="dot critical"></span>Críticas (1 jurado o menos)<strong><span id="summaryCritical">0 (0%)</span></strong></li>
+            </ul>
+          </section>
+
+          <section class="summary-card">
+            <h3>Alertas y conflictos</h3>
+            <ul class="alert-list">
+              <li><i class="ti ti-alert-triangle"></i><span id="alertIncomplete">—</span> mesas podrían quedar incompletas</li>
+              <li><i class="ti ti-alert-triangle"></i><span id="alertConflicts">—</span> conflictos de disponibilidad detectados</li>
+              <li><i class="ti ti-info-circle"></i>Revisar restricciones de horario</li>
+            </ul>
+          </section>
+
+          <section class="summary-card">
+            <h3>Distribución por rol (estimada)</h3>
+            <div class="donut-wrap">
+              <svg class="donut-chart" viewBox="0 0 120 120" aria-label="Distribución por rol">
+                <circle class="donut-base" cx="60" cy="60" r="42"></circle>
+                <circle class="donut-segment seg-1" cx="60" cy="60" r="42"></circle>
+                <circle class="donut-segment seg-2" cx="60" cy="60" r="42"></circle>
+                <circle class="donut-segment seg-3" cx="60" cy="60" r="42"></circle>
+              </svg>
+              <div class="donut-legend">
+                <p><span></span> Estudiantes <strong id="legendEstudiantes">—</strong></p>
+                <p><span></span> Docentes <strong id="legendDocentes">—</strong></p>
+                <p><span></span> Administrativos <strong id="legendAdministrativos">—</strong></p>
+              </div>
+            </div>
+            <strong class="summary-total">Total: <span id="summaryTotalJurados">—</span> jurados</strong>
+          </section>
+        </aside>
+      </div>
+
+      <footer class="assignment-footer" id="asignacionResumen">
+        <div><strong>Pool:</strong> <span id="footerPool">—</span> votantes <b></b> <strong>A asignar:</strong> <span id="footerAsignar">—</span> jurados <b></b> <strong>Mesas:</strong> <span id="footerMesas">—</span></div>
+        <span class="availability-badge" id="availabilityBadge">Sin datos aún</span>
+        <button class="btn-outline" id="btnSimular" type="button"><i class="ti ti-chart-bar"></i> Simular distribución</button>
+        <button class="btn-primary" id="btnEjecutarAsignacion" type="button"><i class="ti ti-player-play"></i> Generar asignación automática</button>
+      </footer>
+    </article>
+  </section>
+
+  <section class="jurados-tab-panel" id="tab-mesas">
+    <div class="mesas-layout">
+      <aside class="puestos-panel">
+        <div class="panel-header">
+          <h2>Puestos de votación</h2>
+          <button class="btn-outline" id="btnNuevaMesa" type="button">Nueva mesa</button>
+        </div>
+        <div class="puestos-list" id="puestosList"></div>
+      </aside>
+      <main class="mesas-panel">
+        <div class="panel-header">
+          <h2 id="mesasPanelTitle">Mesas del puesto</h2>
+          <span id="mesasPanelHint">Seleccione un puesto</span>
+        </div>
+        <div class="mesas-grid" id="mesasGrid"></div>
+      </main>
+    </div>
+  </section>
+
+  <section class="jurados-tab-panel" id="tab-planillas">
+    <article class="planillas-section">
+      <h2>Generar planillas oficiales</h2>
+      <div class="planillas-filtros">
+        <select id="planillaPuesto"></select>
+        <select id="planillaMesa"></select>
+      </div>
+      <div class="planilla-preview" id="planillaPreview"></div>
+      <div class="planillas-actions">
+        <button class="btn-outline" id="btnPreviewPDF" type="button">Vista previa</button>
+        <button class="btn-primary" id="btnExportarPDF" type="button">Descargar PDF</button>
+        <button class="btn-outline" id="btnNotificarTodos" type="button" disabled title="Módulo SendGrid pendiente de implementación">Notificar jurados por correo</button>
+      </div>
+      <div class="feature-pending-notice">
+        <span>La notificación por correo estará disponible próximamente.</span>
+        <span>La lógica queda lista para conectar con SendGrid.</span>
+      </div>
+    </article>
+  </section>
+
+  <div class="jurados-modal" id="modalResultado" aria-hidden="true">
+    <div class="jurados-modal-panel wide">
+      <div class="modal-header">
+        <h2 id="resultadoTitulo">Resultado de simulación</h2>
+        <button class="modal-close" data-close-modal="modalResultado" type="button">×</button>
+      </div>
+      <div id="resultadoAsignacion"></div>
+      <label class="disabled-mail"><input type="checkbox" disabled> Notificar por correo al confirmar <span>Módulo SendGrid pendiente</span></label>
+      <div class="modal-actions">
+        <button class="btn-outline" data-close-modal="modalResultado" type="button">Volver a configurar</button>
+        <button class="btn-primary" id="btnConfirmarAsignacion" type="button">Confirmar y guardar</button>
+      </div>
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col items-center justify-center py-20 gap-4">
-    <span class="material-symbols-outlined text-[48px] text-[#C8CBD2]">gavel</span>
-    <p class="font-dm text-sm text-slate-400">Módulo en desarrollo</p>
-    <p class="font-mono text-[10px] text-slate-300 uppercase tracking-widest">PRÓXIMAMENTE</p>
+  <div class="jurados-modal" id="modalMesa" aria-hidden="true">
+    <div class="jurados-modal-panel">
+      <div class="modal-header">
+        <h2 id="modalMesaTitulo">Nueva mesa</h2>
+        <button class="modal-close" data-close-modal="modalMesa" type="button">×</button>
+      </div>
+      <form id="formMesa" class="jurados-form">
+        <input type="hidden" id="mesaId">
+        <label><span>Puesto de votación</span><select id="mesaPuesto"></select></label>
+        <label><span>Hora ingreso</span><input type="time" id="mesaHoraIngreso" value="08:00"></label>
+        <label><span>Hora salida</span><input type="time" id="mesaHoraSalida" value="12:00"></label>
+        <label><span>Cargo principal</span><select id="mesaCargo"><option>PRESIDENTE</option><option>VOCAL</option><option>SECRETARIO</option><option>JURADOS</option></select></label>
+        <div class="modal-actions">
+          <button class="btn-outline" data-close-modal="modalMesa" type="button">Cancelar</button>
+          <button class="btn-primary" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
   </div>
-</div>
+
+  <div class="jurados-modal" id="modalAsignar" aria-hidden="true">
+    <div class="jurados-modal-panel wide">
+      <div class="modal-header">
+        <h2>Asignar jurado manualmente</h2>
+        <button class="modal-close" data-close-modal="modalAsignar" type="button">×</button>
+      </div>
+      <div class="manual-search">
+        <input id="buscarVotanteJurado" type="search" placeholder="Buscar por nombre o identificación">
+        <select id="manualCargo"><option>PRESIDENTE</option><option>VOCAL</option><option>SECRETARIO</option></select>
+        <input id="manualFecha" type="date">
+      </div>
+      <div class="manual-results" id="manualResults"></div>
+    </div>
+  </div>
+
+  <div class="jurados-modal" id="modalPoolElegible" aria-hidden="true">
+    <div class="jurados-modal-panel wide">
+      <div class="modal-header">
+        <h2>Votantes elegibles en el pool</h2>
+        <button class="modal-close" data-close-modal="modalPoolElegible" type="button">×</button>
+      </div>
+      <div class="pool-modal-toolbar">
+        <input id="buscarPoolElegible" type="search" placeholder="Buscar por nombre, identificación, rol o puesto">
+        <span id="poolElegibleTotal">— registros</span>
+      </div>
+      <div class="pool-table-wrap" id="poolElegibleLista"></div>
+    </div>
+  </div>
+
+  <div class="jurados-modal" id="modalConfirm" aria-hidden="true">
+    <div class="jurados-modal-panel">
+      <div id="confirmContent"></div>
+    </div>
+  </div>
+
+  <div class="toast-stack" id="juradosToasts"></div>
+</section>
+
+<script src="../../js/jurados.js"></script>
