@@ -145,7 +145,7 @@ public class EleccionController {
                 return;
             }
 
-            eleccionRepo.cambiarEstado(id, "CERRADA");
+            adminService.cerrarEleccion(id, ctx.attribute("idAdmin"));
             ctx.json(ApiResponse.success("Elección cerrada"));
         } catch (Exception e) {
             ctx.status(500).json(ApiResponse.error(e.getMessage()));
