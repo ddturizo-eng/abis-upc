@@ -1,23 +1,157 @@
-﻿<div class="flex flex-col gap-6">
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-[#004D33] font-dm">Candidatos</h1>
-        <p class="text-sm text-slate-400 mt-1 font-dm">Consulta rapida de candidatos por eleccion</p>
+<section class="candidatos-page">
+  <link rel="stylesheet" href="../../styles/candidatos.css">
+
+  <div class="candidatos-page-header">
+    <div class="candidatos-header-left">
+      <span class="module-badge">GESTIÓN ELECTORAL</span>
+      <h1 class="page-title">Candidatos Electorales</h1>
+      <p class="page-subtitle">Administración del tarjetón · Campañas · Validación de cargos</p>
+    </div>
+    <div class="candidatos-header-actions">
+      <div class="eleccion-selector-wrapper">
+        <label for="selectEleccion">Elección activa</label>
+        <select id="selectEleccion">
+          <option value="">Cargando elecciones...</option>
+        </select>
+        <span class="eleccion-status-badge" id="eleccionStatusBadge">SIN ESTADO</span>
       </div>
-      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase">POSTULACIONES</span>
+      <button class="btn-outline" id="btnExportar" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v11m0 0 4-4m-4 4-4-4M5 19h14"/></svg>
+        Exportar
+      </button>
+      <button class="btn-outline" id="btnAuditoria" type="button">Ver auditoría</button>
+      <button class="btn-primary" id="btnNuevoCandidato" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        Nuevo candidato
+      </button>
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
-    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Eleccion</label>
-    <select id="candidatos-election-select" class="w-full max-w-xl rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#004D33]">
-      <option value="">Cargando elecciones...</option>
-    </select>
+  <div class="candidatos-stats" id="candidatosStats"></div>
+
+  <div class="candidatos-filters">
+    <label class="filter-search">
+      <span>Búsqueda</span>
+      <input id="filtroBusquedaCandidato" type="search" placeholder="Nombre o identificación">
+    </label>
+    <label>
+      <span>Cargo</span>
+      <select id="filtroCargoCandidato">
+        <option value="">Todos</option>
+      </select>
+    </label>
+    <label>
+      <span>Estado</span>
+      <select id="filtroEstadoCandidato">
+        <option value="">Todos</option>
+        <option value="con_votos">Con votos</option>
+        <option value="sin_votos">Sin votos</option>
+        <option value="activo">Activo</option>
+        <option value="inactivo">Inactivo</option>
+      </select>
+    </label>
+    <label>
+      <span>Ordenar por</span>
+      <select id="filtroOrdenCandidato">
+        <option value="numero">Número campaña</option>
+        <option value="nombre">Nombre</option>
+        <option value="cargo">Cargo</option>
+        <option value="votos">Votos</option>
+      </select>
+    </label>
+    <button class="btn-outline" id="btnLimpiarFiltrosCandidatos" type="button">Limpiar</button>
+    <button class="btn-primary" id="btnAplicarFiltrosCandidatos" type="button">Aplicar filtros</button>
   </div>
 
-  <div id="candidatos-list" class="grid grid-cols-1 gap-4"></div>
-  <div id="candidatos-error" class="hidden rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-600"></div>
-</div>
-<script src="../../js/candidatos.js"></script>
+  <div class="candidatos-layout">
+    <main class="candidatos-main">
+      <div class="candidatos-content" id="candidatosContent">
+        <div class="candidatos-empty">Cargando candidatos electorales...</div>
+      </div>
+      <div class="candidatos-error hidden" id="candidatosError"></div>
+    </main>
 
+    <aside class="candidatos-sidebar">
+      <div class="sidebar-panel">
+        <div class="sidebar-panel-header">
+          <span>VISTA PREVIA DEL TARJETÓN</span>
+          <button class="btn-link" id="btnAbrirTarjeton" type="button">↗ Pantalla completa</button>
+        </div>
+        <div class="tarjeton-preview" id="tarjetonPreview"></div>
+      </div>
+
+      <div class="sidebar-panel">
+        <div class="sidebar-panel-header">
+          <span>AUDITORÍA RECIENTE</span>
+          <a href="#" class="btn-link" id="btnVerAuditoriaCompleta">Ver toda</a>
+        </div>
+        <div class="auditoria-list" id="auditoriaList"></div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="candidate-modal" id="modalCandidato" aria-hidden="true">
+    <div class="candidate-modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalCandidatoTitulo">
+      <div class="candidate-modal-header">
+        <div>
+          <span class="module-badge">POSTULACIÓN</span>
+          <h2 id="modalCandidatoTitulo">Nuevo candidato</h2>
+        </div>
+        <button class="modal-close" id="btnCerrarModalCandidato" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <form class="candidate-form" id="formCandidato" novalidate>
+        <input type="hidden" id="candidateId">
+        <div class="form-grid">
+          <label>
+            <span>Primer nombre *</span>
+            <input id="primerNombre" name="primerNombre" type="text" autocomplete="off">
+            <small class="field-error"></small>
+          </label>
+          <label>
+            <span>Segundo nombre</span>
+            <input id="segundoNombre" name="segundoNombre" type="text" autocomplete="off">
+            <small class="field-error"></small>
+          </label>
+          <label>
+            <span>Primer apellido *</span>
+            <input id="primerApellido" name="primerApellido" type="text" autocomplete="off">
+            <small class="field-error"></small>
+          </label>
+          <label>
+            <span>Segundo apellido</span>
+            <input id="segundoApellido" name="segundoApellido" type="text" autocomplete="off">
+            <small class="field-error"></small>
+          </label>
+          <label>
+            <span>Número de campaña *</span>
+            <input id="numeroCampania" name="numeroCampania" type="number" min="1" autocomplete="off">
+            <small class="field-error"></small>
+          </label>
+          <label>
+            <span>Cargo *</span>
+            <select id="cargoCandidato" name="cargo"></select>
+            <small class="field-error"></small>
+          </label>
+        </div>
+        <label class="photo-field">
+          <span>Foto del candidato</span>
+          <input id="fotoCandidato" name="foto" type="file" accept="image/*">
+          <div class="photo-preview" id="fotoPreview">Sin foto</div>
+        </label>
+        <div class="candidate-modal-error" id="modalCandidatoError"></div>
+        <div class="candidate-modal-footer">
+          <button class="btn-outline" id="btnCancelarCandidato" type="button">Cancelar</button>
+          <button class="btn-primary" type="submit">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="candidate-modal" id="modalEliminarCandidato" aria-hidden="true">
+    <div class="candidate-modal-panel candidate-modal-confirm" role="dialog" aria-modal="true" aria-labelledby="modalEliminarTitulo">
+      <div id="modalEliminarContenido"></div>
+    </div>
+  </div>
+</section>
+
+<script src="../../js/candidatos.js"></script>
