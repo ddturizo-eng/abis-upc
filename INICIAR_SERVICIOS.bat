@@ -15,6 +15,12 @@ echo   ABIS-UPC - Inicio de Servicios
 echo ==========================================
 echo.
 
+set "ABIS_DB_URL=jdbc:oracle:thin:@localhost:1521/XEPDB1"
+set "ABIS_DB_USER=abisAdmin"
+set "ABIS_DB_PASSWORD=12345"
+set "BIOMETRIC_SERVICE_URL=http://localhost:8001"
+set "OCR_SERVICE_URL=http://localhost:8002"
+
 echo [1/7] Verificando Oracle XE...
 echo     Oracle se mantiene corriendo (no se toca)
 echo.
@@ -56,7 +62,7 @@ echo.
 
 echo [4/7] Iniciando Servicio Biometrico (puerto 8001)...
 cd /d "C:\PROYECTOS P3\abis-upc\abis-biometric"
-start "ABIS-Biometric" powershell -NoExit -ExecutionPolicy Bypass -Command "Set-Location 'C:\PROYECTOS P3\abis-upc\abis-biometric'; if (Test-Path '.\venv\Scripts\Activate.ps1') { . '.\venv\Scripts\Activate.ps1' }; python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
+start "ABIS-Biometric" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:ABIS_DB_URL='%ABIS_DB_URL%'; $env:ABIS_DB_USER='%ABIS_DB_USER%'; $env:ABIS_DB_PASSWORD='%ABIS_DB_PASSWORD%'; Set-Location 'C:\PROYECTOS P3\abis-upc\abis-biometric'; if (Test-Path '.\venv\Scripts\Activate.ps1') { . '.\venv\Scripts\Activate.ps1' }; python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
 echo     Biometrico iniciado en puerto 8001
 echo.
 
@@ -82,7 +88,7 @@ if not exist "abis-backend-1.0-SNAPSHOT.jar" (
     pause
     exit /b 1
 )
-start "ABIS-Backend" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:ABIS_DB_URL='jdbc:oracle:thin:@localhost:1521/XEPDB1'; $env:ABIS_DB_USER='abisAdmin'; $env:ABIS_DB_PASSWORD='12345'; $env:BIOMETRIC_SERVICE_URL='http://localhost:8001'; $env:OCR_SERVICE_URL='http://localhost:8002'; Set-Location 'C:\PROYECTOS P3\abis-upc\abis-backend\target'; java -jar abis-backend-1.0-SNAPSHOT.jar"
+start "ABIS-Backend" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:ABIS_DB_URL='%ABIS_DB_URL%'; $env:ABIS_DB_USER='%ABIS_DB_USER%'; $env:ABIS_DB_PASSWORD='%ABIS_DB_PASSWORD%'; $env:BIOMETRIC_SERVICE_URL='%BIOMETRIC_SERVICE_URL%'; $env:OCR_SERVICE_URL='%OCR_SERVICE_URL%'; Set-Location 'C:\PROYECTOS P3\abis-upc\abis-backend\target'; java -jar abis-backend-1.0-SNAPSHOT.jar"
 echo     Backend Java iniciado en puerto 7000
 echo.
 
