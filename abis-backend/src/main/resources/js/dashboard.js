@@ -126,6 +126,18 @@
     }
   }
 
+  window.abrirModoVotacion = async function abrirModoVotacion() {
+    try {
+      const response = await fetch('/api/votacion/activa', { headers: authHeaders() });
+      if (!response.ok) {
+        throw new Error('No hay una jornada electoral en curso.');
+      }
+      window.open('/pages/votacion/index.html', 'ABISVotacionKiosko', 'noopener,noreferrer');
+    } catch (error) {
+      alert(error.message || 'No fue posible abrir el modo votacion.');
+    }
+  };
+
   async function loadRecentActivity() {
     try {
       const response = await fetch('/api/auditoria/reciente?limit=3', { headers: authHeaders() });
