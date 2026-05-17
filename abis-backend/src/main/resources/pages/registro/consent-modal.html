@@ -1,46 +1,107 @@
 <div class="min-h-[calc(100vh-180px)] flex items-center justify-center">
-    <section class="abis-card w-full max-w-5xl overflow-hidden">
-        <div class="bg-[#1a3a2a] text-white px-8 py-6 flex items-center justify-between">
+    <section class="consent-shell">
+        <header class="consent-hero">
             <div>
-                <h1 class="text-2xl font-bold">Autorización de tratamiento de datos personales</h1>
-                <p class="text-sm text-emerald-100 mt-1">Sistema ABIS-UPC v1.0.0-STABLE · Entorno de pruebas</p>
+                <h1>Autorización de tratamiento de datos personales</h1>
+                <p>Sistema ABIS-UPC v1.0.0-STABLE • Entorno de pruebas</p>
             </div>
-            <span class="material-symbols-outlined text-[34px]">verified_user</span>
+            <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+        </header>
+
+        <div class="consent-body">
+            <section class="consent-summary" aria-labelledby="consent-summary-title">
+                <div class="consent-section-heading">
+                    <h2 id="consent-summary-title">Resumen del tratamiento de datos</h2>
+                    <p>Antes de continuar, es importante que conozcas cómo se usarán tus datos.</p>
+                </div>
+
+                <div class="consent-facts">
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                        <div>
+                            <h3>¿Quién es el responsable?</h3>
+                            <p>Universidad Popular del Cesar<br>NIT: 890.300.445-6</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">database</span>
+                        <div>
+                            <h3>¿Qué datos se recolectan?</h3>
+                            <p>Nombre, cédula, correo, fotografía facial, plantilla de huella dactilar y código QR del documento.</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+                        <div>
+                            <h3>¿Para qué se usan?</h3>
+                            <p>Verificación de identidad en el proceso electoral universitario y validación del sistema biométrico.</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                        <div>
+                            <h3>¿Por cuánto tiempo se conservan?</h3>
+                            <p>Únicamente durante la fase de validación y se eliminan al finalizar el proceso.</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">shield</span>
+                        <div>
+                            <h3>¿Cómo se protegen?</h3>
+                            <p>Los datos se cifran con AES-256 y se almacenan en servidores seguros con acceso restringido.</p>
+                        </div>
+                    </article>
+                </div>
+
+                <aside class="consent-protected">
+                    <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+                    <div>
+                        <strong>Tu información está protegida</strong>
+                        <p>No compartimos tus datos con terceros. Este proceso es auditado y cumple con la Ley 1581 de 2012.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="consent-document" aria-labelledby="consent-document-title">
+                <div class="consent-section-heading">
+                    <h2 id="consent-document-title">Documento completo</h2>
+                    <p>Lee detenidamente el documento antes de aceptar.</p>
+                </div>
+
+                <div id="consent-scroll" class="consent-scroll">
+                    <h3>AUTORIZACIÓN DE TRATAMIENTO DE DATOS PERSONALES</h3>
+                    <p>De conformidad con la Ley 1581 de 2012 y su Decreto Reglamentario 1377 de 2013, autorizo de manera libre, previa, expresa e informada a la Universidad Popular del Cesar para recolectar, almacenar, usar y tratar mis datos personales, incluyendo datos biométricos, para los fines relacionados con la verificación de identidad en el proceso electoral universitario y la validación del sistema biométrico.</p>
+                    <p>Declaro que he sido informado(a) sobre mi derecho a conocer, actualizar, rectificar y solicitar la eliminación de mis datos personales, así como sobre las finalidades del tratamiento y los mecanismos para ejercer dichos derechos.</p>
+                    <p>La captura de datos biométricos, como fotografía facial y huella dactilar, es voluntaria, pero necesaria para garantizar la seguridad, autenticidad y transparencia del proceso electoral.</p>
+                    <p>Los datos capturados serán eliminados al finalizar el período de validación del sistema y no serán compartidos con terceros bajo ninguna circunstancia.</p>
+                    <p>El sistema ABIS-UPC implementa medidas técnicas y administrativas para proteger la información recolectada, incluyendo cifrado AES-256, separación de datos sensibles y acceso restringido al personal autorizado.</p>
+                    <p>Al aceptar, confirmo que comprendo el alcance de esta autorización y autorizo el tratamiento de mis datos personales y biométricos conforme a la normativa colombiana vigente.</p>
+                    <p>También entiendo que puedo revocar esta autorización o solicitar información sobre el tratamiento de mis datos mediante los canales institucionales definidos por el responsable del sistema.</p>
+                </div>
+            </section>
         </div>
 
-        <div class="p-8 grid grid-cols-12 gap-6">
-            <div class="col-span-8">
-                <div id="consent-scroll" class="h-[420px] overflow-y-auto pr-4 text-sm leading-6 text-slate-700 border border-slate-200 rounded-lg p-5 bg-slate-50">
-                    <p><strong>Responsable:</strong> Daniel David Turizo Chacón · C.C. 1.052.041.109 · ddturizo@unicesar.edu.co</p>
-                    <p class="mt-3"><strong>Carácter:</strong> Proyecto de desarrollo académico — No producción · Mayo 2026</p>
-                    <p class="mt-3"><strong>Base legal:</strong> Ley 1581 de 2012 · Decreto 1377 de 2013 · Política interna de la institución.</p>
-                    <p class="mt-3"><strong>Datos recolectados:</strong> Nombre, cédula, correo, fotografía facial, plantilla de huella dactilar y código QR del documento.</p>
-                    <p class="mt-3"><strong>Finalidad exclusiva:</strong> Verificación de identidad en el proceso electoral universitario y validación del sistema biométrico en fase de pruebas.</p>
-                    <p class="mt-3"><strong>Datos sensibles:</strong> La fotografía y huella dactilar son datos sensibles conforme al Art. 6 de la Ley 1581 de 2012. Su captura es voluntaria. Negarse implica únicamente no poder continuar con el registro.</p>
-                    <p class="mt-3"><strong>Seguridad:</strong> Los datos se transmiten cifrados con AES-256 y se almacenan en una base de datos de acceso restringido al equipo de desarrollo.</p>
-                    <p class="mt-3"><strong>Retención:</strong> Los datos capturados durante esta fase de pruebas serán eliminados al finalizar el período de validación del sistema. Las plantillas biométricas no se comparten con terceros bajo ninguna circunstancia.</p>
-                    <p class="mt-3"><strong>Sus derechos:</strong> Acceso · Rectificación · Supresión · Revocación. Las solicitudes serán recibidas en ddturizo@unicesar.edu.co.</p>
-                    <div class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-800">
-                        <strong>Aviso de entorno de pruebas:</strong> Este sistema se encuentra en fase de desarrollo académico. Los datos recolectados se usan exclusivamente para validar el funcionamiento del sistema biométrico y no serán utilizados en ningún proceso electoral real.
-                    </div>
-                    <p class="mt-4">Al aceptar, declara haber leído y autorizado de forma libre e informada el tratamiento de sus datos personales y biométricos conforme a la legislación colombiana vigente.</p>
+        <footer class="consent-actions">
+            <label class="consent-check">
+                <input id="consent-checkbox" type="checkbox" disabled>
+                <span class="material-symbols-outlined" aria-hidden="true">check</span>
+                <div>
+                    <strong>He leído y acepto el tratamiento de mis datos personales y biométricos</strong>
+                    <p>Al marcar esta casilla, confirmo que comprendo y acepto las condiciones descritas en este documento.</p>
                 </div>
-            </div>
+            </label>
 
-            <aside class="col-span-4 flex flex-col gap-4">
-                <div class="rounded-lg border border-emerald-100 bg-emerald-50 p-4">
-                    <p class="text-[11px] font-bold uppercase tracking-widest text-[#1a3a2a]">Condición de avance</p>
-                    <p class="text-sm text-slate-600 mt-2">Debe leer el documento completo para habilitar la aceptación.</p>
-                </div>
-                <label class="flex items-start gap-3 rounded-lg border border-slate-200 p-4 text-sm text-slate-700">
-                    <input id="consent-checkbox" type="checkbox" class="mt-1 h-4 w-4 accent-[#1a3a2a]" disabled>
-                    <span>He leído y acepto el tratamiento de mis datos personales y biométricos.</span>
-                </label>
-                <button id="btn-consent-accept" class="bg-[#1a3a2a] text-white font-bold py-4 rounded-lg opacity-50 cursor-not-allowed" disabled>
+            <div class="consent-continue">
+                <button id="btn-consent-accept" class="opacity-50 cursor-not-allowed" disabled>
+                    <span class="material-symbols-outlined" aria-hidden="true">shield</span>
                     Aceptar y continuar
                 </button>
-                <p id="consent-hint" class="text-xs text-slate-500">Desplace el texto legal hasta el final.</p>
-            </aside>
-        </div>
+                <p id="consent-hint">Desplace el texto legal hasta el final.</p>
+            </div>
+        </footer>
     </section>
 </div>
