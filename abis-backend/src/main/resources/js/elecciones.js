@@ -67,6 +67,12 @@
     return Math.max(0, Math.min(100, Math.round((part / total) * 100)));
   }
 
+  function parsePesoVoto(id) {
+    const raw = String(document.getElementById(id)?.value || '').replace(',', '.').trim();
+    const value = Number(raw);
+    return Number.isFinite(value) ? value : null;
+  }
+
   function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -325,10 +331,10 @@
     state.editando = null;
     document.querySelector('.modal-title').textContent = 'Nueva Elección';
     document.getElementById('form-eleccion').reset();
-    document.getElementById('peso-estudiante').value = '1.0';
-    document.getElementById('peso-docente').value = '2.0';
-    document.getElementById('peso-egresado').value = '1.0';
-    document.getElementById('peso-administrativo').value = '1.5';
+    document.getElementById('peso-estudiante').value = '1.00';
+    document.getElementById('peso-docente').value = '2.00';
+    document.getElementById('peso-egresado').value = '1.00';
+    document.getElementById('peso-administrativo').value = '1.50';
     ocultarErrorModal();
     document.getElementById('modal-eleccion').classList.add('open');
   };
@@ -359,14 +365,18 @@
       fechaHoraInicio: document.getElementById('eleccion-inicio').value,
       fechaHoraFin: document.getElementById('eleccion-fin').value,
       pesosRoles: {
-        estudiante: Number(document.getElementById('peso-estudiante').value),
-        docente: Number(document.getElementById('peso-docente').value),
-        egresado: Number(document.getElementById('peso-egresado').value),
-        administrativo: Number(document.getElementById('peso-administrativo').value)
+        estudiante: parsePesoVoto('peso-estudiante'),
+        docente: parsePesoVoto('peso-docente'),
+        egresado: parsePesoVoto('peso-egresado'),
+        administrativo: parsePesoVoto('peso-administrativo')
       }
     };
     if (!body.nombre || !body.fechaHoraInicio || !body.fechaHoraFin) {
       mostrarErrorModal('Completa los campos obligatorios.');
+      return;
+    }
+    if (Object.values(body.pesosRoles).some((peso) => peso === null || peso <= 0)) {
+      mostrarErrorModal('Ingresa pesos de voto mayores que 0. Puedes usar punto o coma decimal.');
       return;
     }
     try {
@@ -398,7 +408,7 @@
   window.cerrarEleccion = async function cerrarEleccion(idEleccion) {
     if (!confirm('¿Está seguro de cerrar esta elección?')) return;
     try {
-      await requestJson(`/api/elecciones/${idEleccion}/cerrar`, { method: 'POST' });
+      await requestJson(`/api/elecciones/${idEleccion}/cerrar`, { method: 'PUT' });
       showToast('Elección cerrada correctamente', 'success');
       await Promise.all([loadElecciones(), loadStats()]);
     } catch (error) {
