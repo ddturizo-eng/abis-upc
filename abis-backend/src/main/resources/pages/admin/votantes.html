@@ -2,9 +2,15 @@
   <link rel="stylesheet" href="../../styles/votantes.css">
 
   <div class="voters-header">
-    <div>
-      <h1 class="voters-title">Censo Electoral</h1>
-      <p class="voters-subtitle">Gestion integral de votantes, trazabilidad y autenticacion biometrica.</p>
+    <div class="voters-heading voters-heading-accent">
+      <div class="voters-heading-bar" aria-hidden="true"></div>
+      <div>
+        <h1 class="voters-title voters-title-elegant">Censo Electoral</h1>
+        <p class="voters-subtitle voters-subtitle-icon">
+          <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+          Gestión integral de votantes, trazabilidad y autenticación biométrica.
+        </p>
+      </div>
     </div>
     <div class="voters-actions">
       <button class="voters-btn voters-btn-ghost" id="voters-import">
@@ -17,7 +23,7 @@
       </button>
       <button class="voters-btn voters-btn-ghost" id="voters-audit-button">
         <span class="material-symbols-outlined">assignment</span>
-        Ver auditoria
+        Ver auditoría
       </button>
       <button class="voters-btn voters-btn-primary" id="voters-new">
         <span class="material-symbols-outlined">add</span>
@@ -32,9 +38,9 @@
     <div class="voters-left">
       <div class="voters-toolbar">
         <label class="search-wrap">
-          <span class="voters-field-label">Busqueda</span>
+          <span class="voters-field-label">Búsqueda</span>
           <span class="voters-search">
-            <input id="voters-search" type="search" placeholder="Identificacion, nombre o correo">
+            <input id="voters-search" type="search" placeholder="Identificación, nombre o correo">
             <span class="material-symbols-outlined">search</span>
           </span>
         </label>
@@ -57,7 +63,7 @@
           </select>
         </label>
         <label>
-          <span class="voters-field-label">Biometrico</span>
+          <span class="voters-field-label">Biométrico</span>
           <select class="voters-select" id="voters-filter-bio">
             <option value="">Todos</option>
             <option value="enrolado">Enrolado</option>
@@ -65,7 +71,7 @@
           </select>
         </label>
         <label>
-          <span class="voters-field-label">QR cedula</span>
+          <span class="voters-field-label">QR cédula</span>
           <select class="voters-select" id="voters-filter-qr">
             <option value="">Todos</option>
             <option value="registrado">Registrado</option>
@@ -88,13 +94,13 @@
             <thead>
               <tr>
                 <th>Votante</th>
-                <th>Identificacion</th>
+                <th>Identificación</th>
                 <th>Nombre completo</th>
                 <th>Rol</th>
-                <th>Puesto de votacion</th>
-                <th>Biometrico</th>
+                <th>Puesto de votación</th>
+                <th>Biométrico</th>
                 <th>Estado</th>
-                <th>Ultima actividad</th>
+                <th>Última actividad</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -112,7 +118,7 @@
       <div class="audit-header">
         <div class="audit-title">
           <span class="material-symbols-outlined">history</span>
-          Auditoria reciente
+          Auditoría reciente
         </div>
         <button class="audit-link" id="voters-audit-link">Ver toda</button>
       </div>
