@@ -19,6 +19,7 @@ import com.abisupc.security.AuthMiddleware;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import java.nio.charset.StandardCharsets;
+import java.util.concurrent.CountDownLatch;
 
 public class AppServer {
 
@@ -84,7 +85,6 @@ public class AppServer {
         app.post("/api/elecciones", EleccionController::crear);
         app.put("/api/elecciones/{id}", EleccionController::editar);
         app.post("/api/elecciones/{id}/iniciar", EleccionController::iniciar);
-        app.post("/api/elecciones/{id}/cerrar", EleccionController::cerrar);
         app.put("/api/elecciones/{id}/cerrar", EleccionController::cerrarAdmin);
         app.delete("/api/elecciones/{id}", EleccionController::eliminar);
         app.get("/api/elecciones/{id}/roles", EleccionController::getRoles);
@@ -96,6 +96,8 @@ public class AppServer {
 
         // Mesas y jurados
         app.get("/api/jurados", JuradoController::getAll);
+        app.post("/api/jurados/resumen-asignacion", JuradoController::resumenAsignacion);
+        app.post("/api/jurados/pool-elegible", JuradoController::poolElegible);
         app.get("/api/jurados/mesas", JuradoController::mesas);
         app.get("/api/jurados/mesas/{id}", JuradoController::mesaDetalle);
         app.post("/api/jurados/mesas", JuradoController::crearMesa);
@@ -139,5 +141,12 @@ public class AppServer {
         System.out.println("  POST /api/auth/login      (admin)");
         System.out.println("  POST /api/auth/logout     (admin)");
         System.out.println("  /api/admin/*              (protegido por AuthMiddleware)");
+
+        try {
+            new CountDownLatch(1).await();
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            app.stop();
+        }
     }
 }
