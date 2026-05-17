@@ -11,10 +11,16 @@ _pool = None
 
 def init_db():
     global _pool
-    db_user = os.getenv("ABIS_DB_USER", "abis")
-    db_password = os.getenv("ABIS_DB_PASSWORD", "")
+    db_user = os.getenv("ABIS_DB_USER")
+    db_password = os.getenv("ABIS_DB_PASSWORD")
     jdbc_url = os.getenv("ABIS_DB_URL", "jdbc:oracle:thin:@localhost:1521/XEPDB1")
     dsn = jdbc_url.replace("jdbc:oracle:thin:@", "")
+
+    if not db_user or not db_password:
+        raise RuntimeError(
+            "Variables de Oracle requeridas para abis-biometric: "
+            "ABIS_DB_USER y ABIS_DB_PASSWORD"
+        )
 
     _pool = oracledb.create_pool(
         user=db_user,
