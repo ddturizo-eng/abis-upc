@@ -1,123 +1,243 @@
-﻿(function initVotacion() {
-  const state = { eleccion: null, cargos: [], votante: null, selecciones: {} };
+(function initVotacionKiosko() {
+  const state = {
+    eleccion: null,
+    cargos: [],
+    votante: null,
+    permiso: null,
+    idCandidato: null
+  };
+
   const $ = (id) => document.getElementById(id);
+  const screens = ['welcome', 'verify', 'identity', 'ballot', 'success'];
 
-  function showError(message) {
-    $('vote-error').textContent = message;
-    $('vote-error').classList.remove('hidden');
-    $('vote-success').classList.add('hidden');
+  function token() {
+    return localStorage.getItem('abis_token') || '';
   }
 
-  function showSuccess(message) {
-    $('vote-success').textContent = message;
-    $('vote-success').classList.remove('hidden');
-    $('vote-error').classList.add('hidden');
+  async function verificarSesion() {
+    if (!token()) {
+      window.location.replace('/pages/auth/login.html');
+      return false;
+    }
+    try {
+      const response = await fetch('/api/admin/dashboard', {
+        headers: { Authorization: `Bearer ${token()}` }
+      });
+      if (!response.ok) throw new Error('Sesion invalida');
+      return true;
+    } catch (error) {
+      localStorage.removeItem('abis_token');
+      window.location.replace('/pages/auth/login.html');
+      return false;
+    }
   }
 
-  function updateSubmit() {
-    const completas = state.cargos.length > 0 && state.cargos.every((cargo) => state.selecciones[cargo.cargo]);
-    const ok = completas && state.votante && !$('vote-confirm-identity').disabled && $('vote-confirm-identity').checked;
-    $('btn-vote-submit').disabled = !ok;
-    $('btn-vote-submit').classList.toggle('opacity-50', !ok);
-    $('btn-vote-submit').classList.toggle('cursor-not-allowed', !ok);
+  function showScreen(name) {
+    screens.forEach((screen) => {
+      $(`screen-${screen}`).classList.toggle('hidden', screen !== name);
+    });
   }
 
-  async function cargarTarjeton() {
+  function setMessage(id, message) {
+    const element = $(id);
+    if (!element) return;
+    element.textContent = message || '';
+    element.classList.toggle('hidden', !message);
+  }
+
+  async function cargarEleccion() {
     try {
       const data = await API.get('/api/votacion/activa');
       state.eleccion = data.eleccion;
       state.cargos = data.cargos || [];
-      $('vote-election-name').textContent = state.eleccion.nombre;
+      const nombre = state.eleccion?.nombre || 'jornada electoral';
+      $('welcome-election-name').textContent = nombre;
+      $('ballot-election-name').textContent = nombre;
       renderTarjeton();
+      setMessage('welcome-error', '');
     } catch (error) {
-      showError(error.message);
-      $('vote-election-name').textContent = 'No hay eleccion activa';
+      $('welcome-election-name').textContent = 'jornada electoral';
+      setMessage('welcome-error', error.message || 'No hay una elección en curso.');
+      $('btn-go-verify').disabled = true;
+    }
+  }
+
+  async function iniciarVerificacion() {
+    setMessage('verify-error', '');
+    $('verify-status').textContent = 'Capturando huella. Mantén el dedo sobre el lector.';
+    $('btn-start-verify').disabled = true;
+
+    try {
+      const result = await API.post('/api/verify', {});
+      if (!result?.matched || !result.identificacion) {
+        throw new Error('No se encontró coincidencia biométrica.');
+      }
+
+      const identificacion = String(result.identificacion);
+      const [votante, permiso] = await Promise.all([
+        API.get('/api/votacion/votante?identificacion=' + encodeURIComponent(identificacion)),
+        API.get(`/api/votantes/${encodeURIComponent(identificacion)}/puede-votar?idEleccion=${encodeURIComponent(state.eleccion.id)}`)
+      ]);
+
+      state.votante = votante;
+      state.permiso = permiso;
+      renderIdentidad();
+      showScreen('identity');
+    } catch (error) {
+      setMessage('verify-error', error.message || 'No fue posible verificar la huella.');
+      $('verify-status').textContent = 'Verificación no completada. Intenta nuevamente.';
+    } finally {
+      $('btn-start-verify').disabled = false;
+    }
+  }
+
+  function renderIdentidad() {
+    const votante = state.votante || {};
+    const permiso = state.permiso || {};
+    $('identity-name').textContent = votante.nombre || '--';
+    $('identity-id').textContent = votante.identificacion || '--';
+    $('identity-status').textContent = permiso.puede === 'S' ? 'HABILITADO PARA VOTAR' : (permiso.motivo || votante.estado || '--');
+    $('identity-place').textContent = votante.idPuesto ? `Puesto ${votante.idPuesto}` : '--';
+    $('jury-confirm-identity').checked = false;
+    $('jury-confirm-identity').disabled = permiso.puede !== 'S';
+    $('btn-go-ballot').disabled = true;
+    setMessage('identity-error', permiso.puede === 'S' ? '' : (permiso.motivo || 'El votante no puede votar en esta elección.'));
+
+    if (votante.fotoUrl) {
+      $('identity-photo').src = votante.fotoUrl;
+      $('identity-photo').classList.remove('hidden');
+      $('identity-photo-empty').classList.add('hidden');
+    } else {
+      $('identity-photo').classList.add('hidden');
+      $('identity-photo-empty').classList.remove('hidden');
     }
   }
 
   function renderTarjeton() {
+    if (!state.cargos.length) {
+      $('vote-ballot').innerHTML = '<div class="kiosk-message kiosk-message-error">La elección activa no tiene candidatos configurados.</div>';
+      return;
+    }
+
     $('vote-ballot').innerHTML = state.cargos.map((grupo) => `
-      <div class="rounded-lg border border-slate-200 overflow-hidden">
-        <div class="bg-slate-50 px-4 py-3 text-sm font-bold text-[#004D33]">${grupo.cargo}</div>
-        <div class="grid grid-cols-2 gap-3 p-4">
-          ${(grupo.candidatos || []).map((c) => `
-            <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-slate-200 p-4 hover:border-[#004D33]">
-              <input type="radio" name="cargo-${grupo.cargo}" value="${c.idCandidato}" data-cargo="${grupo.cargo}" class="text-[#004D33]">
-              <span class="flex h-10 w-10 items-center justify-center rounded-full bg-[#004D33] text-sm font-bold text-white">${c.numeroCampania}</span>
-              <span class="font-bold text-slate-700">${c.nombre}</span>
+      <div class="kiosk-cargo">
+        <div class="kiosk-cargo-title">
+          <i class="ti ti-ballot" aria-hidden="true"></i>
+          <span>
+            <small>CARGO A ELEGIR</small>
+            ${escapeHtml(grupo.cargo || 'Cargo')}
+          </span>
+        </div>
+        <div class="kiosk-candidates">
+          ${(grupo.candidatos || []).map((candidato) => `
+            <label class="kiosk-candidate">
+              <input type="radio" name="candidato" value="${Number(candidato.idCandidato)}">
+              <span class="kiosk-candidate-check" aria-hidden="true"><i class="ti ti-check"></i></span>
+              <span class="kiosk-candidate-number">${escapeHtml(formatNumeroCampania(candidato.numeroCampania))}</span>
+              <span class="kiosk-candidate-meta">
+                <small>MOVIMIENTO</small>
+                <span class="kiosk-candidate-party">${escapeHtml(candidato.movimiento || candidato.partido || 'Universitario')}</span>
+              </span>
+              <span class="kiosk-candidate-photo" aria-hidden="true">
+                <i class="ti ti-user"></i>
+              </span>
+              <span class="kiosk-candidate-name">${escapeHtml(candidato.nombre || 'Candidato')}</span>
+              <span class="kiosk-candidate-slogan">${escapeHtml(candidato.eslogan || 'Compromiso con la comunidad universitaria')}</span>
+              <span class="kiosk-candidate-button">Seleccionar voto</span>
             </label>
           `).join('')}
         </div>
       </div>
     `).join('');
+
     document.querySelectorAll('#vote-ballot input[type="radio"]').forEach((input) => {
       input.addEventListener('change', () => {
-        state.selecciones[input.dataset.cargo] = Number(input.value);
-        updateSubmit();
+        state.idCandidato = Number(input.value);
+        $('vote-selection-status').textContent = 'Selección lista para confirmar';
+        $('btn-vote-submit').disabled = false;
       });
     });
   }
 
-  async function buscarVotante() {
-    const identificacion = $('vote-identificacion').value.trim();
-    if (!identificacion) {
-      showError('Ingrese la identificacion del votante.');
-      return;
-    }
-    try {
-      const votante = await API.get('/api/votacion/votante?identificacion=' + encodeURIComponent(identificacion));
-      state.votante = votante;
-      $('vote-voter-card').classList.remove('hidden');
-      $('vote-voter-name').textContent = votante.nombre;
-      $('vote-voter-state').textContent = votante.yaVoto ? 'VOTO YA EJERCIDO' : votante.estado;
-      $('vote-confirm-identity').checked = false;
-      $('vote-confirm-identity').disabled = votante.yaVoto || votante.estado !== 'PENDIENTE';
-      if (votante.fotoUrl) {
-        $('vote-voter-photo').src = votante.fotoUrl;
-        $('vote-voter-photo').classList.remove('hidden');
-        $('vote-voter-photo-empty').classList.add('hidden');
-      } else {
-        $('vote-voter-photo').classList.add('hidden');
-        $('vote-voter-photo-empty').classList.remove('hidden');
-      }
-      if (votante.yaVoto) showError('Voto ya ejercido.');
-      else if (votante.estado !== 'PENDIENTE') showError('Votante no habilitado.');
-      else showSuccess('Votante validado. Confirme identidad visual.');
-      updateSubmit();
-    } catch (error) {
-      state.votante = null;
-      $('vote-voter-card').classList.add('hidden');
-      showError(error.message);
-      updateSubmit();
-    }
+  function irATarjeton() {
+    state.idCandidato = null;
+    $('vote-selection-status').textContent = 'Seleccione una opción';
+    $('btn-vote-submit').disabled = true;
+    document.querySelectorAll('#vote-ballot input[type="radio"]').forEach((input) => {
+      input.checked = false;
+    });
+    showScreen('ballot');
   }
 
   async function registrarVoto() {
-    const selecciones = Object.entries(state.selecciones).map(([cargo, idCandidato]) => ({ cargo, idCandidato }));
-    if (!confirm('El voto se registrara de forma irreversible. Continuar?')) return;
+    if (!state.votante || !state.eleccion || !state.idCandidato) {
+      return;
+    }
+
+    if (!confirm('El voto se registrará de forma irreversible. ¿Continuar?')) {
+      return;
+    }
+
     try {
-      await API.post('/api/votacion/registrar', {
+      $('btn-vote-submit').disabled = true;
+      await API.post('/api/votos/registrar', {
         identificacion: state.votante.identificacion,
-        selecciones
+        idEleccion: state.eleccion.id,
+        idCandidato: state.idCandidato,
+        idPuesto: state.votante.idPuesto
       });
-      showSuccess('Voto registrado correctamente.');
-      state.votante = null;
-      state.selecciones = {};
-      $('vote-identificacion').value = '';
-      $('vote-voter-card').classList.add('hidden');
-      document.querySelectorAll('#vote-ballot input[type="radio"]').forEach((input) => { input.checked = false; });
-      updateSubmit();
+      showScreen('success');
+      window.setTimeout(volverInicio, 4000);
     } catch (error) {
-      showError(error.message);
+      setMessage('identity-error', error.message || 'No fue posible registrar el voto.');
+      showScreen('identity');
     }
   }
 
-  $('btn-vote-search').addEventListener('click', buscarVotante);
-  $('vote-identificacion').addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') buscarVotante();
-  });
-  $('vote-confirm-identity').addEventListener('change', updateSubmit);
-  $('btn-vote-submit').addEventListener('click', registrarVoto);
-  cargarTarjeton();
-})();
+  function volverInicio() {
+    state.votante = null;
+    state.permiso = null;
+    state.idCandidato = null;
+    $('verify-status').textContent = 'Cuando estés listo, inicia la verificación.';
+    setMessage('verify-error', '');
+    setMessage('identity-error', '');
+    document.querySelectorAll('#vote-ballot input[type="radio"]').forEach((input) => {
+      input.checked = false;
+    });
+    showScreen('welcome');
+  }
 
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  async function init() {
+    if (!(await verificarSesion())) return;
+    $('btn-go-verify').addEventListener('click', () => showScreen('verify'));
+    $('btn-start-verify').addEventListener('click', iniciarVerificacion);
+    $('btn-cancel-verify').addEventListener('click', () => showScreen('welcome'));
+    $('jury-confirm-identity').addEventListener('change', () => {
+      $('btn-go-ballot').disabled = !$('jury-confirm-identity').checked;
+    });
+    $('btn-go-ballot').addEventListener('click', irATarjeton);
+    $('btn-retry-identity').addEventListener('click', () => showScreen('verify'));
+    $('btn-ballot-back')?.addEventListener('click', () => showScreen('identity'));
+    $('btn-vote-submit').addEventListener('click', registrarVoto);
+    $('btn-return-welcome').addEventListener('click', volverInicio);
+    await cargarEleccion();
+    showScreen('welcome');
+  }
+
+  init();
+
+  function formatNumeroCampania(value) {
+    if (value === null || value === undefined || value === '') return '--';
+    const text = String(value);
+    return /^\d+$/.test(text) ? text.padStart(2, '0') : text;
+  }
+})();
