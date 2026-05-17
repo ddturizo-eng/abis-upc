@@ -77,7 +77,7 @@ public class VotanteRepository implements Repository<Votante> {
             ps.executeUpdate();
         } catch (SQLException e) {
             if (e.getErrorCode() == 1) {
-                throw new RuntimeException("Ya existe un votante con la identificación: " + entity.getIdentificacion(), e);
+                throw new RuntimeException("Ya existe un votante con la identificacion: " + entity.getIdentificacion(), e);
             }
             throw new RuntimeException("Error en VotanteRepository.save", e);
         }
@@ -86,7 +86,7 @@ public class VotanteRepository implements Repository<Votante> {
     @Override
     public void update(Votante entity) {
         String sql = "UPDATE Votantes SET CORREO = ?, PRIMER_NOMBRE = ?, SEGUNDO_NOMBRE = ?, " +
-                "PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, ESTADO_VOTO = ?, FOTO_URL = ?, " +
+                "PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, FOTO_URL = ?, " +
                 "FECHA_CONSENTIMIENTO = ?, ID_ROL = ?, ID_PUESTO = ?, QR_CEDULA = ? WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -95,16 +95,15 @@ public class VotanteRepository implements Repository<Votante> {
             ps.setString(3, entity.getSegundoNombre());
             ps.setString(4, entity.getPrimerApellido());
             ps.setString(5, entity.getSegundoApellido());
-            ps.setString(6, entity.getEstadoVoto());
-            ps.setString(7, entity.getFotoUrl());
-            ps.setTimestamp(8, entity.getFechaConsentimiento());
-            ps.setLong(9, entity.getIdRol());
-            ps.setLong(10, entity.getIdPuesto());
-            ps.setString(11, entity.getQrCedula());
-            ps.setString(12, entity.getIdentificacion());
+            ps.setString(6, entity.getFotoUrl());
+            ps.setTimestamp(7, entity.getFechaConsentimiento());
+            ps.setLong(8, entity.getIdRol());
+            ps.setLong(9, entity.getIdPuesto());
+            ps.setString(10, entity.getQrCedula());
+            ps.setString(11, entity.getIdentificacion());
             int filas = ps.executeUpdate();
             if (filas == 0) {
-                throw new RuntimeException("No se encontró el votante con identificación: " + entity.getIdentificacion());
+                throw new RuntimeException("No se encontro el votante con identificacion: " + entity.getIdentificacion());
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotanteRepository.update - identificacion: " + entity.getIdentificacion(), e);
@@ -129,10 +128,7 @@ public class VotanteRepository implements Repository<Votante> {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapRow(rs));
-                }
-                return Optional.empty();
+                return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotanteRepository.findByIdentificacion - identificacion: " + identificacion, e);
@@ -145,10 +141,7 @@ public class VotanteRepository implements Repository<Votante> {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, correo);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapRow(rs));
-                }
-                return Optional.empty();
+                return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotanteRepository.findByCorreo - correo: " + correo, e);
@@ -161,10 +154,7 @@ public class VotanteRepository implements Repository<Votante> {
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, qrCedula);
             try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) {
-                    return Optional.of(mapRow(rs));
-                }
-                return Optional.empty();
+                return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotanteRepository.findByQrCedula", e);
@@ -219,18 +209,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public void actualizarEstado(String identificacion, String estado) {
-        String sql = "UPDATE Votantes SET ESTADO_VOTO = ? WHERE IDENTIFICACION = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setString(1, estado);
-            ps.setString(2, identificacion);
-            int filas = ps.executeUpdate();
-            if (filas == 0) {
-                throw new RuntimeException("No se encontró el votante con identificación: " + identificacion);
-            }
-        } catch (SQLException e) {
-            throw new RuntimeException("Error en VotanteRepository.actualizarEstado - identificacion: " + identificacion, e);
-        }
+        throw new UnsupportedOperationException("El estado del votante se cambia mediante procedimientos Oracle autorizados");
     }
 
     public void actualizarFoto(String identificacion, String fotoUrl) {
@@ -241,7 +220,7 @@ public class VotanteRepository implements Repository<Votante> {
             ps.setString(2, identificacion);
             int filas = ps.executeUpdate();
             if (filas == 0) {
-                throw new RuntimeException("No se encontró el votante con identificación: " + identificacion);
+                throw new RuntimeException("No se encontro el votante con identificacion: " + identificacion);
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotanteRepository.actualizarFoto - identificacion: " + identificacion, e);
