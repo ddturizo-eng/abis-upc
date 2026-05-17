@@ -12,12 +12,6 @@ from pathlib import Path
 
 load_dotenv(dotenv_path=Path(__file__).resolve().parent.parent.parent / ".env")
 
-# DIAGNÓSTICO TEMPORAL — eliminar después
-import os
-print(f"[ENV] DB_USER={os.getenv('ABIS_DB_USER')}")
-print(f"[ENV] DB_PASSWORD={os.getenv('ABIS_DB_PASSWORD')}")
-print(f"[ENV] __file__={Path(__file__).resolve()}")
-print(f"[ENV] .env path={Path(__file__).resolve().parent.parent.parent / '.env'}")
 # Carga el .env desde la raíz del proyecto (abis-upc/.env)
 # __file__ = abis-upc/abis-biometric/app/main.py
 # .parent.parent.parent = abis-upc/
