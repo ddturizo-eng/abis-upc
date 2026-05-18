@@ -7,6 +7,7 @@ import com.abisupc.model.EstadoEleccion;
 import com.abisupc.repository.EleccionRepository;
 import com.abisupc.repository.EleccionRolRepository;
 import com.abisupc.service.AdminService;
+import com.abisupc.service.EleccionLifecycleService;
 import com.abisupc.service.ResultadosService;
 import com.abisupc.util.OracleErrorHandler;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -28,11 +29,13 @@ public class EleccionController {
     private static final EleccionRepository eleccionRepo = new EleccionRepository();
     private static final EleccionRolRepository eleccionRolRepo = new EleccionRolRepository();
     private static final AdminService adminService = new AdminService();
+    private static final EleccionLifecycleService lifecycleService = new EleccionLifecycleService();
     private static final ResultadosService resultadosService = new ResultadosService();
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static void getAll(Context ctx) {
         try {
+            lifecycleService.sincronizarEstados();
             String estado = ctx.queryParam("estado");
             List<Eleccion> fuente = estado != null && !estado.isBlank()
                     ? eleccionRepo.findByEstado(estado.trim().toUpperCase())
@@ -65,6 +68,7 @@ public class EleccionController {
 
     public static void stats(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
+            lifecycleService.sincronizarEstados();
             Map<String, Object> stats = new LinkedHashMap<>();
             stats.put("total", count(conn, "SELECT COUNT(*) FROM Elecciones"));
             stats.put("programadas", count(conn, "SELECT COUNT(*) FROM Elecciones WHERE ESTADO = 'PROGRAMADA'"));
@@ -105,6 +109,7 @@ public class EleccionController {
             Eleccion eleccion = parseEleccion(body);
             eleccion.setId(id);
             eleccionRepo.update(eleccion);
+            configurarPesosRolesSiExisten(id, body);
             ctx.json(ApiResponse.success("Elección actualizada"));
         } catch (IllegalStateException e) {
             ctx.status(409).json(ApiResponse.error(e.getMessage()));
@@ -118,14 +123,25 @@ public class EleccionController {
     public static void iniciar(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
-            if (eleccionRepo.hayEleccionEnCurso()) {
-                ctx.status(409).json(ApiResponse.error("Ya existe una elección en curso"));
-                return;
-            }
+            lifecycleService.sincronizarEstados();
 
             Eleccion eleccion = eleccionRepo.findById(id).orElse(null);
+            if (eleccion != null && eleccion.getEstado() == EstadoEleccion.EN_CURSO) {
+                ctx.json(ApiResponse.success("Elección ya estaba en curso"));
+                return;
+            }
             if (eleccion == null || eleccion.getEstado() != EstadoEleccion.PROGRAMADA) {
                 ctx.status(409).json(ApiResponse.error("La elección debe estar en estado PROGRAMADA"));
+                return;
+            }
+            var activa = lifecycleService.eleccionEnCurso();
+            if (activa.isPresent()) {
+                Map<String, Object> detail = new LinkedHashMap<>();
+                detail.put("motivo", "YA_EXISTE_ELECCION_EN_CURSO");
+                detail.put("activa", activa.get());
+                detail.put("solicitada", Map.of("id", id, "nombre", eleccion.getNombre()));
+                detail.put("mensaje", "Primero cierre la elección activa para iniciar esta jornada");
+                ctx.status(409).json(ApiResponse.error(mapper.writeValueAsString(detail)));
                 return;
             }
 
@@ -199,6 +215,7 @@ public class EleccionController {
 
     public static void getRoles(Context ctx) {
         try {
+            lifecycleService.sincronizarEstados();
             Long id = Long.parseLong(ctx.pathParam("id"));
             ctx.json(ApiResponse.success(eleccionRolRepo.findByEleccion(id)));
         } catch (Exception e) {
@@ -218,9 +235,12 @@ public class EleccionController {
             if (pesoVoto == null || pesoVoto <= 0) {
                 throw new IllegalArgumentException("pesoVoto debe ser mayor que 0");
             }
+            validarProgramada(idEleccion);
 
             eleccionRolRepo.save(idEleccion, idRol, pesoVoto);
             ctx.status(201).json(ApiResponse.success("Peso de voto configurado"));
+        } catch (IllegalStateException e) {
+            ctx.status(409).json(ApiResponse.error(e.getMessage()));
         } catch (IllegalArgumentException e) {
             ctx.status(400).json(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
@@ -263,18 +283,28 @@ public class EleccionController {
             return;
         }
         JsonNode pesos = body.get("pesosRoles");
-        configurarPeso(idEleccion, 1L, pesos, "estudiante");
-        configurarPeso(idEleccion, 3L, pesos, "docente");
-        configurarPeso(idEleccion, 2L, pesos, "egresado");
-        configurarPeso(idEleccion, 4L, pesos, "administrativo");
+        validarProgramada(idEleccion);
+        configurarPeso(idEleccion, pesos, "estudiante", "Estudiante");
+        configurarPeso(idEleccion, pesos, "docente", "Docente");
+        configurarPeso(idEleccion, pesos, "egresado", "Egresado");
+        configurarPeso(idEleccion, pesos, "administrativo", "Administrativo");
     }
 
-    private static void configurarPeso(Long idEleccion, Long idRol, JsonNode pesos, String field) {
+    private static void configurarPeso(Long idEleccion, JsonNode pesos, String field, String nombreRol) {
         if (pesos != null && pesos.hasNonNull(field)) {
             double peso = pesos.get(field).asDouble();
             if (peso > 0) {
+                Long idRol = eleccionRolRepo.findRolIdByNombre(nombreRol);
                 eleccionRolRepo.save(idEleccion, idRol, peso);
             }
+        }
+    }
+
+    private static void validarProgramada(Long idEleccion) {
+        Eleccion eleccion = eleccionRepo.findById(idEleccion)
+                .orElseThrow(() -> new IllegalArgumentException("Eleccion no encontrada"));
+        if (eleccion.getEstado() != EstadoEleccion.PROGRAMADA) {
+            throw new IllegalStateException("Los pesos de voto solo se pueden cambiar antes de iniciar la eleccion");
         }
     }
 
