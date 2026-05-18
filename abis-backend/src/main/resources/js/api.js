@@ -216,3 +216,24 @@ const ApiEleccionRoles = {
 window.ApiElecciones = ApiElecciones;
 window.ApiCandidatos = ApiCandidatos;
 window.ApiEleccionRoles = ApiEleccionRoles;
+
+const ApiCertificados = {
+    listar: (eleccionId = '', limit = 100) => {
+        const params = new URLSearchParams();
+        if (eleccionId) params.set('eleccionId', eleccionId);
+        if (limit) params.set('limit', limit);
+        const query = params.toString();
+        return API.get(`/api/certificados${query ? `?${query}` : ''}`);
+    },
+    resumen: (eleccionId = '') => {
+        const params = new URLSearchParams();
+        if (eleccionId) params.set('eleccionId', eleccionId);
+        const query = params.toString();
+        return API.get(`/api/certificados/resumen${query ? `?${query}` : ''}`);
+    },
+    elecciones: () => API.get('/api/certificados/elecciones'),
+    reenviar: (idAuditoria) => API.post(`/api/certificados/${idAuditoria}/reenviar`, {}),
+    reenviarVotante: (identificacion, idEleccion) => API.post('/api/certificados/reenviar', { identificacion, idEleccion })
+};
+
+window.ApiCertificados = ApiCertificados;

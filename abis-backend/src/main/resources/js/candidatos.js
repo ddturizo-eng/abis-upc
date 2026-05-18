@@ -131,7 +131,12 @@
       const payload = await ApiElecciones.listar();
       state.elecciones = unwrap(payload);
       renderizarSelectorElecciones();
-      const activa = state.elecciones.find((item) => normalizeUpper(item.estado) === 'EN_CURSO') || state.elecciones[0];
+      const preferida = localStorage.getItem('abis_eleccion_candidatos');
+      const seleccionada = preferida
+        ? state.elecciones.find((item) => String(electionId(item)) === String(preferida))
+        : null;
+      const activa = seleccionada || state.elecciones.find((item) => normalizeUpper(item.estado) === 'EN_CURSO') || state.elecciones[0];
+      localStorage.removeItem('abis_eleccion_candidatos');
       if (activa) {
         state.eleccionId = String(electionId(activa));
         state.eleccionActual = activa;
@@ -611,13 +616,18 @@
   }
 
   function abrirModal(modal) {
+    modal.removeAttribute('inert');
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');
   }
 
   function cerrarModal(modal) {
+    if (modal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
     modal.classList.remove('open');
     modal.setAttribute('aria-hidden', 'true');
+    modal.setAttribute('inert', '');
   }
 
   function exportarCsv() {

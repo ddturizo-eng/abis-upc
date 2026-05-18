@@ -72,6 +72,7 @@ Program.cs
  System.Windows.Forms.dll
  System.Xml.dll
  System.Xml.Linq.dll
+<NUGET>/newtonsoft.json/13.0.4/lib/net45/Newtonsoft.Json.dll
 DPFPDevNET.dll
 DPFPEngNET.dll
 DPFPShrNET.dll

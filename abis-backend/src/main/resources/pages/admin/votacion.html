@@ -1,56 +1,33 @@
-﻿<div class="flex flex-col gap-6">
+<section class="admin-section">
   <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
-    <div class="flex items-center justify-between">
+    <div class="flex items-center justify-between gap-4">
       <div>
-        <h1 class="text-2xl font-bold text-[#004D33] font-dm">Puesto de Votacion</h1>
-        <p id="vote-election-name" class="text-sm text-slate-400 mt-1 font-dm">Cargando eleccion activa...</p>
+        <h1 class="text-2xl font-bold text-[#004D33] font-dm">Modo de votacion</h1>
+        <p class="text-sm text-slate-400 mt-1 font-dm">La jornada se opera desde la pantalla kiosko oficial.</p>
       </div>
-      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase">TARJETON</span>
+      <button type="button" id="btn-open-kiosk" class="rounded-lg bg-[#004D33] px-5 py-3 text-sm font-bold text-white">
+        Abrir modo votacion
+      </button>
     </div>
+    <div id="votacion-admin-message" class="mt-4 hidden rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700"></div>
   </div>
+</section>
 
-  <div class="grid grid-cols-12 gap-6">
-    <aside class="col-span-4 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6 flex flex-col gap-4">
-      <div>
-        <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-2">Identificacion del votante</label>
-        <div class="flex gap-2">
-          <input id="vote-identificacion" class="w-full rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm outline-none focus:border-[#004D33]" placeholder="Cedula">
-          <button id="btn-vote-search" class="rounded-lg bg-[#004D33] px-4 text-white">
-            <span class="material-symbols-outlined">search</span>
-          </button>
-        </div>
-      </div>
+<script>
+  (function initAdminVotacionRedirect() {
+    const button = document.getElementById('btn-open-kiosk');
+    const message = document.getElementById('votacion-admin-message');
 
-      <div id="vote-voter-card" class="hidden rounded-lg border border-slate-200 bg-slate-50 p-4">
-        <div class="aspect-[4/3] overflow-hidden rounded-lg bg-slate-200 flex items-center justify-center">
-          <img id="vote-voter-photo" class="hidden h-full w-full object-cover" alt="Foto del votante">
-          <span id="vote-voter-photo-empty" class="material-symbols-outlined text-5xl text-slate-400">person</span>
-        </div>
-        <p id="vote-voter-name" class="mt-4 text-lg font-bold text-[#004D33]">--</p>
-        <p id="vote-voter-state" class="text-xs font-bold uppercase tracking-widest text-slate-400">--</p>
-        <label class="mt-4 flex items-center gap-2 text-sm text-slate-600">
-          <input id="vote-confirm-identity" type="checkbox" class="rounded border-slate-300 text-[#004D33]">
-          Jurado confirma identidad visual
-        </label>
-      </div>
+    async function openKiosk() {
+      try {
+        await API.get('/api/votacion/activa');
+        window.open('/pages/votacion/index.html', 'ABISVotacionKiosko', 'noopener,noreferrer');
+      } catch (error) {
+        message.textContent = error.message || 'No hay una eleccion en curso para abrir el modo votacion.';
+        message.classList.remove('hidden');
+      }
+    }
 
-      <div id="vote-error" class="hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"></div>
-      <div id="vote-success" class="hidden rounded-lg border border-green-200 bg-green-50 p-3 text-sm text-green-700"></div>
-    </aside>
-
-    <section class="col-span-8 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
-      <div class="px-6 py-4 bg-slate-50 border-b flex items-center justify-between">
-        <h2 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Candidatos</h2>
-        <span id="vote-selection-status" class="text-xs text-slate-500">Seleccione una opcion por cargo</span>
-      </div>
-      <div id="vote-ballot" class="p-6 flex flex-col gap-6"></div>
-      <div class="border-t bg-slate-50 p-6 flex justify-end">
-        <button id="btn-vote-submit" disabled class="rounded-lg bg-[#4CAF7D] px-6 py-3 text-sm font-bold text-white opacity-50 cursor-not-allowed">
-          Registrar voto
-        </button>
-      </div>
-    </section>
-  </div>
-</div>
-<script src="../../js/votacion.js"></script>
-
+    button?.addEventListener('click', openKiosk);
+  })();
+</script>

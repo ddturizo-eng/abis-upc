@@ -2,6 +2,7 @@ package com.abisupc.controller;
 
 import com.abisupc.config.AppConfig;
 import com.abisupc.integration.BiometricClient;
+import com.abisupc.integration.CertificadoClient;
 import io.javalin.Javalin;
 
 import java.net.InetSocketAddress;
@@ -23,6 +24,7 @@ public class TestController {
             boolean ocrAlive = BiometricClient.isOcrAlive();
             boolean databaseAlive = isDatabaseAlive();
             boolean nativeAlive = isPortOpen("localhost", 8765);
+            boolean emailAlive = new CertificadoClient().isAlive();
 
             Map<String, Object> status = new LinkedHashMap<>();
             status.put("java", "ok");
@@ -31,7 +33,8 @@ public class TestController {
             status.put("ocr", ocrAlive ? "ok" : "offline");
             status.put("native", nativeAlive ? "ok" : "offline");
             status.put("database", databaseAlive ? "ok" : "offline");
-            status.put("mensaje", (pythonAlive && ocrAlive && nativeAlive && databaseAlive)
+            status.put("email", emailAlive ? "ok" : "offline");
+            status.put("mensaje", (pythonAlive && ocrAlive && nativeAlive && databaseAlive && emailAlive)
                     ? "Todos los sistemas operativos"
                     : "Verificar servicios externos y Oracle XE");
 

@@ -13,7 +13,12 @@ import java.util.List;
 public class EleccionRolRepository {
 
     public void save(Long idEleccion, Long idRol, Double pesoVoto) {
-        String sql = "INSERT INTO Eleccion_roles (ID_ELECCION, ID_ROL, PESO_VOTO, FECHA_CONFIGURACION) VALUES (?, ?, ?, SYSDATE)";
+        String sql = "MERGE INTO Eleccion_roles er " +
+                "USING (SELECT ? AS ID_ELECCION, ? AS ID_ROL, ? AS PESO_VOTO FROM dual) src " +
+                "ON (er.ID_ELECCION = src.ID_ELECCION AND er.ID_ROL = src.ID_ROL) " +
+                "WHEN MATCHED THEN UPDATE SET er.PESO_VOTO = src.PESO_VOTO, er.FECHA_CONFIGURACION = SYSDATE " +
+                "WHEN NOT MATCHED THEN INSERT (ID_ELECCION, ID_ROL, PESO_VOTO, FECHA_CONFIGURACION) " +
+                "VALUES (src.ID_ELECCION, src.ID_ROL, src.PESO_VOTO, SYSDATE)";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idEleccion);
@@ -22,6 +27,22 @@ public class EleccionRolRepository {
             ps.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException("Error en EleccionRolRepository.save", e);
+        }
+    }
+
+    public Long findRolIdByNombre(String nombre) {
+        String sql = "SELECT ID_ROL FROM Roles WHERE UPPER(NOMBRE) = UPPER(?)";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nombre);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getLong("ID_ROL");
+                }
+                throw new IllegalArgumentException("Rol no encontrado: " + nombre);
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en EleccionRolRepository.findRolIdByNombre", e);
         }
     }
 

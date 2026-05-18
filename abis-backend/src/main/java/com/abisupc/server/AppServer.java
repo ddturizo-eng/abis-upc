@@ -15,7 +15,9 @@ import com.abisupc.controller.VotacionController;
 import com.abisupc.controller.BiometricProgressController;
 import com.abisupc.controller.JuradoController;
 import com.abisupc.controller.BiometriaController;
+import com.abisupc.controller.CertificadoController;
 import com.abisupc.security.AuthMiddleware;
+import com.abisupc.service.EleccionLifecycleService;
 import io.javalin.Javalin;
 import io.javalin.http.staticfiles.Location;
 import java.nio.charset.StandardCharsets;
@@ -24,6 +26,7 @@ import java.util.concurrent.CountDownLatch;
 public class AppServer {
 
     public static void main(String[] args) {
+        new EleccionLifecycleService().sincronizarEstados();
 
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add("C:/PROYECTOS P3/abis-upc/abis-backend/src/main/resources", Location.EXTERNAL);
@@ -108,6 +111,7 @@ public class AppServer {
         app.delete("/api/jurados/{identificacion}/{idMesa}", JuradoController::remover);
         app.get("/api/jurados/exportar/pdf", JuradoController::exportarPdf);
         app.post("/api/biometria/enrolar", BiometriaController::enrolar);
+        CertificadoController.register(app);
 
         // Rutas de administracion protegidas por token de sesion
         AuthMiddleware auth = new AuthMiddleware();
@@ -116,6 +120,8 @@ public class AppServer {
         app.before("/api/jurados", auth);
         app.before("/api/jurados/*", auth);
         app.before("/api/biometria/enrolar", auth);
+        app.before("/api/certificados", auth);
+        app.before("/api/certificados/*", auth);
         app.before("/api/votantes", auth);
         app.before("/api/votantes/estadisticas", auth);
         app.before("/api/votantes/{id}/inhabilitar", auth);
