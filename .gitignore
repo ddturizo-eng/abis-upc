@@ -74,6 +74,10 @@ abis-biometric/.mvn/
 # ─── LOGS ────────────────────────────────────────────────────────────────────
 *.log
 logs/
+abis-email-service/logs/
+abis-email-service/temp/
+abis-email-service/node_modules/
+abis-email-service/.env
 
 
 # ─── IDEs ────────────────────────────────────────────────────────────────────
