@@ -4,10 +4,12 @@ import com.abisupc.dto.CertificadoEnvioRequest;
 import com.abisupc.dto.CertificadoEnvioResponse;
 import com.abisupc.integration.CertificadoClient;
 import com.abisupc.model.Eleccion;
+import com.abisupc.model.PuestoVotacion;
 import com.abisupc.model.RegistroVoto;
 import com.abisupc.model.Votante;
 import com.abisupc.repository.AuditoriaCorreoRepository;
 import com.abisupc.repository.EleccionRepository;
+import com.abisupc.repository.PuestoVotacionRepository;
 import com.abisupc.repository.RegistroVotoRepository;
 import com.abisupc.repository.VotanteRepository;
 
@@ -27,6 +29,7 @@ public class CertificadoService {
     private final VotanteRepository votanteRepo;
     private final EleccionRepository eleccionRepo;
     private final RegistroVotoRepository registroVotoRepo;
+    private final PuestoVotacionRepository puestoRepo;
     private final CertificadoClient certificadoClient;
 
     public CertificadoService() {
@@ -35,6 +38,7 @@ public class CertificadoService {
                 new VotanteRepository(),
                 new EleccionRepository(),
                 new RegistroVotoRepository(),
+                new PuestoVotacionRepository(),
                 new CertificadoClient()
         );
     }
@@ -44,12 +48,14 @@ public class CertificadoService {
             VotanteRepository votanteRepo,
             EleccionRepository eleccionRepo,
             RegistroVotoRepository registroVotoRepo,
+            PuestoVotacionRepository puestoRepo,
             CertificadoClient certificadoClient
     ) {
         this.auditoriaCorreoRepo = auditoriaCorreoRepo;
         this.votanteRepo = votanteRepo;
         this.eleccionRepo = eleccionRepo;
         this.registroVotoRepo = registroVotoRepo;
+        this.puestoRepo = puestoRepo;
         this.certificadoClient = certificadoClient;
     }
 
@@ -70,13 +76,15 @@ public class CertificadoService {
                 .orElseThrow(() -> new IllegalArgumentException("Eleccion no encontrada: " + idEleccion));
         RegistroVoto registro = registroVotoRepo.findByIdentificacionEleccion(identificacion, idEleccion)
                 .orElseThrow(() -> new IllegalStateException("El votante no tiene registro de voto para la eleccion"));
+        PuestoVotacion puesto = puestoRepo.findById(registro.getIdPuesto())
+                .orElseThrow(() -> new IllegalStateException("Puesto de votacion no encontrado para el registro"));
 
         String codigoCertificado = generarCodigoCertificado();
         Long idAuditoria = auditoriaCorreoRepo.registrarSolicitud(identificacion, idEleccion, codigoCertificado);
 
         try {
             CertificadoEnvioResponse response = certificadoClient.enviar(
-                    construirPayload(votante, eleccion, registro, codigoCertificado)
+                    construirPayload(votante, eleccion, registro, puesto, codigoCertificado)
             );
             auditoriaCorreoRepo.marcarEnviado(idAuditoria, response.getMessageId());
         } catch (Exception e) {
@@ -92,6 +100,7 @@ public class CertificadoService {
             Votante votante,
             Eleccion eleccion,
             RegistroVoto registro,
+            PuestoVotacion puesto,
             String codigoCertificado
     ) {
         CertificadoEnvioRequest payload = new CertificadoEnvioRequest();
@@ -102,6 +111,9 @@ public class CertificadoService {
         payload.setNombreEleccion(eleccion.getNombre());
         payload.setFechaVoto(fechaVoto(registro));
         payload.setCodigoCertificado(codigoCertificado);
+        payload.setNombrePuesto(puesto.getNombrePuesto());
+        payload.setSede(puesto.getSede());
+        payload.setCiudad(puesto.getCiudad());
         return payload;
     }
 

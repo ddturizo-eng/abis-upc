@@ -114,6 +114,9 @@ public class CertificadoClient {
         validarTexto(payload.getNombreEleccion(), "nombreEleccion");
         validarTexto(payload.getFechaVoto(), "fechaVoto");
         validarTexto(payload.getCodigoCertificado(), "codigoCertificado");
+        validarTexto(payload.getNombrePuesto(), "nombrePuesto");
+        validarTexto(payload.getSede(), "sede");
+        validarTexto(payload.getCiudad(), "ciudad");
         if (payload.getIdEleccion() == null || payload.getIdEleccion() <= 0) {
             throw new IllegalArgumentException("idEleccion requerido");
         }

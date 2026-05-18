@@ -1,7 +1,5 @@
 package com.abisupc.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /**
  * Payload interno para solicitar al microservicio Node el certificado del votante.
  */
@@ -14,6 +12,9 @@ public class CertificadoEnvioRequest {
     private String nombreEleccion;
     private String fechaVoto;
     private String codigoCertificado;
+    private String nombrePuesto;
+    private String sede;
+    private String ciudad;
 
     public String getIdentificacion() {
         return identificacion;
@@ -69,5 +70,29 @@ public class CertificadoEnvioRequest {
 
     public void setCodigoCertificado(String codigoCertificado) {
         this.codigoCertificado = codigoCertificado;
+    }
+
+    public String getNombrePuesto() {
+        return nombrePuesto;
+    }
+
+    public void setNombrePuesto(String nombrePuesto) {
+        this.nombrePuesto = nombrePuesto;
+    }
+
+    public String getSede() {
+        return sede;
+    }
+
+    public void setSede(String sede) {
+        this.sede = sede;
+    }
+
+    public String getCiudad() {
+        return ciudad;
+    }
+
+    public void setCiudad(String ciudad) {
+        this.ciudad = ciudad;
     }
 }
