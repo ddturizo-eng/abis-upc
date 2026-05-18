@@ -3,6 +3,7 @@ package com.abisupc.service;
 import com.abisupc.dto.CertificadoEnvioRequest;
 import com.abisupc.dto.CertificadoEnvioResponse;
 import com.abisupc.integration.CertificadoClient;
+import com.abisupc.model.AuditoriaCorreo;
 import com.abisupc.model.Eleccion;
 import com.abisupc.model.PuestoVotacion;
 import com.abisupc.model.RegistroVoto;
@@ -16,6 +17,10 @@ import com.abisupc.repository.VotanteRepository;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -94,6 +99,105 @@ public class CertificadoService {
             }
             throw new IOException("No fue posible enviar certificado", e);
         }
+    }
+
+    public Map<String, Object> reenviarCertificado(Long idAuditoria) throws IOException {
+        if (idAuditoria == null || idAuditoria <= 0) {
+            throw new IllegalArgumentException("idAuditoria requerido");
+        }
+        AuditoriaCorreo auditoria = auditoriaCorreoRepo.findById(idAuditoria)
+                .orElseThrow(() -> new IllegalArgumentException("Auditoria de certificado no encontrada"));
+        Long nuevoId = reenviarDesdeAuditoria(auditoria);
+        return Map.of("idAuditoria", nuevoId);
+    }
+
+    public Map<String, Object> reenviarCertificado(String identificacion, Long idEleccion) throws IOException {
+        validarEntrada(identificacion, idEleccion);
+        AuditoriaCorreo auditoria = auditoriaCorreoRepo
+                .findUltimaPorVotanteEleccionORegistro(identificacion, idEleccion)
+                .orElseThrow(() -> new IllegalStateException("El votante no tiene registro de voto para la eleccion"));
+        Long nuevoId = reenviarDesdeAuditoria(auditoria);
+        return Map.of("idAuditoria", nuevoId);
+    }
+
+    public List<Map<String, Object>> listarCertificados(Long idEleccion, int limit) {
+        List<Map<String, Object>> response = new ArrayList<>();
+        for (AuditoriaCorreo auditoria : auditoriaCorreoRepo.findUltimasPorRegistrosVoto(idEleccion, limit)) {
+            response.add(toResumen(auditoria));
+        }
+        return response;
+    }
+
+    public Map<String, Object> resumenPanel(Long idEleccion) {
+        List<AuditoriaCorreo> auditorias = auditoriaCorreoRepo.findUltimasPorRegistrosVoto(idEleccion, 200);
+        long enviados = auditorias.stream().filter(a -> "ENVIADO".equalsIgnoreCase(a.getEstado())).count();
+        long errores = auditorias.stream().filter(a -> "ERROR".equalsIgnoreCase(a.getEstado())).count();
+        long pendientes = auditorias.stream()
+                .filter(a -> !"ENVIADO".equalsIgnoreCase(a.getEstado()) && !"ERROR".equalsIgnoreCase(a.getEstado()))
+                .count();
+        Map<String, Object> resumen = new LinkedHashMap<>();
+        resumen.put("total", auditorias.size());
+        resumen.put("enviados", enviados);
+        resumen.put("errores", errores);
+        resumen.put("pendientes", pendientes);
+        return resumen;
+    }
+
+    public void prepararAuditoria() {
+        auditoriaCorreoRepo.asegurarInfraestructura();
+    }
+
+    private Long reenviarDesdeAuditoria(AuditoriaCorreo auditoria) throws IOException {
+        String codigoCertificado = auditoria.getCodigoCertificado();
+        if (codigoCertificado == null || codigoCertificado.isBlank()) {
+            codigoCertificado = generarCodigoCertificado();
+        }
+
+        Votante votante = votanteRepo.findByIdentificacion(auditoria.getIdentificacion())
+                .orElseThrow(() -> new IllegalArgumentException("Votante no encontrado: " + auditoria.getIdentificacion()));
+        Eleccion eleccion = eleccionRepo.findById(auditoria.getIdEleccion())
+                .orElseThrow(() -> new IllegalArgumentException("Eleccion no encontrada: " + auditoria.getIdEleccion()));
+        RegistroVoto registro = registroVotoRepo.findByIdentificacionEleccion(auditoria.getIdentificacion(), auditoria.getIdEleccion())
+                .orElseThrow(() -> new IllegalStateException("El votante no tiene registro de voto para la eleccion"));
+        PuestoVotacion puesto = puestoRepo.findById(registro.getIdPuesto())
+                .orElseThrow(() -> new IllegalStateException("Puesto de votacion no encontrado para el registro"));
+
+        Long idReintento = auditoriaCorreoRepo.registrarReintento(
+                auditoria.getIdentificacion(),
+                auditoria.getIdEleccion(),
+                codigoCertificado
+        );
+        try {
+            CertificadoEnvioResponse response = certificadoClient.enviar(
+                    construirPayload(votante, eleccion, registro, puesto, codigoCertificado)
+            );
+            auditoriaCorreoRepo.marcarEnviado(idReintento, response.getMessageId());
+            return idReintento;
+        } catch (Exception e) {
+            auditoriaCorreoRepo.marcarError(idReintento, e.getMessage());
+            if (e instanceof IOException ioException) {
+                throw ioException;
+            }
+            throw new IOException("No fue posible reenviar certificado", e);
+        }
+    }
+
+    private Map<String, Object> toResumen(AuditoriaCorreo auditoria) {
+        Map<String, Object> item = new LinkedHashMap<>();
+        item.put("idAuditoria", auditoria.getId());
+        item.put("identificacion", auditoria.getIdentificacion());
+        item.put("idEleccion", auditoria.getIdEleccion());
+        item.put("correo", auditoria.getCorreoVotante());
+        item.put("estado", auditoria.getEstado());
+        item.put("provider", auditoria.getProvider());
+        item.put("messageId", auditoria.getMessageId());
+        item.put("codigoCertificado", auditoria.getCodigoCertificado());
+        item.put("observaciones", auditoria.getObservaciones());
+        item.put("fechaSolicitud", auditoria.getFechaSolicitud() != null ? auditoria.getFechaSolicitud().toInstant().toString() : null);
+        item.put("fechaEnvio", auditoria.getFechaEnvio() != null ? auditoria.getFechaEnvio().toInstant().toString() : null);
+        votanteRepo.findByIdentificacion(auditoria.getIdentificacion()).ifPresent(v -> item.put("nombre", nombreCompleto(v)));
+        eleccionRepo.findById(auditoria.getIdEleccion()).ifPresent(e -> item.put("eleccion", e.getNombre()));
+        return item;
     }
 
     private CertificadoEnvioRequest construirPayload(
