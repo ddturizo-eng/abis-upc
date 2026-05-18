@@ -1,18 +1,82 @@
-<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
-<div class="flex flex-col gap-6">
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-6">
-    <div class="flex items-center justify-between">
-      <div>
-        <h1 class="text-2xl font-bold text-[#004D33] font-dm">Certificados</h1>
-        <p class="text-sm text-slate-400 mt-1 font-dm">Certificados de participación</p>
+<section class="flex flex-col gap-5">
+  <div class="bg-white rounded-lg shadow-card border border-outline p-5">
+    <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-12 w-12 rounded-lg bg-[#edfaf3] text-[#158759] flex items-center justify-center">
+          <span class="material-symbols-outlined">verified</span>
+        </div>
+        <div>
+          <h1 class="text-2xl font-bold text-[#0a2e1f]">Certificados post-voto</h1>
+          <p class="text-sm text-slate-500">Seguimiento y reenvio del PDF enviado al correo del votante.</p>
+        </div>
       </div>
-      <span class="bg-[#004D33] text-white text-[10px] font-bold px-3 py-1 rounded-full tracking-widest uppercase">EN DESARROLLO</span>
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <select id="cert-eleccion" class="rounded-lg border-outline text-sm min-w-[260px]">
+          <option value="">Todas las elecciones</option>
+        </select>
+        <button id="cert-refresh" class="inline-flex items-center justify-center gap-2 rounded-lg bg-[#158759] px-4 py-2 text-sm font-semibold text-white">
+          <span class="material-symbols-outlined text-[18px]">refresh</span>
+          Actualizar
+        </button>
+      </div>
     </div>
   </div>
 
-  <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] flex flex-col items-center justify-center py-20 gap-4">
-    <span class="material-symbols-outlined text-[48px] text-[#C8CBD2]">verified</span>
-    <p class="font-dm text-sm text-slate-400">Módulo en desarrollo</p>
-    <p class="font-mono text-[10px] text-slate-300 uppercase tracking-widest">PRÓXIMAMENTE</p>
+  <div class="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <article class="bg-white rounded-lg shadow-card border border-outline p-4">
+      <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Votos con certificado</p>
+      <p id="cert-total" class="mt-2 text-3xl font-bold text-[#0a2e1f]">--</p>
+    </article>
+    <article class="bg-white rounded-lg shadow-card border border-outline p-4">
+      <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Enviados</p>
+      <p id="cert-enviados" class="mt-2 text-3xl font-bold text-[#158759]">--</p>
+    </article>
+    <article class="bg-white rounded-lg shadow-card border border-outline p-4">
+      <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Pendientes</p>
+      <p id="cert-pendientes" class="mt-2 text-3xl font-bold text-amber-600">--</p>
+    </article>
+    <article class="bg-white rounded-lg shadow-card border border-outline p-4">
+      <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">Errores</p>
+      <p id="cert-errores" class="mt-2 text-3xl font-bold text-red-600">--</p>
+    </article>
   </div>
-</div>
+
+  <div class="bg-white rounded-lg shadow-card border border-outline overflow-hidden">
+    <div class="flex flex-col gap-3 border-b border-outline p-4 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h2 class="text-lg font-bold text-[#0a2e1f]">Auditoria de envios</h2>
+        <p class="text-sm text-slate-500">Cada fila corresponde al ultimo intento asociado a un registro de voto.</p>
+      </div>
+      <div class="flex flex-col gap-2 sm:flex-row">
+        <input id="cert-search" type="search" placeholder="Buscar por cedula, nombre o correo" class="rounded-lg border-outline text-sm sm:w-80">
+        <button id="cert-resend-selected" class="inline-flex items-center justify-center gap-2 rounded-lg border border-outline px-4 py-2 text-sm font-semibold text-[#0a2e1f]" disabled>
+          <span class="material-symbols-outlined text-[18px]">outgoing_mail</span>
+          Reenviar seleccionado
+        </button>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-left text-sm">
+        <thead class="bg-[#f8faf9] text-xs uppercase tracking-wider text-slate-500">
+          <tr>
+            <th class="w-10 px-4 py-3"></th>
+            <th class="px-4 py-3">Votante</th>
+            <th class="px-4 py-3">Eleccion</th>
+            <th class="px-4 py-3">Estado</th>
+            <th class="px-4 py-3">Codigo</th>
+            <th class="px-4 py-3">Ultimo intento</th>
+            <th class="px-4 py-3 text-right">Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="cert-table" class="divide-y divide-outline">
+          <tr>
+            <td colspan="7" class="px-4 py-10 text-center text-slate-400">Cargando certificados...</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<script src="../../js/certificados.js"></script>
