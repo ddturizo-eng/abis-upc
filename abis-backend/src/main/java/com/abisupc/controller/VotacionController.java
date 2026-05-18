@@ -1,6 +1,7 @@
 package com.abisupc.controller;
 
 import com.abisupc.config.AppConfig;
+import com.abisupc.service.EleccionLifecycleService;
 import com.abisupc.service.VotacionService;
 import com.abisupc.util.OracleErrorHandler;
 import io.javalin.http.Context;
@@ -17,8 +18,10 @@ import java.util.Map;
 public class VotacionController {
 
     private static final VotacionService votacionService = new VotacionService();
+    private static final EleccionLifecycleService lifecycleService = new EleccionLifecycleService();
 
     public static void activa(Context ctx) {
+        lifecycleService.sincronizarEstados();
         try (Connection conn = AppConfig.getConnection()) {
             Map<String, Object> eleccion = eleccionActiva(conn);
             if (eleccion == null) {
@@ -37,6 +40,7 @@ public class VotacionController {
     }
 
     public static void registrar(Context ctx) {
+        lifecycleService.sincronizarEstados();
         Map<?, ?> body = ctx.bodyAsClass(Map.class);
         String identificacion = text(body.get("identificacion"));
 
@@ -90,6 +94,7 @@ public class VotacionController {
     }
 
     public static void votante(Context ctx) {
+        lifecycleService.sincronizarEstados();
         String identificacion = ctx.queryParam("identificacion");
         try (Connection conn = AppConfig.getConnection()) {
             Map<String, Object> eleccion = eleccionActiva(conn);

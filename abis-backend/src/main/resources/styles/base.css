@@ -118,7 +118,7 @@ button {
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-dm);
   font-weight: 700;
-  color: var(--text-primary);
+  color: #c1ead6;
   line-height: 1.2;
 }
 

@@ -18,22 +18,20 @@ public class VotoRepository implements Repository<Voto> {
     private Voto mapRow(ResultSet rs) throws SQLException {
         Voto voto = new Voto();
 
-        voto.setId(rs.getLong("ID_VOTO"));
+        voto.setId(rs.getLong("ID_VOTO_ALIAS"));
         voto.setIdEleccion(rs.getLong("ID_ELECCION"));
         Long idCandidato = rs.getLong("ID_CANDIDATO");
         voto.setIdCandidato(rs.wasNull() ? null : idCandidato);
         voto.setFechaHora(rs.getTimestamp("FECHA_HORA"));
-        voto.setPesoVotoAplicado(rs.getDouble("PESO_VOTO_APLICADO"));
+        voto.setPesoVotoAplicado(rs.getDouble("PESO_VOTO_ALIAS"));
 
         return voto;
     }
 
     @Override
     public Optional<Voto> findById(Long id) {
-        String sql = "SELECT ID_VOTO, FECHA_HORA, PESO_VOTO_APLICADO, ID_ELECCION, ID_CANDIDATO " +
-                "FROM Votos WHERE ID_VOTO = ?";
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(selectBase(conn) + " WHERE " + idColumn(conn) + " = ?")) {
             ps.setLong(1, id);
             try (ResultSet rs = ps.executeQuery()) {
                 return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
@@ -45,11 +43,9 @@ public class VotoRepository implements Repository<Voto> {
 
     @Override
     public List<Voto> findAll() {
-        String sql = "SELECT ID_VOTO, FECHA_HORA, PESO_VOTO_APLICADO, ID_ELECCION, ID_CANDIDATO " +
-                "FROM Votos ORDER BY ID_VOTO";
         List<Voto> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
+             PreparedStatement ps = conn.prepareStatement(selectBase(conn) + " ORDER BY " + idColumn(conn));
              ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 lista.add(mapRow(rs));
@@ -76,11 +72,9 @@ public class VotoRepository implements Repository<Voto> {
     }
 
     public List<Voto> findByEleccion(Long idEleccion) {
-        String sql = "SELECT ID_VOTO, FECHA_HORA, PESO_VOTO_APLICADO, ID_ELECCION, ID_CANDIDATO " +
-                "FROM Votos WHERE ID_ELECCION = ? ORDER BY FECHA_HORA DESC";
         List<Voto> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement(selectBase(conn) + " WHERE ID_ELECCION = ? ORDER BY FECHA_HORA DESC")) {
             ps.setLong(1, idEleccion);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -131,11 +125,10 @@ public class VotoRepository implements Repository<Voto> {
     }
 
     public Map<Long, Double> obtenerResultadosPonderados(Long idEleccion) {
-        String sql = "SELECT ID_CANDIDATO, SUM(PESO_VOTO_APLICADO) AS TOTAL_PONDERADO FROM Votos " +
-                "WHERE ID_ELECCION = ? GROUP BY ID_CANDIDATO";
         Map<Long, Double> resultados = new HashMap<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
+             PreparedStatement ps = conn.prepareStatement("SELECT ID_CANDIDATO, SUM(" + pesoColumn(conn) + ") AS TOTAL_PONDERADO FROM Votos " +
+                     "WHERE ID_ELECCION = ? GROUP BY ID_CANDIDATO")) {
             ps.setLong(1, idEleccion);
             try (ResultSet rs = ps.executeQuery()) {
                 while (rs.next()) {
@@ -151,6 +144,29 @@ public class VotoRepository implements Repository<Voto> {
 
     public Map<String, Integer> obtenerResultadosPorRol(Long idEleccion) {
         return new HashMap<>();
+    }
+
+    private String selectBase(Connection conn) throws SQLException {
+        return "SELECT " + idColumn(conn) + " AS ID_VOTO_ALIAS, FECHA_HORA, " +
+                pesoColumn(conn) + " AS PESO_VOTO_ALIAS, ID_ELECCION, ID_CANDIDATO FROM Votos";
+    }
+
+    private String idColumn(Connection conn) throws SQLException {
+        return columnExists(conn, "ID_VOTO") ? "ID_VOTO" : "ID_VOTOS";
+    }
+
+    private String pesoColumn(Connection conn) throws SQLException {
+        return columnExists(conn, "PESO_VOTO_APLICADO") ? "PESO_VOTO_APLICADO" : "PESOVOTO_APLICADO";
+    }
+
+    private boolean columnExists(Connection conn, String columnName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = 'VOTOS' AND COLUMN_NAME = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, columnName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
     }
 
 }

@@ -73,6 +73,48 @@
     return Number.isFinite(value) ? value : null;
   }
 
+  function errorLegible(error) {
+    const raw = error?.message || String(error || '');
+    try {
+      const detail = JSON.parse(raw);
+      if (detail.motivo === 'YA_EXISTE_ELECCION_EN_CURSO' && detail.activa) {
+        return `Ya existe una eleccion en curso: ${detail.activa.nombre} (ID ${detail.activa.id}). Cierrala antes de iniciar otra.`;
+      }
+      return detail.mensaje || raw;
+    } catch (_ignored) {
+      return raw;
+    }
+  }
+
+  function setPesosDefault() {
+    document.getElementById('peso-estudiante').value = '1.00';
+    document.getElementById('peso-docente').value = '2.00';
+    document.getElementById('peso-egresado').value = '1.00';
+    document.getElementById('peso-administrativo').value = '1.50';
+  }
+
+  async function cargarPesosEleccion(idEleccion) {
+    setPesosDefault();
+    try {
+      const payload = await requestJson(`/api/elecciones/${idEleccion}/roles`);
+      const roles = normalizarLista(payload);
+      const byName = new Map(roles.map((rol) => [String(rol.nombreRol || '').toUpperCase(), rol]));
+      [
+        ['ESTUDIANTE', 'peso-estudiante'],
+        ['DOCENTE', 'peso-docente'],
+        ['EGRESADO', 'peso-egresado'],
+        ['ADMINISTRATIVO', 'peso-administrativo']
+      ].forEach(([nombre, inputId]) => {
+        const value = byName.get(nombre)?.pesoVoto;
+        if (value !== undefined && value !== null) {
+          document.getElementById(inputId).value = Number(value).toFixed(2);
+        }
+      });
+    } catch (error) {
+      showToast('No fue posible cargar pesos actuales; se muestran valores por defecto', 'warning');
+    }
+  }
+
   function setText(id, value) {
     const el = document.getElementById(id);
     if (el) el.textContent = value;
@@ -211,8 +253,7 @@
         <button type="button" class="action-ghost" onclick="editarEleccion(${id})">Editar</button>${menu}`;
     }
     if (estado === 'EN_CURSO') {
-      return `<button type="button" class="action-ghost" onclick="editarEleccion(${id})">Editar</button>
-        <button type="button" class="action-ghost" onclick="verCandidatos(${id})">Candidatos</button>${menu}`;
+      return `<button type="button" class="action-ghost" onclick="verCandidatos(${id})">Candidatos</button>${menu}`;
     }
     if (estado === 'FINALIZADA') {
       return `<button type="button" class="action-ghost" onclick="verResumen(${id})">Ver resumen</button>${menu}`;
@@ -331,19 +372,23 @@
     state.editando = null;
     document.querySelector('.modal-title').textContent = 'Nueva Elección';
     document.getElementById('form-eleccion').reset();
-    document.getElementById('peso-estudiante').value = '1.00';
-    document.getElementById('peso-docente').value = '2.00';
-    document.getElementById('peso-egresado').value = '1.00';
-    document.getElementById('peso-administrativo').value = '1.50';
+    setPesosDefault();
     ocultarErrorModal();
-    document.getElementById('modal-eleccion').classList.add('open');
+    const modal = document.getElementById('modal-eleccion');
+    modal.classList.add('open');
+    modal.removeAttribute('inert');
   };
 
   window.cerrarModalEleccion = function cerrarModalEleccion() {
-    document.getElementById('modal-eleccion').classList.remove('open');
+    const modal = document.getElementById('modal-eleccion');
+    if (modal.contains(document.activeElement)) {
+      document.activeElement.blur();
+    }
+    modal.classList.remove('open');
+    modal.setAttribute('inert', '');
   };
 
-  window.editarEleccion = function editarEleccion(id) {
+  window.editarEleccion = async function editarEleccion(id) {
     const election = state.elecciones.find((e) => Number(e.id) === Number(id));
     if (!election || normalizarEstado(election.estado) !== 'PROGRAMADA') {
       showToast('Solo se pueden editar elecciones programadas', 'warning');
@@ -354,8 +399,11 @@
     document.getElementById('eleccion-nombre').value = election.nombre || '';
     document.getElementById('eleccion-inicio').value = String(election.fechaHoraInicio || '').slice(0, 16);
     document.getElementById('eleccion-fin').value = String(election.fechaHoraFin || '').slice(0, 16);
+    await cargarPesosEleccion(id);
     ocultarErrorModal();
-    document.getElementById('modal-eleccion').classList.add('open');
+    const modal = document.getElementById('modal-eleccion');
+    modal.classList.add('open');
+    modal.removeAttribute('inert');
   };
 
   document.getElementById('form-eleccion')?.addEventListener('submit', async (event) => {
@@ -401,7 +449,7 @@
       showToast('Elección iniciada correctamente', 'success');
       await Promise.all([loadElecciones(), loadStats()]);
     } catch (error) {
-      showToast('Error al iniciar la elección', 'error');
+      showToast(errorLegible(error), 'error');
     }
   };
 
@@ -427,16 +475,29 @@
     }
   };
 
-  window.verCandidatos = function verCandidatos() {
-    showToast('Gestión de candidatos disponible desde el módulo de elección.', 'warning');
+  window.verCandidatos = function verCandidatos(idEleccion) {
+    if (idEleccion) {
+      localStorage.setItem('abis_eleccion_candidatos', String(idEleccion));
+    }
+    AdminRouter.irA('candidatos');
   };
 
   window.verResumen = function verResumen() {
     showToast('Resumen electoral en preparación.', 'warning');
   };
 
-  window.abrirDetalleEleccion = function abrirDetalleEleccion() {
-    showToast('Detalle de elección en preparación.', 'warning');
+  window.abrirDetalleEleccion = function abrirDetalleEleccion(id) {
+    const election = state.elecciones.find((e) => Number(e.id) === Number(id));
+    const estado = normalizarEstado(election?.estado);
+    if (estado === 'PROGRAMADA') {
+      editarEleccion(id);
+      return;
+    }
+    if (estado === 'EN_CURSO') {
+      verCandidatos(id);
+      return;
+    }
+    verResumen(id);
   };
 
   window.toggleMenuEleccion = function toggleMenuEleccion(event, id) {
@@ -461,14 +522,13 @@
     }
     if (estado === 'EN_CURSO') {
       return `
-        <button type="button" onclick="verResumen(${id})">Ver en tiempo real</button>
+        <button type="button" onclick="verCandidatos(${id})">Ver candidatos</button>
         <button type="button" class="danger" onclick="cerrarEleccion(${id})">Cerrar elección</button>
       `;
     }
     if (estado === 'FINALIZADA') {
       return `
-        <button type="button" onclick="verResumen(${id})">Descargar reporte</button>
-        <button type="button" onclick="verResumen(${id})">Ver certificados</button>
+        <button type="button" onclick="verResumen(${id})">Ver resultados</button>
       `;
     }
     return `
