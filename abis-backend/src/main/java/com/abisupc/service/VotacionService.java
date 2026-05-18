@@ -5,19 +5,30 @@ import com.abisupc.repository.VotoOracleRepository;
 
 import java.sql.SQLException;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class VotacionService {
 
     private final VotoOracleRepository votoRepo;
     private final VotanteAdminRepository votanteAdminRepo;
+    private final CertificadoService certificadoService;
+    private final ExecutorService certificadoExecutor;
 
     public VotacionService() {
-        this(new VotoOracleRepository(), new VotanteAdminRepository());
+        this(new VotoOracleRepository(), new VotanteAdminRepository(), new CertificadoService(), Executors.newSingleThreadExecutor());
     }
 
-    public VotacionService(VotoOracleRepository votoRepo, VotanteAdminRepository votanteAdminRepo) {
+    public VotacionService(
+            VotoOracleRepository votoRepo,
+            VotanteAdminRepository votanteAdminRepo,
+            CertificadoService certificadoService,
+            ExecutorService certificadoExecutor
+    ) {
         this.votoRepo = votoRepo;
         this.votanteAdminRepo = votanteAdminRepo;
+        this.certificadoService = certificadoService;
+        this.certificadoExecutor = certificadoExecutor;
     }
 
     public Map<String, String> votantePuedeVotar(String identificacion, Long idEleccion) throws SQLException {
@@ -37,6 +48,11 @@ public class VotacionService {
         }
 
         votoRepo.registrarVoto(identificacion, idEleccion, idCandidato, idPuesto);
+        solicitarCertificadoAsync(identificacion, idEleccion);
+    }
+
+    private void solicitarCertificadoAsync(String identificacion, Long idEleccion) {
+        certificadoExecutor.submit(() -> certificadoService.enviarCertificadoPostVoto(identificacion, idEleccion));
     }
 
     private void validarIdentificacion(String identificacion) {
