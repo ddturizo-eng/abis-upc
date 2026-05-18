@@ -119,6 +119,22 @@ public class RegistroVotoRepository implements Repository<RegistroVoto> {
         }
     }
 
+    public Optional<RegistroVoto> findByIdentificacionEleccion(String identificacion, Long idEleccion) {
+        String sql = "SELECT ID_REGISTRO, FECHA_HORA, IDENTIFICACION, ID_PUESTO, ID_ELECCION " +
+                "FROM Registro_votos WHERE IDENTIFICACION = ? AND ID_ELECCION = ? ORDER BY FECHA_HORA DESC";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, identificacion);
+            ps.setLong(2, idEleccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en RegistroVotoRepository.findByIdentificacionEleccion - identificacion: " +
+                    identificacion + ", idEleccion: " + idEleccion, e);
+        }
+    }
+
     public int countByPuesto(Long idPuesto, Long idEleccion) {
         String sql = "SELECT COUNT(*) FROM Registro_votos WHERE ID_PUESTO = ? AND ID_ELECCION = ?";
         try (Connection conn = AppConfig.getConnection();
