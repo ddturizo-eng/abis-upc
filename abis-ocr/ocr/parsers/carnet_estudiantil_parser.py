@@ -38,8 +38,8 @@ logger = logging.getLogger(__name__)
 
 # Patrones de tipo de documento que preceden al número en el carnet
 _DOC_TYPE_PATTERN = re.compile(
-    r"\b(C\.?C\.?|T\.?I\.?|TI|CC)\s*([\d][.\d\s]{5,16})",
-    re.IGNORECASE,
+    r"(?:^|\s)(C\.?C\.?|T\.?I\.?|TI|CC)\s*(\d[\d.\s]{5,16})",
+    re.IGNORECASE | re.MULTILINE,
 )
 
 # Palabras que indican que una línea es institucional/académica (no nombre)
@@ -131,26 +131,36 @@ class CarnetEstudiantilParser(BaseParser):
         """
         Extrae el número de documento y su tipo (CC / TI).
 
-        Formatos soportados:
-            "CC 1.007.819.137"
-            "C.C. 1.007.819.137"
-            "T.I 1.052.052.781"
-            "TI 1.052.052.781"
-            "T.I. 1.052.052.781"
+        Formatos soportados en raw_text real:
+            "CC1.007.819.137"      ← sin espacio (caso Unicesar)
+            "CC 1.007.819.137"     ← con espacio
+            "C.C. 1.007.819.137"   ← con puntos en prefijo
+            "T.I 1.052.052.781"    ← tarjeta de identidad
+            "TI 1.052.052.781"     ← sin puntos
 
-        Returns:
-            (numero_limpio, tipo_prefijo) — ej. ("1007819137", "CC")
-            o (None, None) si no se encontró.
+        Estrategia: buscar el patrón en cada línea individualmente
+        para evitar problemas de word boundary en texto pegado.
         """
-        match = _DOC_TYPE_PATTERN.search(text)
-        if match:
-            prefix_raw = match.group(1)
-            number_raw = match.group(2)
-            clean = re.sub(r"[^\d]", "", number_raw)
-            if 7 <= len(clean) <= 11:
-                # Normalizar prefijo
-                prefix = re.sub(r"\.", "", prefix_raw).upper()  # "T.I." → "TI"
-                return clean, prefix
+        lines = text.split("\n")
+
+        for line in lines:
+            line = line.strip()
+            # Intentar match en la línea completa
+            match = _DOC_TYPE_PATTERN.search(line)
+            if not match:
+                # Intentar sin word boundary para casos pegados como "CC1.007..."
+                match = re.search(
+                    r"(C\.?C\.?|T\.?I\.?|TI|CC)\s*(\d[\d.\s]{5,16})",
+                    line,
+                    re.IGNORECASE,
+                )
+            if match:
+                prefix_raw = match.group(1)
+                number_raw = match.group(2)
+                clean = re.sub(r"[^\d]", "", number_raw)
+                if 7 <= len(clean) <= 11:
+                    prefix = re.sub(r"\.", "", prefix_raw).upper()
+                    return clean, prefix
 
         return None, None
 
@@ -185,7 +195,11 @@ class CarnetEstudiantilParser(BaseParser):
         header_idx = self._find_header_line(lines)
 
         # Zona del nombre: entre header y número
-        start = (header_idx + 1) if header_idx is not None else 0
+        start = (
+            header_idx + 1
+            if header_idx is not None and (numero_idx is None or header_idx < numero_idx)
+            else 0
+        )
         end = numero_idx if numero_idx is not None else len(lines)
 
         name_candidates = []
