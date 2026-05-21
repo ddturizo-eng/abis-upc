@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ABIS-UPC | Modo Votación</title>
+  <title>ABIS-UPC | Modo Votacion</title>
   <script>
     window.tailwind = window.tailwind || {};
     tailwind.config = {
@@ -12,13 +12,9 @@
           fontFamily: { sans: ['DM Sans', 'sans-serif'] },
           colors: {
             brand: {
-              50: '#edfaf3', 100: '#d0f4e2', 200: '#a5e9c9', 300: '#6dd8aa',
-              400: '#3cbf88', 500: '#1fa86e', 600: '#158759', 700: '#0f6644',
-              800: '#0a4a31', 900: '#0a2e1f'
-            },
-            surface: {
-              50: '#f4f7f5', 100: '#f0f9f5', 200: '#e3ebe6',
-              300: '#c9d8ce', 400: '#8aab99', 500: '#4a6b5a'
+              700: '#14733b',
+              800: '#075521',
+              900: '#1a5c35'
             }
           }
         }
@@ -26,66 +22,1341 @@
     };
   </script>
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   <link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
   <link rel="stylesheet" href="../../styles/base.css">
-  <link rel="stylesheet" href="../../styles/votacion-kiosk.css">
+  <style>
+    :root {
+      --abis-green: #075521;
+      --abis-green-soft: #14733b;
+      --abis-green-deep: #1a5c35;
+      --abis-lime: #14733b;
+      --abis-white: #ffffff;
+      --abis-ink: #1f2925;
+      --abis-muted: #6b7280;
+      --abis-page: #f8faf7;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      font-family: "DM Sans", sans-serif;
+      color: var(--abis-ink);
+      background: var(--abis-page);
+    }
+
+    body {
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    body.welcome-lock {
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .hidden { display: none !important; }
+
+    .system-active-badge {
+      position: fixed;
+      top: 20px;
+      right: 24px;
+      z-index: 50;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: white;
+      border: 1.5px solid #14733b;
+      border-radius: 9999px;
+      padding: 6px 16px;
+      color: #075521;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      box-shadow: 0 2px 8px rgba(7, 85, 33, 0.15);
+    }
+
+    .system-active-badge span {
+      animation: pulse 2s infinite;
+      color: #14733b;
+    }
+
+    .kiosk-shell,
+    .kiosk-screen {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
+    }
+
+    .kiosk-screen {
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .welcome-photo-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background:
+        linear-gradient(rgba(255, 255, 255, 0.58), rgba(255, 255, 255, 0.58)),
+        url("../../images/votacion-fondo.avif");
+      background-position: center;
+      background-size: cover;
+      pointer-events: none;
+    }
+
+    .welcome-photo-bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(1px);
+    }
+
+    .kiosk-welcome-screen {
+      min-height: 100vh;
+      padding: 24px 24px 56px;
+    }
+
+    .welcome-content {
+      position: relative;
+      z-index: 2;
+      width: min(92vw, 760px);
+      text-align: center;
+      animation: revealText 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    .institution-mark {
+      color: #14733b;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 4px;
+      margin: 20px 0 0;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .institution-mark::after {
+      content: "";
+      display: block;
+      width: 32px;
+      height: 2px;
+      background: #14733b;
+      margin: 6px auto 0;
+      border-radius: 2px;
+    }
+
+    .welcome-icon {
+      position: relative;
+      width: 88px;
+      height: 88px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.85);
+      border: 2px solid rgba(7, 85, 33, 0.2);
+      border-radius: 50%;
+      box-shadow: 0 4px 24px rgba(7, 85, 33, 0.15);
+      animation: float 3.5s ease-in-out infinite;
+    }
+
+    .welcome-icon i {
+      position: relative;
+      z-index: 2;
+      color: #075521;
+      font-size: 72px;
+    }
+
+    .welcome-title {
+      margin: 16px 0 0;
+      color: #1f2925;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 900;
+      line-height: 1.1;
+      text-align: center;
+      text-shadow: 0 2px 12px rgba(255, 255, 255, 0.8);
+    }
+
+    .welcome-title span:first-child {
+      display: block;
+    }
+
+    #welcome-election-name {
+      display: block;
+      max-width: 100%;
+      color: #075521;
+      text-shadow: 0 2px 16px rgba(255, 255, 255, 0.9);
+      animation: revealText 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+    }
+
+    .welcome-copy {
+      margin: 16px auto 0;
+      max-width: 420px;
+      color: #374151;
+      font-size: 16px;
+      line-height: 1.6;
+      text-align: center;
+      text-shadow: 0 1px 4px rgba(255, 255, 255, 0.9);
+    }
+
+    .kiosk-primary-action,
+    .kiosk-secondary-action,
+    #btn-vote-submit {
+      border: 0;
+      font-family: inherit;
+    }
+
+    .kiosk-primary-action {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      width: auto;
+      margin: 32px auto 0;
+      padding: 18px 48px;
+      background: linear-gradient(135deg, #14733b 0%, #075521 100%);
+      border: 0;
+      border-radius: 14px;
+      color: white;
+      font-size: 17px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      cursor: pointer;
+      overflow: hidden;
+      box-shadow:
+        0 4px 20px rgba(7, 85, 33, 0.35),
+        0 1px 0 rgba(255, 255, 255, 0.15) inset;
+      transition: all 0.3s ease;
+      animation: revealText 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.6s both;
+    }
+
+    .kiosk-primary-action::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .kiosk-primary-action:hover:not(:disabled)::before { left: 100%; }
+
+    .kiosk-primary-action:hover:not(:disabled) {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(7, 85, 33, 0.45);
+    }
+
+    .kiosk-primary-action:active:not(:disabled) { transform: translateY(-1px); }
+    .kiosk-primary-action:disabled { cursor: not-allowed; opacity: 0.45; }
+    .kiosk-primary-action i:first-child { animation: pulse 3s ease-in-out infinite; }
+
+    .kiosk-secondary-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 48px;
+      padding: 12px 24px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 10px;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .kiosk-secondary-action:hover {
+      border-color: rgba(255, 255, 255, 0.35);
+      color: white;
+    }
+
+    .kiosk-message {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .kiosk-message-error {
+      color: #fecaca;
+      background: rgba(127, 29, 29, 0.32);
+      border: 1px solid rgba(248, 113, 113, 0.45);
+      box-shadow: 0 0 24px rgba(127, 29, 29, 0.22);
+    }
+
+    .verify-panel,
+    .identity-layout,
+    .success-panel {
+      width: min(1100px, 92vw);
+      position: relative;
+      z-index: 10;
+    }
+
+    .verify-panel {
+      display: grid;
+      grid-template-columns: minmax(230px, 0.32fr) minmax(0, 0.68fr);
+      overflow: hidden;
+      background: rgba(5, 30, 15, 0.75);
+      border: 1px solid rgba(20, 115, 59, 0.35);
+      border-radius: 24px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.45);
+    }
+
+    .verify-steps {
+      display: grid;
+      gap: 0;
+      padding: 38px 26px;
+      border-right: 1px solid rgba(20, 115, 59, 0.2);
+    }
+
+    .verify-step {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      gap: 14px;
+      min-height: 96px;
+      position: relative;
+    }
+
+    .verify-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      top: 48px;
+      bottom: 14px;
+      left: 20px;
+      border-left: 1px dashed rgba(20, 115, 59, 0.25);
+    }
+
+    .verify-step > span {
+      display: flex;
+      width: 42px;
+      height: 42px;
+      align-items: center;
+      justify-content: center;
+      color: rgba(255, 255, 255, 0.4);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 999px;
+      z-index: 1;
+    }
+
+    .verify-step.active > span,
+    .verify-step.is-active > span,
+    .verify-step.is-done > span {
+      color: white;
+      background: #14733b;
+      border-color: #4ade80;
+    }
+
+    .verify-step strong {
+      display: block;
+      color: white;
+      font-size: 14px;
+    }
+
+    .verify-step small {
+      display: block;
+      margin-top: 3px;
+      color: rgba(255, 255, 255, 0.38);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .verify-scan {
+      padding: 42px 44px 28px;
+      text-align: center;
+    }
+
+    .kiosk-eyebrow {
+      margin: 0;
+      color: rgba(74, 222, 128, 0.8);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .verify-scan h2,
+    .jury-confirm-card h2,
+    .success-panel h2 {
+      margin: 12px auto 0;
+      color: white;
+      font-size: 32px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .verify-copy,
+    .success-panel p {
+      max-width: 460px;
+      margin: 14px auto 0;
+      color: rgba(255, 255, 255, 0.52);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .fingerprint-stage {
+      position: relative;
+      width: 246px;
+      height: 246px;
+      margin: 30px auto 16px;
+    }
+
+    .fingerprint-progress {
+      width: 240px;
+      height: 240px;
+      transform: rotate(-90deg);
+    }
+
+    .fingerprint-progress circle {
+      fill: none;
+      stroke-linecap: round;
+      stroke-width: 8;
+    }
+
+    .fingerprint-progress circle:first-child { stroke: rgba(255, 255, 255, 0.08); }
+    .fingerprint-progress circle:last-child {
+      stroke: #4ade80;
+      stroke-dasharray: 666;
+      stroke-dashoffset: 166;
+      transition: stroke-dashoffset 700ms ease-out;
+    }
+
+    .fingerprint-core {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      display: flex;
+      width: 142px;
+      height: 142px;
+      align-items: center;
+      justify-content: center;
+      color: var(--abis-lime);
+      font-size: 68px;
+      background: rgba(20, 115, 59, 0.18);
+      border: 1px solid rgba(74, 222, 128, 0.22);
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      animation: subtle-pulse 2s ease-in-out infinite;
+    }
+
+    .sonar-ring {
+      position: absolute;
+      inset: 54px;
+      border: 2px solid #14733b;
+      border-radius: 999px;
+      opacity: 0;
+      animation: sonar-ring 2s ease-out infinite;
+    }
+
+    .sonar-ring-delay { animation-delay: 1s; }
+
+    #verify-status {
+      margin: 0;
+      color: var(--abis-lime);
+      font-size: 16px;
+      font-weight: 800;
+    }
+
+    .verify-substatus {
+      display: block;
+      margin-top: 5px;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 13px;
+    }
+
+    .verify-tips {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .verify-tips article {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px;
+      color: rgba(255, 255, 255, 0.65);
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .verify-tips i { color: var(--abis-lime); }
+
+    .verify-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 22px;
+    }
+
+    .verify-actions .kiosk-primary-action { width: auto; }
+
+    .verify-foot {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 18px 26px;
+      color: rgba(255, 255, 255, 0.4);
+      border-top: 1px solid rgba(20, 115, 59, 0.2);
+      font-size: 13px;
+    }
+
+    .identity-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+      gap: 18px;
+    }
+
+    .identity-card,
+    .jury-confirm-card,
+    .success-panel {
+      background: rgba(5, 30, 15, 0.75);
+      border: 1px solid rgba(20, 115, 59, 0.35);
+      border-radius: 24px;
+      backdrop-filter: blur(24px);
+      box-shadow: 0 32px 64px rgba(0, 0, 0, 0.45);
+      animation: slideUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .identity-card {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 24px;
+      padding: 24px;
+    }
+
+    .identity-photo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 14px;
+    }
+
+    .identity-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .identity-photo i {
+      color: var(--abis-lime);
+      font-size: 5rem;
+      opacity: 0.7;
+    }
+
+    .identity-copy h2 {
+      margin: 8px 0 24px;
+      color: white;
+      font-size: 2rem;
+      font-weight: 800;
+      line-height: 1.1;
+    }
+
+    .identity-copy dl {
+      display: grid;
+      gap: 14px;
+      margin: 0;
+    }
+
+    .identity-copy div {
+      padding: 14px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      border-radius: 12px;
+    }
+
+    .identity-copy dt {
+      color: var(--abis-lime);
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .identity-copy dd {
+      margin: 6px 0 0;
+      color: white;
+      font-weight: 800;
+    }
+
+    .jury-confirm-card {
+      padding: 28px;
+    }
+
+    .jury-confirm-card h2 { font-size: 1.6rem; }
+
+    .kiosk-confirm {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-top: 24px;
+      padding: 16px;
+      color: rgba(255, 255, 255, 0.8);
+      background: rgba(20, 115, 59, 0.16);
+      border: 1px solid rgba(20, 115, 59, 0.28);
+      border-radius: 12px;
+      font-size: 0.95rem;
+      font-weight: 700;
+      line-height: 1.45;
+    }
+
+    .kiosk-confirm input {
+      width: 20px;
+      height: 20px;
+      margin-top: 2px;
+      accent-color: var(--abis-green-soft);
+    }
+
+    #screen-ballot {
+      display: block;
+      min-height: 100vh;
+      padding: 0 0 112px;
+      background: #f4f7f5;
+    }
+
+    .ballot-sticky-header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      padding: 16px 32px;
+      background: rgba(255, 255, 255, 0.94);
+      border-bottom: 1px solid #dbe5df;
+      box-shadow: 0 1px 8px rgba(7, 85, 33, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .ballot-sticky-header::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 3px;
+      background: linear-gradient(90deg, #075521, #14733b);
+    }
+
+    .ballot-brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-width: 180px;
+      color: #075521;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+    }
+
+    .ballot-brand i {
+      color: #14733b;
+      font-size: 22px;
+    }
+
+    .ballot-heading {
+      text-align: center;
+    }
+
+    .ballot-heading h2 {
+      margin: 0;
+      color: #1f2925;
+      font-size: 20px;
+      font-weight: 800;
+    }
+
+    .ballot-heading p {
+      margin: 4px 0 0;
+      color: #5f6f67;
+      font-size: 12px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .ballot-current-cargo {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 220px;
+      padding: 6px 16px;
+      color: #075521;
+      background: #e8f5ed;
+      border: 1px solid #b7e4c7;
+      border-radius: 9999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .ballot-instruction {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 9px;
+      margin: 22px 0 16px;
+      color: #5f6f67;
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .ballot-instruction i {
+      color: #14733b;
+    }
+
+    .kiosk-ballot {
+      display: grid;
+      gap: 28px;
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 0 24px 120px;
+    }
+
+    .kiosk-cargo {
+      display: grid;
+      gap: 0;
+    }
+
+    .ballot-document {
+      overflow: hidden;
+      background: #ffffff;
+      border: 2px solid #1f2925;
+      border-radius: 8px;
+      box-shadow: 0 10px 28px rgba(31, 41, 37, 0.08);
+    }
+
+    .ballot-document-header {
+      display: grid;
+      grid-template-columns: minmax(170px, 0.9fr) minmax(320px, 1.7fr) minmax(160px, 0.8fr);
+      gap: 20px;
+      align-items: start;
+      padding: 24px 30px 16px;
+      background: #fbfcfb;
+    }
+
+    .ballot-document-brand {
+      display: grid;
+      gap: 7px;
+      color: #075521;
+      text-transform: uppercase;
+    }
+
+    .flag-strip {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr;
+      width: 126px;
+      height: 12px;
+      border: 1px solid rgba(31, 41, 37, 0.08);
+    }
+
+    .flag-strip span:nth-child(1) { background: #fcd116; }
+    .flag-strip span:nth-child(2) { background: #003893; }
+    .flag-strip span:nth-child(3) { background: #ce1126; }
+
+    .ballot-document-brand strong {
+      font-size: 16px;
+      font-weight: 900;
+      line-height: 1.15;
+    }
+
+    .ballot-document-brand em {
+      font-style: normal;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .ballot-document-title {
+      display: grid;
+      gap: 5px;
+      justify-items: center;
+      text-align: center;
+    }
+
+    .ballot-document-title small {
+      color: #5f6f67;
+      font-size: 12px;
+      font-weight: 800;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .ballot-document-title h3 {
+      width: 100%;
+      margin: 0;
+      padding-bottom: 8px;
+      color: #1f2925;
+      border-bottom: 1px solid #1f2925;
+      font-size: 24px;
+      font-weight: 900;
+      line-height: 1.12;
+      text-transform: uppercase;
+    }
+
+    .ballot-document-title span {
+      color: #1f2925;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .ballot-document-code {
+      display: grid;
+      gap: 6px;
+      justify-items: end;
+      color: #1f2925;
+    }
+
+    .barcode-lines {
+      width: 132px;
+      height: 36px;
+      background: repeating-linear-gradient(90deg, #1f2925 0 2px, transparent 2px 5px, #1f2925 5px 6px, transparent 6px 9px);
+    }
+
+    .ballot-document-code strong {
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: 0.18em;
+    }
+
+    .ballot-document-instruction {
+      padding: 12px 20px;
+      color: #b42318;
+      background: #ffffff;
+      border-top: 1px solid #1f2925;
+      border-bottom: 1px solid #1f2925;
+      font-size: 14px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .kiosk-candidates {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 22px;
+      padding: 30px;
+    }
+
+    .tarjeton-candidato {
+      position: relative;
+      display: grid;
+      grid-template-rows: auto minmax(170px, auto) 1fr;
+      min-height: 360px;
+      overflow: hidden;
+      padding: 14px;
+      cursor: pointer;
+      background: #ffffff;
+      border: 1.5px solid #1f2925;
+      border-radius: 4px;
+      box-shadow: none;
+      opacity: 0;
+      animation: cardEntrance 0.5s ease forwards;
+      transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+    }
+
+    .tarjeton-candidato:hover:not(.seleccionado) {
+      transform: translateY(-2px);
+      border-color: #14733b;
+      box-shadow: 0 8px 18px rgba(7, 85, 33, 0.12);
+    }
+
+    .tarjeton-candidato.seleccionado,
+    .tarjeton-candidato.selected,
+    .tarjeton-candidato:has(input:checked) {
+      transform: translateY(-1px);
+      background: #e8f5ed;
+      border-color: #14733b;
+      border-width: 2px;
+      box-shadow: 0 0 0 4px rgba(20, 115, 59, 0.12);
+    }
+
+    .tarjeton-candidato input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+    }
+
+    .candidate-top {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 0 0 10px;
+    }
+
+    .kiosk-candidate-number {
+      display: inline-flex;
+      width: 38px;
+      height: 38px;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      background: #075521;
+      border-radius: 9999px;
+      font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 14px;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .kiosk-candidate-photo {
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 176px;
+      overflow: hidden;
+      background: #f4f7f5;
+      border: 1px solid #dbe5df;
+      border-radius: 2px;
+    }
+
+    .kiosk-candidate-photo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: top center;
+      transition: transform 0.4s ease;
+    }
+
+    .tarjeton-candidato:hover .kiosk-candidate-photo img { transform: scale(1.05); }
+
+    .img-fallback {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: #f4f7f5;
+    }
+
+    .img-fallback-avatar {
+      display: flex;
+      width: 64px;
+      height: 64px;
+      align-items: center;
+      justify-content: center;
+      color: #075521;
+      background: #e8f5ed;
+      border: 2px solid #b7e4c7;
+      border-radius: 50%;
+      font-size: 28px;
+      font-weight: 800;
+    }
+
+    .img-fallback span {
+      margin-top: 8px;
+      color: #5f6f67;
+      font-size: 11px;
+    }
+
+    .blank-vote .kiosk-candidate-photo {
+      min-height: 242px;
+      background: #ffffff;
+      border: 2px dashed #c5d0c9;
+    }
+
+    .blank-vote-label {
+      display: flex;
+      width: 100%;
+      height: 100%;
+      min-height: 220px;
+      align-items: center;
+      justify-content: center;
+      padding: 22px;
+      color: #1f2925;
+      font-size: 22px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .candidate-bottom {
+      display: grid;
+      gap: 9px;
+      align-content: start;
+      padding: 14px 0 0;
+      text-align: center;
+    }
+
+    .kiosk-candidate-role {
+      color: #5f6f67;
+      font-size: 10px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .kiosk-candidate-name {
+      display: block;
+      min-height: 42px;
+      color: #1f2925;
+      font-size: 15px;
+      font-weight: 900;
+      line-height: 1.25;
+      text-transform: uppercase;
+    }
+
+    .kiosk-candidate-party {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-height: 42px;
+      padding: 8px 10px;
+      color: #075521;
+      background: #e8f5ed;
+      border: 1px solid #b7e4c7;
+      border-radius: 2px;
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .kiosk-candidate-check {
+      position: absolute;
+      display: flex;
+      top: 12px;
+      right: 12px;
+      z-index: 3;
+      width: 28px;
+      height: 28px;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      background: #14733b;
+      border-radius: 9999px;
+      opacity: 0;
+      transform: scale(0.75);
+      transition: opacity 150ms ease, transform 150ms ease;
+    }
+
+    .tarjeton-candidato.seleccionado .kiosk-candidate-check,
+    .tarjeton-candidato.selected .kiosk-candidate-check,
+    .tarjeton-candidato:has(input:checked) .kiosk-candidate-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .ballot-document-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 14px 30px;
+      color: #5f6f67;
+      background: #f4f7f5;
+      border-top: 1px solid #1f2925;
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .ballot-document-footer span {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .ballot-security {
+      display: none;
+    }
+
+    .ballot-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 30;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      padding: 16px 32px;
+      background: rgba(255, 255, 255, 0.96);
+      border-top: 1px solid #dbe5df;
+      box-shadow: 0 -4px 16px rgba(7, 85, 33, 0.08);
+      backdrop-filter: blur(14px);
+    }
+
+    .ballot-footer-brand {
+      color: #5f6f67;
+      font-size: 11px;
+      letter-spacing: 1px;
+      text-align: center;
+      text-transform: uppercase;
+    }
+
+    .ballot-footer .kiosk-secondary-action {
+      min-height: 44px;
+      color: #075521;
+      background: #ffffff;
+      border: 1px solid #b7e4c7;
+      border-radius: 10px;
+    }
+
+    .ballot-footer .kiosk-secondary-action:hover {
+      color: #075521;
+      background: #e8f5ed;
+      border-color: #14733b;
+    }
+
+    #btn-vote-submit {
+      min-width: 210px;
+      padding: 12px 28px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #14733b, #075521);
+      border: 1px solid #14733b;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 4px 16px rgba(20, 115, 59, 0.22);
+      transition: all 0.3s ease;
+    }
+
+    #btn-vote-submit:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(20, 115, 59, 0.3);
+    }
+
+    #btn-vote-submit:disabled {
+      background: #e8ede9;
+      border: 1px solid #dbe5df;
+      color: #8a9890;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
+    .success-panel {
+      max-width: 680px;
+      padding: 52px 56px;
+      text-align: center;
+    }
+
+    .success-icon {
+      display: inline-flex;
+      width: 112px;
+      height: 112px;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 24px;
+      color: var(--abis-lime);
+      background: rgba(20, 115, 59, 0.2);
+      border: 1px solid rgba(74, 222, 128, 0.24);
+      border-radius: 999px;
+      font-size: 4.2rem;
+    }
+
+    .kiosk-global-footer {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      padding: 14px;
+      color: rgba(31, 41, 37, 0.45);
+      text-align: center;
+      font-size: 11px;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-shadow: 0 1px 4px rgba(255, 255, 255, 0.8);
+      pointer-events: none;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(32px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes revealText {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes sonar-ring {
+      0% { transform: scale(1); opacity: 0.6; }
+      100% { transform: scale(2.8); opacity: 0; }
+    }
+
+    @keyframes subtle-pulse {
+      0%, 100% { transform: translate(-50%, -50%) scale(1); }
+      50% { transform: translate(-50%, -50%) scale(1.03); }
+    }
+
+    @keyframes cardEntrance {
+      from { opacity: 0; transform: translateY(30px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @keyframes drawLine { to { stroke-dashoffset: 0; } }
+    @keyframes drawCircle { to { stroke-dashoffset: 0; } }
+
+    @media (max-width: 1024px) {
+      .verify-panel,
+      .identity-layout,
+      .identity-card {
+        grid-template-columns: 1fr;
+      }
+
+      .verify-steps {
+        grid-template-columns: repeat(4, 1fr);
+        border-right: 0;
+        border-bottom: 1px solid rgba(20, 115, 59, 0.2);
+        padding: 22px;
+      }
+
+      .verify-step {
+        grid-template-columns: 1fr;
+        justify-items: center;
+        min-height: auto;
+        text-align: center;
+      }
+
+      .verify-step:not(:last-child)::after { display: none; }
+      .ballot-current-cargo { display: none; }
+      .ballot-document-header {
+        grid-template-columns: 1fr;
+        justify-items: center;
+      }
+      .ballot-document-brand,
+      .ballot-document-code {
+        justify-items: center;
+        text-align: center;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .success-panel {
+        padding: 30px 22px;
+      }
+
+      .welcome-title { font-size: 2rem; }
+      #welcome-election-name { white-space: normal; }
+      .verify-tips {
+        grid-template-columns: 1fr;
+      }
+
+      .verify-scan { padding: 28px 20px; }
+      .verify-actions,
+      .verify-foot,
+      .ballot-footer {
+        align-items: stretch;
+        flex-direction: column;
+      }
+
+      .ballot-sticky-header {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .ballot-heading { text-align: left; }
+      .kiosk-ballot { padding-inline: 12px; }
+      .ballot-document-header,
+      .kiosk-candidates,
+      .ballot-document-footer {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+      .ballot-document-title h3 { font-size: 19px; }
+      .ballot-document-footer {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+      .kiosk-primary-action,
+      .kiosk-secondary-action,
+      #btn-vote-submit { width: 100%; }
+    }
+  </style>
 </head>
-<body class="votacion-kiosk-body">
-  <header class="kiosk-topbar">
-    <div class="kiosk-brand">
-      <img src="../../images/logo-shield.png" alt="Escudo ABIS UPC">
-      <span class="kiosk-brand-separator"></span>
-      <span>Sistema de Gestión Electoral</span>
-    </div>
-    <div class="kiosk-system-badge"><span></span>Sistema activo</div>
-  </header>
+<body class="welcome-lock">
+  <div class="welcome-photo-bg" aria-hidden="true"></div>
+  <div class="system-active-badge"><span>&#9679;</span> SISTEMA ACTIVO</div>
 
-  <svg class="kiosk-shape kiosk-shape-left" viewBox="0 0 300 800" aria-hidden="true">
-    <path d="M0,0 Q150,200 0,400 Q150,600 0,800 L0,0Z" fill="#158759" opacity="0.06"/>
-  </svg>
-  <svg class="kiosk-shape kiosk-shape-right" viewBox="0 0 300 800" aria-hidden="true">
-    <path d="M300,0 Q130,210 300,410 Q140,610 300,800 L300,0Z" fill="#158759" opacity="0.06"/>
-  </svg>
-
-  <main class="kiosk-shell" aria-label="Modo kiosko de votación">
+  <main class="kiosk-shell" aria-label="Modo kiosko de votacion">
     <section id="screen-welcome" class="kiosk-screen kiosk-welcome-screen">
-      <div class="welcome-backdrop" aria-hidden="true"></div>
-      <div class="welcome-panel">
-        <div class="welcome-illustration" aria-hidden="true">
-          <img src="../../images/logo-shield.png" alt="">
-          <span></span><span></span><span></span><span></span>
+      <div class="welcome-content">
+        <div class="welcome-icon" aria-hidden="true">
+          <i class="ti ti-ballot"></i>
         </div>
-        <p class="kiosk-eyebrow">ABIS-UPC</p>
-        <h1>Bienvenido a la <span id="welcome-election-name">jornada electoral</span></h1>
-        <div class="kiosk-title-rule"></div>
-        <p class="welcome-copy">Para continuar, confirma tu identidad mediante verificación dactilar.</p>
+        <p class="institution-mark">ABIS &mdash; UPC</p>
+        <h1 class="welcome-title">
+          <span>Bienvenido a la</span>
+          <span id="welcome-election-name">jornada electoral</span>
+        </h1>
+        <p class="welcome-copy">Para continuar, confirma tu identidad mediante verificacion dactilar.</p>
         <button id="btn-go-verify" type="button" class="kiosk-primary-action">
           <i class="ti ti-fingerprint" aria-hidden="true"></i>
           Ir a confirmar mi identidad
           <i class="ti ti-arrow-right" aria-hidden="true"></i>
         </button>
-        <div class="welcome-features" aria-label="Características del sistema">
-          <article><i class="ti ti-shield-check"></i><strong>Seguro</strong><span>Tus datos están protegidos</span></article>
-          <article><i class="ti ti-circle-check"></i><strong>Confiable</strong><span>Sistema transparente y auditado</span></article>
-          <article><i class="ti ti-users-group"></i><strong>Participativo</strong><span>Tu voto construye el futuro</span></article>
-        </div>
         <div id="welcome-error" class="kiosk-message kiosk-message-error hidden"></div>
       </div>
     </section>
 
     <section id="screen-verify" class="kiosk-screen hidden">
       <div class="verify-panel">
-        <aside class="verify-steps" aria-label="Pasos de verificación">
+        <aside class="verify-steps" aria-label="Pasos de verificacion">
           <div class="verify-step active"><span><i class="ti ti-fingerprint"></i></span><div><strong>Colocar dedo</strong><small>Pon tu dedo en el lector</small></div></div>
           <div class="verify-step"><span><i class="ti ti-search"></i></span><div><strong>Verificando</strong><small>Buscando coincidencia</small></div></div>
           <div class="verify-step"><span><i class="ti ti-circle-check"></i></span><div><strong>Confirmando</strong><small>Validando identidad</small></div></div>
-          <div class="verify-step"><span><i class="ti ti-lock"></i></span><div><strong>Completado</strong><small>Acceso al tarjetón</small></div></div>
+          <div class="verify-step"><span><i class="ti ti-lock"></i></span><div><strong>Completado</strong><small>Acceso al tarjeton</small></div></div>
         </aside>
         <section class="verify-scan">
-          <p class="kiosk-eyebrow">Verificación dactilar</p>
+          <p class="kiosk-eyebrow">Verificacion dactilar</p>
           <h2>Por favor, coloca tu dedo en el lector</h2>
-          <p class="verify-copy">Asegúrate de colocar el dedo plano y mantenerlo quieto durante la lectura.</p>
+          <p class="verify-copy">Asegurate de colocar el dedo plano y mantenerlo quieto durante la lectura.</p>
           <div class="fingerprint-stage" aria-hidden="true">
             <span class="sonar-ring"></span>
             <span class="sonar-ring sonar-ring-delay"></span>
@@ -95,24 +1366,24 @@
             </svg>
             <div class="fingerprint-core"><i class="ti ti-fingerprint"></i></div>
           </div>
-          <p id="verify-status">Cuando estés listo, inicia la verificación.</p>
+          <p id="verify-status">Cuando estes listo, inicia la verificacion.</p>
           <span class="verify-substatus">No muevas tu dedo durante la lectura</span>
           <div class="verify-tips">
             <article><i class="ti ti-fingerprint"></i><span>Coloca plano</span></article>
             <article><i class="ti ti-clock"></i><span>No lo muevas</span></article>
-            <article><i class="ti ti-shield-check"></i><span>Mantén limpio</span></article>
+            <article><i class="ti ti-shield-check"></i><span>Manten limpio</span></article>
           </div>
           <div class="verify-actions">
             <button id="btn-start-verify" type="button" class="kiosk-primary-action">
               <i class="ti ti-fingerprint" aria-hidden="true"></i>
-              Iniciar verificación
+              Iniciar verificacion
               <i class="ti ti-arrow-right" aria-hidden="true"></i>
             </button>
             <button id="btn-cancel-verify" type="button" class="kiosk-secondary-action"><i class="ti ti-arrow-left"></i> Volver</button>
           </div>
           <div id="verify-error" class="kiosk-message kiosk-message-error hidden"></div>
         </section>
-        <footer class="verify-foot"><span><i class="ti ti-shield-check"></i> Tu información está protegida con encriptación de nivel electoral</span><span>Tiempo estimado: 5-10s</span></footer>
+        <footer class="verify-foot"><span><i class="ti ti-shield-check"></i> Tu informacion esta protegida con encriptacion de nivel electoral</span><span>Tiempo estimado: 5-10s</span></footer>
       </div>
     </section>
 
@@ -127,22 +1398,22 @@
             <p class="kiosk-eyebrow">Datos personales</p>
             <h2 id="identity-name">--</h2>
             <dl>
-              <div><dt>Identificación</dt><dd id="identity-id">--</dd></div>
+              <div><dt>Identificacion</dt><dd id="identity-id">--</dd></div>
               <div><dt>Estado del voto</dt><dd id="identity-status">--</dd></div>
               <div><dt>Puesto asignado</dt><dd id="identity-place">--</dd></div>
             </dl>
           </div>
         </article>
         <article class="jury-confirm-card">
-          <p class="kiosk-eyebrow">Confirmación del jurado</p>
-          <h2>¿La persona coincide con los datos mostrados?</h2>
+          <p class="kiosk-eyebrow">Confirmacion del jurado</p>
+          <h2>La persona coincide con los datos mostrados?</h2>
           <label class="kiosk-confirm">
             <input id="jury-confirm-identity" type="checkbox">
             <span>Confirmo que la identidad visual corresponde al votante.</span>
           </label>
           <button id="btn-go-ballot" type="button" class="kiosk-primary-action" disabled>
             <i class="ti ti-ballot"></i>
-            Ir a tarjetón
+            Ir a tarjeton
             <i class="ti ti-arrow-right"></i>
           </button>
           <button id="btn-retry-identity" type="button" class="kiosk-secondary-action">Verificar otra huella</button>
@@ -152,31 +1423,32 @@
     </section>
 
     <section id="screen-ballot" class="kiosk-screen hidden">
-      <section class="kiosk-ballot-panel" aria-label="Tarjetón electoral">
-        <div class="ballot-header">
-          <img src="../../images/logo-shield.png" alt="" aria-hidden="true">
+      <header class="ballot-sticky-header">
+        <div class="ballot-brand"><i class="ti ti-ballot"></i><span>ABIS - UPC</span></div>
+        <div class="ballot-heading">
           <h2 id="ballot-election-name">Seleccione su candidato</h2>
-          <p>Tarjetón Electrónico</p>
-          <div class="kiosk-title-rule"></div>
+          <p>Tarjeton Electronico</p>
         </div>
-        <div class="ballot-instruction"><i class="ti ti-info-circle"></i><span id="vote-selection-status">Seleccione una opción de voto</span></div>
-        <div id="vote-ballot" class="kiosk-ballot"></div>
-        <div class="ballot-security"><i class="ti ti-shield-check"></i> Tu voto es secreto y está protegido por encriptación de nivel electoral.</div>
-        <div class="ballot-footer">
-          <button id="btn-ballot-back" type="button" class="kiosk-secondary-action"><i class="ti ti-arrow-left"></i> Volver</button>
-          <button id="btn-vote-submit" type="button" disabled>
-            <i class="ti ti-circle-check"></i>
-            Confirmar voto
-          </button>
-        </div>
-      </section>
+        <div id="ballot-current-cargo" class="ballot-current-cargo">CARGO A ELEGIR</div>
+      </header>
+      <div class="ballot-instruction"><i class="ti ti-circle-dot"></i><span id="vote-selection-status">Seleccione un candidato para votar</span></div>
+      <div id="vote-ballot" class="kiosk-ballot"></div>
+      <div class="ballot-security"><i class="ti ti-shield-check"></i> Tu voto es secreto y esta protegido por encriptacion de nivel electoral.</div>
+      <div class="ballot-footer">
+        <button id="btn-ballot-back" type="button" class="kiosk-secondary-action"><i class="ti ti-arrow-left"></i> Volver</button>
+        <div class="ballot-footer-brand">ABIS-UPC — Transparencia, Seguridad y Confianza</div>
+        <button id="btn-vote-submit" type="button" disabled>
+          <i class="ti ti-circle-check"></i>
+          Confirmar voto
+        </button>
+      </div>
     </section>
 
     <section id="screen-success" class="kiosk-screen kiosk-success-screen hidden">
       <div class="success-panel">
         <span class="success-icon" aria-hidden="true"><i class="ti ti-circle-check"></i></span>
         <h2>Su voto se ha ejercido correctamente</h2>
-        <p>El sistema volverá a la pantalla de bienvenida para el siguiente votante.</p>
+        <p>El sistema volvera a la pantalla de bienvenida para el siguiente votante.</p>
         <button id="btn-return-welcome" type="button" class="kiosk-primary-action">
           Volver al inicio
           <i class="ti ti-arrow-right"></i>
@@ -186,13 +1458,46 @@
   </main>
 
   <footer class="kiosk-global-footer">
-    <img src="../../images/logo-shield.png" alt="">
-    <span>ABIS-UPC — Transparencia, Seguridad y Confianza</span>
-    <span>Elecciones Universitarias 2027</span>
+    ABIS-UPC &middot; TRANSPARENCIA Y CONFIANZA &middot; ELECCIONES UNIVERSITARIAS
   </footer>
 
   <script src="../../js/api.js"></script>
   <script src="../../js/votacion.js"></script>
   <script src="../../js/votacion-visual.js"></script>
+  <script>
+    (function initTarjetonSelectionEnhancement() {
+      const ballot = document.getElementById('vote-ballot');
+      const submit = document.getElementById('btn-vote-submit');
+      if (!ballot) return;
+
+      function syncCards() {
+        document.querySelectorAll('.tarjeton-candidato').forEach((card, index) => {
+          card.style.animationDelay = `${index * 0.1}s`;
+          const input = card.querySelector('input[name="candidato"]');
+          card.classList.toggle('seleccionado', Boolean(input?.checked));
+        });
+      }
+
+      ballot.addEventListener('click', (event) => {
+        const card = event.target.closest('.tarjeton-candidato');
+        if (!card) return;
+        document.querySelectorAll('.tarjeton-candidato').forEach((item) => item.classList.remove('seleccionado'));
+        card.classList.add('seleccionado');
+        const input = card.querySelector('input[name="candidato"]');
+        if (input && !input.checked) {
+          input.checked = true;
+          input.dispatchEvent(new Event('change', { bubbles: true }));
+        }
+        if (submit) {
+          submit.disabled = false;
+          submit.classList.remove('opacity-40', 'cursor-not-allowed');
+          submit.classList.add('cursor-pointer');
+        }
+      });
+
+      ballot.addEventListener('change', syncCards);
+      new MutationObserver(syncCards).observe(ballot, { childList: true, subtree: true });
+    })();
+  </script>
 </body>
 </html>

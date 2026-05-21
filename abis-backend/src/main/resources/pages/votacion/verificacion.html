@@ -1,0 +1,76 @@
+<section id="screen-verify" class="kiosk-screen hidden">
+  <div class="verify-panel">
+    <aside class="verify-steps" aria-label="Pasos de verificacion">
+      <div class="verify-step active"><span><i class="ti ti-fingerprint"></i></span><div><strong>Colocar dedo</strong><small>Pon tu dedo en el lector</small></div></div>
+      <div class="verify-step"><span><i class="ti ti-search"></i></span><div><strong>Verificando</strong><small>Buscando coincidencia</small></div></div>
+      <div class="verify-step"><span><i class="ti ti-circle-check"></i></span><div><strong>Confirmando</strong><small>Validando identidad</small></div></div>
+      <div class="verify-step"><span><i class="ti ti-lock"></i></span><div><strong>Completado</strong><small>Acceso al tarjeton</small></div></div>
+    </aside>
+    <section class="verify-scan">
+      <p class="kiosk-eyebrow">Verificacion dactilar</p>
+      <h2>Por favor, coloca tu dedo en el lector</h2>
+      <p class="verify-copy">Asegurate de colocar el dedo plano y mantenerlo quieto durante la lectura.</p>
+      <div class="fingerprint-stage" aria-hidden="true">
+        <span class="sonar-ring"></span>
+        <span class="sonar-ring sonar-ring-delay"></span>
+        <svg class="fingerprint-progress" viewBox="0 0 240 240">
+          <circle cx="120" cy="120" r="106"></circle>
+          <circle cx="120" cy="120" r="106"></circle>
+        </svg>
+        <div class="fingerprint-core"><i class="ti ti-fingerprint"></i></div>
+      </div>
+      <p id="verify-status">Cuando estes listo, inicia la verificacion.</p>
+      <span class="verify-substatus">No muevas tu dedo durante la lectura</span>
+      <div class="verify-tips">
+        <article><i class="ti ti-fingerprint"></i><span>Coloca plano</span></article>
+        <article><i class="ti ti-clock"></i><span>No lo muevas</span></article>
+        <article><i class="ti ti-shield-check"></i><span>Manten limpio</span></article>
+      </div>
+      <div class="verify-actions">
+        <button id="btn-start-verify" type="button" class="kiosk-primary-action">
+          <i class="ti ti-fingerprint" aria-hidden="true"></i>
+          Iniciar verificacion
+          <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
+        <button id="btn-cancel-verify" type="button" class="kiosk-secondary-action"><i class="ti ti-arrow-left"></i> Volver</button>
+      </div>
+      <div id="verify-error" class="kiosk-message kiosk-message-error hidden"></div>
+    </section>
+    <footer class="verify-foot"><span><i class="ti ti-shield-check"></i> Tu informacion esta protegida con encriptacion de nivel electoral</span><span>Tiempo estimado: 5-10s</span></footer>
+  </div>
+</section>
+
+<section id="screen-identity" class="kiosk-screen hidden">
+  <div class="identity-layout">
+    <article class="identity-card">
+      <div class="identity-photo">
+        <img id="identity-photo" class="hidden" alt="Foto del votante">
+        <i id="identity-photo-empty" class="ti ti-user"></i>
+      </div>
+      <div class="identity-copy">
+        <p class="kiosk-eyebrow">Datos personales</p>
+        <h2 id="identity-name">--</h2>
+        <dl>
+          <div><dt>Identificacion</dt><dd id="identity-id">--</dd></div>
+          <div><dt>Estado del voto</dt><dd id="identity-status">--</dd></div>
+          <div><dt>Puesto asignado</dt><dd id="identity-place">--</dd></div>
+        </dl>
+      </div>
+    </article>
+    <article class="jury-confirm-card">
+      <p class="kiosk-eyebrow">Confirmacion del jurado</p>
+      <h2>La persona coincide con los datos mostrados?</h2>
+      <label class="kiosk-confirm">
+        <input id="jury-confirm-identity" type="checkbox">
+        <span>Confirmo que la identidad visual corresponde al votante.</span>
+      </label>
+      <button id="btn-go-ballot" type="button" class="kiosk-primary-action" disabled>
+        <i class="ti ti-ballot"></i>
+        Ir a tarjeton
+        <i class="ti ti-arrow-right"></i>
+      </button>
+      <button id="btn-retry-identity" type="button" class="kiosk-secondary-action">Verificar otra huella</button>
+      <div id="identity-error" class="kiosk-message kiosk-message-error hidden"></div>
+    </article>
+  </div>
+</section>
