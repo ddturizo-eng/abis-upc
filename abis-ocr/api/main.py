@@ -165,9 +165,14 @@ app.add_middleware(
 # Mapeo de string → DocumentHint para el parámetro doc_type
 _HINT_MAP: dict[str, DocumentHint] = {
     "auto": DocumentHint.AUTO,
+    "cc": DocumentHint.AUTO,
+    "ce": DocumentHint.CARNET_ESTUDIANTIL,
+    "c.e.": DocumentHint.CARNET_ESTUDIANTIL,
     "cedula_digital": DocumentHint.CEDULA_DIGITAL,
     "cedula_amarilla": DocumentHint.CEDULA_AMARILLA,
     "tarjeta_identidad": DocumentHint.TARJETA_IDENTIDAD,
+    "ti": DocumentHint.TARJETA_IDENTIDAD,
+    "t.i.": DocumentHint.TARJETA_IDENTIDAD,
     "carnet_estudiantil": DocumentHint.CARNET_ESTUDIANTIL,
 }
 

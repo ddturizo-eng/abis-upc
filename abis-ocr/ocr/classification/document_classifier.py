@@ -5,7 +5,7 @@ Clasificador de documentos de identidad colombianos usando reglas visuales OpenC
 
 Estrategia: dos señales combinadas
     1. Color dominante en HSV  → distingue amarilla / azul / verde/beige (TI)
-    2. Texto ancla vía OCR rápido (Tesseract --psm 6) → confirma el tipo
+    2. Texto ancla vía OCR rápido (Tesseract --psm 11) → confirma el tipo
 
 Principio: SRP  — solo clasifica, no extrae campos ni preprocesa para OCR.
 Principio: OCP  — agregar un nuevo tipo = agregar una regla en _RULES, no tocar lógica.
@@ -57,6 +57,15 @@ _TEXT_ANCHORS: dict[DocumentType, list[str]] = {
     DocumentType.CEDULA_AMARILLA: ["NÚMERO", "NUMERO", "APELLIDOS", "NOMBRES"],
     DocumentType.TARJETA_IDENTIDAD: ["TARJETA DE IDENTIDAD", "IDENTIDAD"],
     DocumentType.CARNET_ESTUDIANTIL: ["UPC", "POLITECNICO", "POLITÉCNICO"],
+}
+
+# Texto ancla de PRIORIDAD ABSOLUTA -- si aparece en cualquier zona de la imagen,
+# el tipo se asigna sin importar el resultado del color HSV.
+# Estas senales son unicas e inequivocas para su tipo de documento.
+_PRIORITY_ANCHORS: dict[DocumentType, list[str]] = {
+    DocumentType.CEDULA_DIGITAL: ["NUIP"],
+    # CEDULA_AMARILLA no tiene ancla de prioridad -- su identificador "NUMERO"
+    # es demasiado generico y puede aparecer en otros documentos.
 }
 
 # Umbral mínimo de píxeles del color dominante para considerar match (0.0 - 1.0)
@@ -160,7 +169,25 @@ class DocumentClassifier:
         else:
             anchor_text = ""
 
-        # 4. Decisión final
+        # 4. Verificar anclas de prioridad absoluta en texto completo
+        # Estas senales son inequivocas y no requieren confirmacion de color
+        if self._use_ocr_anchor:
+            priority_result = self._check_priority_anchors(image)
+            if priority_result is not None:
+                logger.debug(
+                    "Ancla de prioridad encontrada -> %s (cortocircuito)",
+                    priority_result.value,
+                )
+                return ClassificationResult(
+                    document_type=priority_result,
+                    confidence=0.92,
+                    color_score=color_score,
+                    anchor_found=True,
+                    anchor_text="PRIORITY_ANCHOR",
+                    method="priority_anchor",
+                )
+
+        # 5. Decision final por senales combinadas
         return self._decide(
             color_winner, color_score, anchor_winner, anchor_found, anchor_text
         )
@@ -222,7 +249,7 @@ class DocumentClassifier:
         self, image: np.ndarray, color_candidate: Optional[DocumentType]
     ) -> tuple[Optional[DocumentType], bool, str]:
         """
-        Busca texto ancla en la zona superior del documento (primer 30%).
+        Busca texto ancla en la zona superior ampliada del documento (primer 70%).
 
         Args:
             image: Imagen BGR completa.
@@ -231,9 +258,10 @@ class DocumentClassifier:
         Returns:
             (tipo confirmado o None, se encontró ancla)
         """
-        # Recortar zona superior donde suelen estar los identificadores
         h = image.shape[0]
-        roi = image[: int(h * 0.30), :]
+        # Usar 70% de la imagen: la cedula puede estar en cualquier posicion
+        # del frame cuando llega como foto de celular
+        roi = image[: int(h * 0.70), :]
 
         # OCR rápido: grayscale sin CLAHE (velocidad > precisión aquí)
         gray = cv2.cvtColor(roi, cv2.COLOR_BGR2GRAY)
@@ -243,9 +271,11 @@ class DocumentClassifier:
 
             text = pytesseract.image_to_string(
                 gray,
-                config="--psm 6 --oem 1 -l spa",
+                config="--psm 11 --oem 1 -l spa",
                 timeout=2,
             ).upper()
+            # PSM 11 = sparse text: mejor para documentos fotografiados donde
+            # el texto no esta en bloque uniforme (PSM 6 asume pagina de texto uniforme)
         except Exception as e:
             logger.warning("OCR ancla falló: %s", e)
             return None, False
@@ -266,6 +296,55 @@ class DocumentClassifier:
                     return doc_type, True, anchor
 
         return None, False, ""
+
+    def _check_priority_anchors(
+        self, image: np.ndarray
+    ) -> Optional[DocumentType]:
+        """
+        Busca anclas de prioridad absoluta en la imagen completa.
+
+        A diferencia de _check_anchors(), opera sobre la imagen completa
+        (no solo el 70% superior) y usa escala de grises optimizada.
+        Si encuentra una ancla de prioridad, retorna el tipo directamente
+        sin necesitar confirmacion de color.
+
+        Returns:
+            DocumentType si se encontro ancla de prioridad, None si no.
+        """
+        if not _PRIORITY_ANCHORS:
+            return None
+
+        # Usar imagen completa para no perder el NUIP que puede estar
+        # en cualquier posicion segun la orientacion de la foto
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+
+        # Aumentar contraste para mejorar deteccion de texto pequeno
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        gray = clahe.apply(gray)
+
+        try:
+            import pytesseract
+
+            text = pytesseract.image_to_string(
+                gray,
+                config="--psm 11 --oem 1 -l spa",
+                timeout=3,
+            ).upper()
+        except Exception as e:
+            logger.warning("OCR de prioridad fallo: %s", e)
+            return None
+
+        for doc_type, anchors in _PRIORITY_ANCHORS.items():
+            for anchor in anchors:
+                if anchor.upper() in text:
+                    logger.info(
+                        "Ancla de prioridad '%s' detectada -> clasificando como %s",
+                        anchor,
+                        doc_type.value,
+                    )
+                    return doc_type
+
+        return None
 
     # -----------------------------------------------------------------------
     # Decisión final
