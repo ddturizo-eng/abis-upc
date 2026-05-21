@@ -91,6 +91,10 @@
     }[char]));
   }
 
+  function escapeAttr(value) {
+    return escapeHtml(value).replace(/`/g, '&#96;');
+  }
+
   function roleClass(voter) {
     const role = roleName(voter).toLowerCase();
     if (role.includes('estudiante')) return 'badge-student';
@@ -289,8 +293,6 @@
     const popover = document.createElement('div');
     popover.className = 'voter-popover';
     popover.id = 'voter-popover';
-    popover.style.top = `${rect.bottom + 8}px`;
-    popover.style.left = `${Math.max(12, rect.right - 205)}px`;
     popover.innerHTML = `
       <button data-action="details"><span class="material-symbols-outlined">visibility</span>Ver detalles</button>
       <button data-action="edit"><span class="material-symbols-outlined">edit</span>Editar datos</button>
@@ -301,6 +303,7 @@
       <button data-action="disable" class="danger"><span class="material-symbols-outlined">block</span>Inhabilitar</button>
     `;
     document.body.appendChild(popover);
+    positionPopover(anchor, popover);
     popover.querySelectorAll('button').forEach((button) => {
       button.addEventListener('click', () => {
         closePopover();
@@ -308,6 +311,28 @@
       });
     });
     setTimeout(() => document.addEventListener('click', closePopover, { once: true }), 0);
+  }
+
+  function positionPopover(anchor, popover) {
+    const margin = 12;
+    const gap = 8;
+    const rect = anchor.getBoundingClientRect();
+    const menuRect = popover.getBoundingClientRect();
+    const spaceBelow = window.innerHeight - rect.bottom;
+    const spaceAbove = rect.top;
+    const openUp = spaceBelow < menuRect.height + gap + margin && spaceAbove > spaceBelow;
+
+    const left = Math.min(
+      Math.max(margin, rect.right - menuRect.width),
+      window.innerWidth - menuRect.width - margin
+    );
+    const top = openUp
+      ? Math.max(margin, rect.top - menuRect.height - gap)
+      : Math.min(rect.bottom + gap, window.innerHeight - menuRect.height - margin);
+
+    popover.style.left = `${left}px`;
+    popover.style.top = `${top}px`;
+    popover.classList.toggle('dropup', openUp);
   }
 
   function closePopover() {
@@ -332,28 +357,149 @@
     const drawer = document.getElementById('voter-drawer');
     const content = document.getElementById('voter-drawer-content');
     const name = fullName(voter);
+    const editable = action === 'edit';
     const photo = voter.foto_url
       ? `<img src="${escapeHtml(voter.foto_url)}" alt="Foto de ${escapeHtml(name)}" loading="lazy">`
       : `<div class="drawer-initials">${escapeHtml(initials(name))}</div>`;
+    const roleOptions = Object.entries(roleNames).map(([id, label]) =>
+      `<option value="${escapeAttr(id)}" ${Number(voter.rol_id) === Number(id) ? 'selected' : ''}>${escapeHtml(label)}</option>`
+    ).join('');
+    const placeOptions = Object.entries(placeNames).map(([id, label]) =>
+      `<option value="${escapeAttr(id)}" ${Number(voter.puesto_id) === Number(id) ? 'selected' : ''}>${escapeHtml(label)}</option>`
+    ).join('');
     content.innerHTML = `
-      <div class="drawer-photo">${photo}</div>
-      <h3 class="drawer-name">${escapeHtml(name)}</h3>
-      <div class="drawer-grid">
-        <div class="drawer-field"><div class="drawer-label">Identificacion</div><div class="drawer-value">${escapeHtml(voter.identificacion || '--')}</div></div>
-        <div class="drawer-field"><div class="drawer-label">Correo</div><div class="drawer-value">${escapeHtml(voter.correo || '--')}</div></div>
-        <div class="drawer-field"><div class="drawer-label">Rol</div><div class="drawer-value">${escapeHtml(roleName(voter))}</div></div>
-        <div class="drawer-field"><div class="drawer-label">Puesto</div><div class="drawer-value">${escapeHtml(placeName(voter))}</div></div>
-        <div class="drawer-field"><div class="drawer-label">Estado</div><div class="drawer-value">${escapeHtml(stateLabel(voter))}</div></div>
-        <div class="drawer-field"><div class="drawer-label">Biometrico</div><div class="drawer-value">${isBiometric(voter) ? 'Enrolado' : 'No enrolado'}</div></div>
-        <div class="drawer-field"><div class="drawer-label">QR cedula</div><div class="drawer-value">${voter.qr_cedula ? 'Registrado' : 'No registrado'}</div></div>
-      </div>
-      <div class="drawer-grid" style="grid-template-columns:1fr 1fr;margin-top:18px">
-        <button class="voters-btn voters-btn-ghost" type="button">${action === 'edit' ? 'Guardar cambios' : 'Editar'}</button>
-        <button class="voters-btn voters-btn-primary" type="button">${action === 'bio' ? 'Iniciar re-enrolamiento' : 'Ver auditoria'}</button>
+      <div class="voter-modal-layout">
+        <aside class="voter-modal-profile">
+          <button class="drawer-back" type="button" data-close-voter-modal>
+            <span class="material-symbols-outlined">arrow_back</span>
+          </button>
+          <div class="drawer-photo">${photo}</div>
+          <h3 class="drawer-name">${escapeHtml(name)}</h3>
+          <p class="drawer-role">${escapeHtml(roleName(voter))}</p>
+          <div class="drawer-status-pill ${stateClass(voter)}">
+            <span></span>${escapeHtml(stateLabel(voter))}
+          </div>
+        </aside>
+
+        <form class="voter-modal-form" id="voter-edit-form">
+          <div class="voter-modal-heading">
+            <div>
+              <p class="voters-field-label">Ficha del votante</p>
+              <h3>Detalle operativo</h3>
+            </div>
+            <button class="drawer-close in-content" type="button" data-close-voter-modal>
+              <span class="material-symbols-outlined">close</span>
+            </button>
+          </div>
+
+          <div class="voter-form-grid">
+            <label>
+              <span class="drawer-label">Primer nombre</span>
+              <input name="primer_nombre" value="${escapeAttr(voter.primer_nombre || '')}" ${editable ? '' : 'readonly'}>
+            </label>
+            <label>
+              <span class="drawer-label">Segundo nombre</span>
+              <input name="segundo_nombre" value="${escapeAttr(voter.segundo_nombre || '')}" ${editable ? '' : 'readonly'}>
+            </label>
+            <label>
+              <span class="drawer-label">Primer apellido</span>
+              <input name="primer_apellido" value="${escapeAttr(voter.primer_apellido || '')}" ${editable ? '' : 'readonly'}>
+            </label>
+            <label>
+              <span class="drawer-label">Segundo apellido</span>
+              <input name="segundo_apellido" value="${escapeAttr(voter.segundo_apellido || '')}" ${editable ? '' : 'readonly'}>
+            </label>
+            <label>
+              <span class="drawer-label">Identificacion</span>
+              <input name="identificacion" value="${escapeAttr(voter.identificacion || '')}" readonly>
+            </label>
+            <label class="wide">
+              <span class="drawer-label">Correo</span>
+              <input name="correo" type="email" value="${escapeAttr(voter.correo || '')}" ${editable ? '' : 'readonly'}>
+            </label>
+            <label>
+              <span class="drawer-label">Rol</span>
+              <select name="rol_id" ${editable ? '' : 'disabled'}>${roleOptions}</select>
+            </label>
+            <label>
+              <span class="drawer-label">Puesto</span>
+              <select name="puesto_id" ${editable ? '' : 'disabled'}>${placeOptions}</select>
+            </label>
+            <div class="drawer-field compact"><div class="drawer-label">Estado</div><div class="drawer-value">${escapeHtml(stateLabel(voter))}</div></div>
+            <div class="drawer-field compact"><div class="drawer-label">Biometrico</div><div class="drawer-value">${isBiometric(voter) ? 'Enrolado' : 'No enrolado'}</div></div>
+            <div class="drawer-field compact wide"><div class="drawer-label">QR cedula</div><div class="drawer-value">${voter.qr_cedula ? 'Registrado' : 'No registrado'}</div></div>
+          </div>
+
+          <div class="voter-modal-error" id="voter-modal-error"></div>
+          <div class="voter-modal-actions">
+            ${editable
+              ? '<button class="voters-btn voters-btn-ghost" type="button" data-close-voter-modal>Cancelar</button><button class="voters-btn voters-btn-primary" type="submit">Guardar cambios</button>'
+              : '<button class="voters-btn voters-btn-ghost" type="button" id="voter-modal-edit">Editar</button><button class="voters-btn voters-btn-primary" type="button" id="voter-modal-audit"><span class="material-symbols-outlined">history</span>Ver auditoria</button>'}
+          </div>
+        </form>
       </div>
     `;
+    content.querySelectorAll('[data-close-voter-modal]').forEach((button) => button.addEventListener('click', closeDrawer));
+    content.querySelector('#voter-modal-edit')?.addEventListener('click', () => openDrawer(voter, 'edit'));
+    content.querySelector('#voter-modal-audit')?.addEventListener('click', () => {
+      closeDrawer();
+      document.querySelector('.voters-audit-card')?.scrollIntoView({ behavior: 'smooth' });
+    });
+    content.querySelector('#voter-edit-form')?.addEventListener('submit', (event) => saveVoter(event, voter));
     drawer.classList.add('open');
     drawer.setAttribute('aria-hidden', 'false');
+  }
+
+  async function saveVoter(event, voter) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const error = document.getElementById('voter-modal-error');
+    const submit = form.querySelector('button[type="submit"]');
+    const payload = Object.fromEntries(new FormData(form).entries());
+    if (!payload.primer_nombre?.trim() || !payload.primer_apellido?.trim()) {
+      error.textContent = 'Primer nombre y primer apellido son obligatorios.';
+      error.classList.add('visible');
+      return;
+    }
+
+    try {
+      error.textContent = '';
+      error.classList.remove('visible');
+      if (submit) {
+        submit.disabled = true;
+        submit.textContent = 'Guardando...';
+      }
+      const response = await fetch(`/api/votantes/${encodeURIComponent(voter.identificacion)}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...headers
+        },
+        body: JSON.stringify({
+          primer_nombre: payload.primer_nombre.trim(),
+          segundo_nombre: payload.segundo_nombre.trim(),
+          primer_apellido: payload.primer_apellido.trim(),
+          segundo_apellido: payload.segundo_apellido.trim(),
+          correo: payload.correo.trim(),
+          rol_id: Number(payload.rol_id),
+          puesto_id: Number(payload.puesto_id)
+        })
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        throw new Error(body.error || body.message || `HTTP ${response.status}`);
+      }
+      closeDrawer();
+      await loadVoters();
+    } catch (saveError) {
+      error.textContent = saveError.message || 'No fue posible guardar los cambios.';
+      error.classList.add('visible');
+    } finally {
+      if (submit) {
+        submit.disabled = false;
+        submit.textContent = 'Guardar cambios';
+      }
+    }
   }
 
   function closeDrawer() {
@@ -362,18 +508,19 @@
     drawer.setAttribute('aria-hidden', 'true');
   }
 
-  async function renderAudit() {
+  async function renderAudit(limit = 6) {
     const target = document.getElementById('voters-audit-list');
     try {
-      const response = await fetch('/api/auditoria/reciente', { headers });
+      const response = await fetch(`/api/auditoria/reciente?limit=${encodeURIComponent(limit)}`, { headers });
       if (!response.ok) throw new Error('audit unavailable');
       const audit = await response.json();
-      if (Array.isArray(audit) && audit.length) {
-        target.innerHTML = audit.slice(0, 6).map((item) => auditItem({
+      const rows = Array.isArray(audit?.data) ? audit.data : audit;
+      if (Array.isArray(rows) && rows.length) {
+        target.innerHTML = rows.slice(0, limit).map((item) => auditItem({
           action: item.accion || item.campo_modificado || 'Edicion de datos',
           name: item.identificacion || 'Votante',
-          meta: item.fecha_hora || 'Fecha no disponible',
-          detail: item.motivo || `${item.valor_anterior || ''} ${item.valor_nuevo ? '-> ' + item.valor_nuevo : ''}`.trim(),
+          meta: item.fechaHora || item.fecha_hora || 'Fecha no disponible',
+          detail: item.motivo || `${item.valorAnterior || item.valor_anterior || ''} ${item.valorNuevo || item.valor_nuevo ? '-> ' + (item.valorNuevo || item.valor_nuevo) : ''}`.trim(),
           type: auditType(item.accion)
         })).join('');
         return;
@@ -474,8 +621,11 @@
   document.getElementById('voters-import').addEventListener('click', () => document.getElementById('voters-import-input').click());
   document.getElementById('voters-import-input').addEventListener('change', () => alert('Importacion masiva pendiente de endpoint backend.'));
   document.getElementById('voters-new').addEventListener('click', () => { window.location.href = '/pages/registro/index.html'; });
-  document.getElementById('voters-audit-button').addEventListener('click', () => document.querySelector('.voters-audit-card')?.scrollIntoView({ behavior: 'smooth' }));
-  document.getElementById('voters-audit-link').addEventListener('click', () => alert('Vista completa de auditoria pendiente.'));
+  document.getElementById('voters-audit-button').addEventListener('click', async () => {
+    await renderAudit(50);
+    document.querySelector('.voters-audit-card')?.scrollIntoView({ behavior: 'smooth' });
+  });
+  document.getElementById('voters-audit-link').addEventListener('click', () => renderAudit(50));
   document.getElementById('voter-drawer-close').addEventListener('click', closeDrawer);
   document.getElementById('voter-drawer').addEventListener('click', (event) => {
     if (event.target.id === 'voter-drawer') closeDrawer();
