@@ -4,9 +4,10 @@
         }
 
         async function checkHealth() {
+            const indicator = document.getElementById('status-indicator');
             try {
                 const result = await ApiHealth.check();
-                const indicator = document.getElementById('status-indicator');
+                if (!indicator) return;
                 if (result.success) {
                     indicator.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-green-500 mr-2"></span>Backend conectado';
                     indicator.className = 'text-xs text-green-600';
@@ -15,7 +16,7 @@
                     indicator.className = 'text-xs text-red-600';
                 }
             } catch (error) {
-                const indicator = document.getElementById('status-indicator');
+                if (!indicator) return;
                 indicator.innerHTML = '<span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-2"></span>Error de conexi&oacute;n';
                 indicator.className = 'text-xs text-red-600';
             }
