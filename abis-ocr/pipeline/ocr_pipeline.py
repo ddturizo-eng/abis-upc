@@ -69,6 +69,7 @@ class OcrPipeline:
         self._engine = engine
         self._parser_factory = parser_factory or ParserFactory
         self._classifier = classifier or DocumentClassifier()
+        self._last_classification_result: Optional[ClassificationResult] = None
 
         self._validate_dependencies()
 
@@ -98,8 +99,9 @@ class OcrPipeline:
         )
 
         # Determinar tipo de documento
-        classification = self._classify_document(doc_input)
+        self._last_classification_result = None
         doc_type = self._resolve_document_type(doc_input)
+        classification = self._last_classification_result
 
         # Procesar cara frontal
         logger.info("Procesando cara frontal...")
@@ -258,10 +260,16 @@ class OcrPipeline:
         Determina el tipo de documento a procesar.
 
         Flujo:
-            1. Clasifica automáticamente la imagen
-            2. Si hint es AUTO → usar clasificación automática
-            3. Si hint es manual → validar contra clasificador
-            4. Si discrepancia con alta confianza (>=0.80) → clasificador gana
+            1. Si hint es AUTO → usar clasificación automática
+            2. Si hint es manual → respetar siempre la selección del operador
+               El operador está mirando el documento físico; tiene más información
+               que cualquier clasificador automático.
+
+        IMPORTANTE: El hint manual es soberano. El clasificador automático
+        solo actúa cuando el hint es AUTO. Esta decisión es intencional:
+        los falsos positivos del clasificador (ej. confundir carnet con
+        cédula amarilla por color similar) son más dañinos que confiar
+        en el operador humano.
         """
         hint_to_type = {
             DocumentHint.CEDULA_DIGITAL: DocumentType.CEDULA_DIGITAL,
@@ -270,9 +278,10 @@ class OcrPipeline:
             DocumentHint.CARNET_ESTUDIANTIL: DocumentType.CARNET_ESTUDIANTIL,
         }
 
-        classification = self._classify_document(doc_input)
-
+        # Caso AUTO: delegar completamente al clasificador
         if doc_input.document_hint == DocumentHint.AUTO:
+            classification = self._classify_document(doc_input)
+            self._last_classification_result = classification
             if classification and classification.document_type != DocumentType.UNKNOWN:
                 logger.info(
                     "Clasificación automática: %s (confianza=%.2f)",
@@ -286,24 +295,15 @@ class OcrPipeline:
             )
             return DocumentType.CEDULA_DIGITAL
 
+        # Caso hint manual: respetar siempre al operador
+        self._last_classification_result = None
         manual_type = hint_to_type.get(
             doc_input.document_hint, DocumentType.CEDULA_DIGITAL
         )
-
-        if (
-            classification
-            and classification.document_type != DocumentType.UNKNOWN
-            and classification.document_type != manual_type
-            and classification.confidence >= 0.80
-        ):
-            logger.warning(
-                "DISCREPANCIA operador=%s clasificador=%s (%.2f) → usando clasificador",
-                manual_type.value,
-                classification.document_type.value,
-                classification.confidence,
-            )
-            return classification.document_type
-
+        logger.info(
+            "Hint manual del operador: %s → usando sin validación automática",
+            manual_type.value,
+        )
         return manual_type
 
     def _classify_document(
