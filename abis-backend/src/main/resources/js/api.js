@@ -9,21 +9,24 @@ const API = {
     async request(endpoint, options = {}) {
         const url = this.baseUrl + endpoint;
         const token = localStorage.getItem('abis_token');
+        const providedHeaders = options.headers || {};
+        const isFormData = this.isFormData(options.body);
         const config = {
+            ...options,
             headers: {
-                'Content-Type': 'application/json',
+                ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
                 ...(token ? { Authorization: 'Bearer ' + token } : {}),
-                ...options.headers
-            },
-            ...options
+                ...providedHeaders
+            }
         };
 
-        if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
+        if (config.body && typeof config.body === 'object' && !isFormData) {
             config.body = JSON.stringify(config.body);
         }
 
-        if (config.body instanceof FormData) {
+        if (isFormData) {
             delete config.headers['Content-Type'];
+            delete config.headers['content-type'];
         }
 
         try {
@@ -61,6 +64,11 @@ const API = {
             body: formData,
             headers: {}
         });
+    },
+
+    isFormData(body) {
+        return typeof FormData !== 'undefined' &&
+            (body instanceof FormData || Object.prototype.toString.call(body) === '[object FormData]');
     }
 };
 
