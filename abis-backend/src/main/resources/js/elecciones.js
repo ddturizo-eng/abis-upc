@@ -500,6 +500,17 @@
     verResumen(id);
   };
 
+  window.abrirConfiguracionProximaEleccion = function abrirConfiguracionProximaEleccion() {
+    const next = state.elecciones
+      .filter((e) => normalizarEstado(e.estado) === 'PROGRAMADA')
+      .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))[0];
+    if (next) {
+      editarEleccion(next.id);
+      return;
+    }
+    abrirModalNuevaEleccion();
+  };
+
   window.toggleMenuEleccion = function toggleMenuEleccion(event, id) {
     event.stopPropagation();
     const election = state.elecciones.find((e) => Number(e.id) === Number(id));
