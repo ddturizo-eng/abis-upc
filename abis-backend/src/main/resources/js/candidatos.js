@@ -200,6 +200,33 @@
     }
   }
 
+  async function refrescarCandidatosEnVivo() {
+    if (!state.eleccionId || document.hidden) return;
+    if (!document.body.contains(dom.content)) {
+      clearInterval(window.__candidatosLiveRefresh);
+      window.__candidatosLiveRefresh = null;
+      return;
+    }
+    if (dom.modal.classList.contains('open') || dom.modalDelete.classList.contains('open')) return;
+
+    try {
+      const payload = await ApiElecciones.candidatos(state.eleccionId);
+      state.candidatos = unwrap(payload).map(normalizarCandidato);
+      state.filtrados = [...state.candidatos];
+      poblarFiltrosCargo();
+      aplicarFiltros();
+    } catch (error) {
+      console.warn('No fue posible refrescar candidatos en vivo:', error);
+    }
+  }
+
+  function iniciarActualizacionEnVivo() {
+    if (window.__candidatosLiveRefresh) {
+      clearInterval(window.__candidatosLiveRefresh);
+    }
+    window.__candidatosLiveRefresh = setInterval(refrescarCandidatosEnVivo, 10000);
+  }
+
   function normalizarCandidato(candidato) {
     return {
       ...candidato,
@@ -434,6 +461,18 @@
     };
   }
 
+  function construirPayloadCandidato(payload) {
+    const foto = dom.photoInput.files?.[0] || null;
+    if (!foto) return payload;
+
+    const formData = new FormData();
+    Object.entries(payload).forEach(([key, value]) => {
+      formData.append(key, value ?? '');
+    });
+    formData.append('foto', foto);
+    return formData;
+  }
+
   function limpiarErroresFormulario() {
     dom.modalError.textContent = '';
     dom.modalError.classList.remove('visible');
@@ -477,12 +516,13 @@
   }
 
   async function guardarCandidato(formData) {
+    const requestBody = construirPayloadCandidato(formData);
     if (!state.eleccionId) throw new Error('Seleccione una elección antes de guardar.');
     if (state.editandoId) {
-      await ApiCandidatos.editar(state.eleccionId, state.editandoId, formData);
+      await ApiCandidatos.editar(state.eleccionId, state.editandoId, requestBody);
       registrarAuditoria('edit', 'Candidato actualizado', `${formData.primerNombre} ${formData.primerApellido}`, `Cargo: ${formData.cargo}`);
     } else {
-      await ApiCandidatos.agregar(state.eleccionId, formData);
+      await ApiCandidatos.agregar(state.eleccionId, requestBody);
       registrarAuditoria('create', 'Candidato creado', `${formData.primerNombre} ${formData.primerApellido}`, `Número ${formData.numeroCampania}`);
     }
     cerrarModal(dom.modal);
@@ -561,15 +601,39 @@
       <section class="tarjeton-cargo">
         <h3 class="tarjeton-cargo-title">${escapeHtml(cargo)}</h3>
         <div class="tarjeton-mini-grid">
-          ${ordenarCandidatos(items).map((candidato) => `
-            <div class="tarjeton-mini">
-              <span class="tarjeton-mini-num">${String(candidato.numeroCampania || '--').padStart(2, '0')}</span>
-              <span class="tarjeton-mini-name">${escapeHtml(candidato.nombreCompleto)}</span>
+          ${opcionesPreviewTarjeton(items).map((candidato) => `
+            <div class="tarjeton-mini${candidato.esVotoBlanco ? ' blank' : ''}">
+              <span class="tarjeton-mini-num">${candidato.esVotoBlanco ? 'VB' : String(candidato.numeroCampania || '--').padStart(2, '0')}</span>
+              <span class="tarjeton-mini-name">${escapeHtml(candidato.nombreCompleto || candidato.nombre)}</span>
+              <span class="tarjeton-mini-party">${escapeHtml(candidato.movimiento || candidato.partido || (candidato.esVotoBlanco ? 'Opcion oficial' : 'Universitario'))}</span>
             </div>
           `).join('')}
         </div>
       </section>
     `).join('') + '<div class="tarjeton-legend">Números de campaña en formato de tarjetón electoral.</div>';
+  }
+
+  function opcionesPreviewTarjeton(items) {
+    const ordenados = ordenarCandidatos(items).map((candidato) => ({
+      ...candidato,
+      esVotoBlanco: candidateId(candidato) == null ||
+        /voto\s+en\s+blanco/i.test(String(candidato.nombreCompleto || candidato.nombre || ''))
+    }));
+    const tieneVotoBlanco = ordenados.some((candidato) =>
+      candidateId(candidato) == null ||
+      /voto\s+en\s+blanco/i.test(String(candidato.nombreCompleto || candidato.nombre || ''))
+    );
+    if (tieneVotoBlanco) return ordenados;
+    return [
+      ...ordenados,
+      {
+        idCandidato: null,
+        numeroCampania: '',
+        nombreCompleto: 'Voto en blanco',
+        movimiento: 'Opcion oficial',
+        esVotoBlanco: true
+      }
+    ];
   }
 
   function cargarAuditoria() {
@@ -709,7 +773,76 @@
     event.preventDefault();
     document.querySelector('.candidatos-sidebar')?.scrollIntoView({ behavior: 'smooth' });
   });
-  document.getElementById('btnAbrirTarjeton').addEventListener('click', abrirTarjetonCompleto);
+  function abrirTarjetonCompletoVisual() {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!doctype html>
+      <html lang="es">
+      <head>
+        <meta charset="UTF-8">
+        <title>Tarjeton ABIS-UPC</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; background: #f4f7f5; color: #1f2925; font-family: "DM Sans", Arial, sans-serif; padding: 28px; }
+          .sheet { background: #fff; border: 2px solid #1f2925; border-radius: 8px; margin: 0 auto 24px; max-width: 980px; overflow: hidden; }
+          .head { align-items: start; background: #fbfcfb; display: grid; gap: 20px; grid-template-columns: 1fr 2fr 1fr; padding: 24px 30px 16px; }
+          .brand { color: #075521; display: grid; font-weight: 900; gap: 7px; text-transform: uppercase; }
+          .flag { display: grid; grid-template-columns: 2fr 1fr 1fr; height: 12px; width: 126px; }
+          .flag span:nth-child(1) { background: #fcd116; }
+          .flag span:nth-child(2) { background: #003893; }
+          .flag span:nth-child(3) { background: #ce1126; }
+          .year { font-size: 24px; }
+          .title { text-align: center; }
+          .title small { color: #5f6f67; font-size: 12px; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+          .title h1 { border-bottom: 1px solid #1f2925; color: #1f2925; font-size: 25px; line-height: 1.12; margin: 4px 0 6px; padding-bottom: 8px; text-transform: uppercase; }
+          .code { justify-self: end; text-align: right; }
+          .bars { background: repeating-linear-gradient(90deg, #1f2925 0 2px, transparent 2px 5px, #1f2925 5px 6px, transparent 6px 9px); display: block; height: 36px; width: 132px; }
+          .code strong { display: block; font-family: monospace; font-size: 11px; letter-spacing: .18em; margin-top: 6px; }
+          .instruction { border-bottom: 1px solid #1f2925; border-top: 1px solid #1f2925; color: #b42318; font-size: 14px; font-weight: 900; letter-spacing: .08em; padding: 12px; text-align: center; text-transform: uppercase; }
+          .grid { display: grid; gap: 22px; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); padding: 30px; }
+          .candidate { border: 1.5px solid #1f2925; border-radius: 4px; display: grid; gap: 10px; min-height: 260px; padding: 14px; text-align: center; }
+          .num { align-items: center; background: #075521; border-radius: 999px; color: #fff; display: inline-flex; font-family: monospace; font-weight: 900; height: 38px; justify-content: center; width: 38px; }
+          .photo { align-items: center; background: #f4f7f5; border: 1px solid #dbe5df; display: flex; justify-content: center; min-height: 145px; overflow: hidden; }
+          .photo img { height: 100%; object-fit: cover; width: 100%; }
+          .blank .photo { background: #fff; border: 2px dashed #c5d0c9; color: #1f2925; font-size: 22px; font-weight: 900; text-transform: uppercase; }
+          .role { color: #5f6f67; font-size: 10px; font-weight: 900; letter-spacing: .08em; text-transform: uppercase; }
+          .name { color: #1f2925; font-size: 15px; font-weight: 900; line-height: 1.25; text-transform: uppercase; }
+          .party { background: #e8f5ed; border: 1px solid #b7e4c7; color: #075521; font-size: 11px; font-weight: 900; padding: 8px; text-transform: uppercase; }
+          .foot { background: #f4f7f5; border-top: 1px solid #1f2925; color: #5f6f67; display: flex; font-size: 11px; font-weight: 900; justify-content: space-between; padding: 14px 30px; text-transform: uppercase; }
+          @media (max-width: 760px) { body { padding: 12px; } .head { grid-template-columns: 1fr; text-align: center; } .brand, .code { justify-items: center; justify-self: center; } .foot { flex-direction: column; gap: 8px; } }
+        </style>
+      </head>
+      <body>
+        ${Object.entries(agruparPorCargo(state.candidatos)).map(([cargo, items], index) => `
+          <section class="sheet">
+            <header class="head">
+              <div class="brand"><span class="flag"><span></span><span></span><span></span></span><span>Elecciones Universitarias</span><span class="year">${new Date().getFullYear()}</span></div>
+              <div class="title"><small>Voto por la formula de</small><h1>${escapeHtml(cargo)}</h1><span>${escapeHtml(state.eleccionActual?.nombre || 'Eleccion universitaria')} - Unicesar</span></div>
+              <div class="code"><span class="bars"></span><strong>ABIS${String(index + 1).padStart(4, '0')}</strong></div>
+            </header>
+            <div class="instruction">Marque solo una opcion de su preferencia</div>
+            <div class="grid">
+              ${opcionesPreviewTarjeton(items).map((c) => `
+                <article class="candidate${c.esVotoBlanco ? ' blank' : ''}">
+                  <span class="num">${c.esVotoBlanco ? 'VB' : String(c.numeroCampania || '--').padStart(2, '0')}</span>
+                  <div class="photo">${c.esVotoBlanco ? 'Voto en blanco' : (c.fotoUrl || c.foto_url ? `<img src="${escapeHtml(c.fotoUrl || c.foto_url)}" alt="Foto de ${escapeHtml(c.nombreCompleto)}">` : escapeHtml(iniciales(c)))}</div>
+                  <span class="role">${escapeHtml(cargo)}</span>
+                  <span class="name">${escapeHtml(c.nombreCompleto || c.nombre)}</span>
+                  <span class="party">${escapeHtml(c.movimiento || c.partido || (c.esVotoBlanco ? 'Opcion oficial' : 'Universitario'))}</span>
+                </article>
+              `).join('')}
+            </div>
+            <footer class="foot"><span>Sistema Electoral - Unicesar</span><span>Documento oficial de votacion electronica</span></footer>
+          </section>
+        `).join('')}
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+  }
+
+  document.getElementById('btnAbrirTarjeton').addEventListener('click', abrirTarjetonCompletoVisual);
   document.getElementById('btnCerrarModalCandidato').addEventListener('click', () => cerrarModal(dom.modal));
   document.getElementById('btnCancelarCandidato').addEventListener('click', () => cerrarModal(dom.modal));
 
@@ -773,5 +906,6 @@
   window.renderizarTarjetonPreview = renderizarTarjetonPreview;
   window.cargarAuditoria = cargarAuditoria;
 
+  iniciarActualizacionEnVivo();
   cargarElecciones();
 })();
