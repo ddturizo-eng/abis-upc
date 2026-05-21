@@ -4,7 +4,8 @@
     cargos: [],
     votante: null,
     permiso: null,
-    idCandidato: null
+    idCandidato: null,
+    seleccionRealizada: false
   };
 
   const $ = (id) => document.getElementById(id);
@@ -36,6 +37,7 @@
     screens.forEach((screen) => {
       $(`screen-${screen}`).classList.toggle('hidden', screen !== name);
     });
+    document.body.classList.toggle('welcome-lock', name !== 'ballot');
   }
 
   function setMessage(id, message) {
@@ -70,7 +72,7 @@
     try {
       const result = await API.post('/api/verify', {});
       if (!result?.matched || !result.identificacion) {
-        throw new Error('No se encontró coincidencia biométrica.');
+        throw new Error('No hay un votante que coincida con la biometria capturada. Retira el dedo, verifica que sea el votante correcto e intenta nuevamente.');
       }
 
       const identificacion = String(result.identificacion);
@@ -84,8 +86,8 @@
       renderIdentidad();
       showScreen('identity');
     } catch (error) {
-      setMessage('verify-error', error.message || 'No fue posible verificar la huella.');
-      $('verify-status').textContent = 'Verificación no completada. Intenta nuevamente.';
+      setMessage('verify-error', error.message || 'No hay un votante que coincida con la biometria capturada. Intenta nuevamente.');
+      $('verify-status').textContent = 'Verificacion no completada. No se encontro coincidencia biometrica.';
     } finally {
       $('btn-start-verify').disabled = false;
     }
@@ -119,41 +121,53 @@
       return;
     }
 
-    $('vote-ballot').innerHTML = state.cargos.map((grupo) => `
-      <div class="kiosk-cargo">
-        <div class="kiosk-cargo-title">
-          <i class="ti ti-ballot" aria-hidden="true"></i>
-          <span>
-            <small>CARGO A ELEGIR</small>
-            ${escapeHtml(grupo.cargo || 'Cargo')}
-          </span>
-        </div>
-        <div class="kiosk-candidates">
-          ${(grupo.candidatos || []).map((candidato) => `
-            <label class="kiosk-candidate">
-              <input type="radio" name="candidato" value="${Number(candidato.idCandidato)}">
-              <span class="kiosk-candidate-check" aria-hidden="true"><i class="ti ti-check"></i></span>
-              <span class="kiosk-candidate-number">${escapeHtml(formatNumeroCampania(candidato.numeroCampania))}</span>
-              <span class="kiosk-candidate-meta">
-                <small>MOVIMIENTO</small>
-                <span class="kiosk-candidate-party">${escapeHtml(candidato.movimiento || candidato.partido || 'Universitario')}</span>
-              </span>
-              <span class="kiosk-candidate-photo" aria-hidden="true">
-                <i class="ti ti-user"></i>
-              </span>
-              <span class="kiosk-candidate-name">${escapeHtml(candidato.nombre || 'Candidato')}</span>
-              <span class="kiosk-candidate-slogan">${escapeHtml(candidato.eslogan || 'Compromiso con la comunidad universitaria')}</span>
-              <span class="kiosk-candidate-button">Seleccionar voto</span>
-            </label>
-          `).join('')}
-        </div>
-      </div>
-    `).join('');
+    const cargoActual = state.cargos.length === 1
+      ? `CARGO A ELEGIR: ${state.cargos[0].cargo || 'Cargo'}`
+      : `CARGOS A ELEGIR: ${state.cargos.length}`;
+    if ($('ballot-current-cargo')) {
+      $('ballot-current-cargo').textContent = cargoActual;
+    }
+
+    $('vote-ballot').innerHTML = state.cargos.map((grupo, grupoIndex) => {
+      const cargo = grupo.cargo || 'Cargo';
+      const candidatos = opcionesTarjeton(grupo);
+      return `
+        <section class="kiosk-cargo ballot-document">
+          <header class="ballot-document-header">
+            <div class="ballot-document-brand">
+              <span class="flag-strip" aria-hidden="true"><span></span><span></span><span></span></span>
+              <strong>Elecciones Universitarias</strong>
+              <em>${new Date().getFullYear()}</em>
+            </div>
+            <div class="ballot-document-title">
+              <small>Voto por la formula de</small>
+              <h3>${escapeHtml(cargo)}</h3>
+              <span>${escapeHtml(state.eleccion?.nombre || 'Eleccion universitaria')} - Unicesar</span>
+            </div>
+            <div class="ballot-document-code" aria-label="Codigo de verificacion">
+              <span class="barcode-lines" aria-hidden="true"></span>
+              <strong>ABIS${String(grupoIndex + 1).padStart(4, '0')}</strong>
+            </div>
+          </header>
+          <div class="ballot-document-instruction">
+            Marque solo una opcion de su preferencia
+          </div>
+          <div class="kiosk-candidates">
+            ${candidatos.map((candidato, index) => renderOpcionTarjeton(candidato, grupo, index)).join('')}
+          </div>
+          <footer class="ballot-document-footer">
+            <span><i class="ti ti-shield-check" aria-hidden="true"></i> Sistema Electoral - Unicesar</span>
+            <span>Documento oficial de votacion electronica</span>
+          </footer>
+        </section>
+      `;
+    }).join('');
 
     document.querySelectorAll('#vote-ballot input[type="radio"]').forEach((input) => {
       input.addEventListener('change', () => {
-        state.idCandidato = Number(input.value);
-        $('vote-selection-status').textContent = 'Selección lista para confirmar';
+        state.idCandidato = input.dataset.votoBlanco === 'true' ? null : Number(input.value);
+        state.seleccionRealizada = true;
+        $('vote-selection-status').textContent = 'Seleccion lista para confirmar';
         $('btn-vote-submit').disabled = false;
       });
     });
@@ -161,16 +175,18 @@
 
   function irATarjeton() {
     state.idCandidato = null;
+    state.seleccionRealizada = false;
     $('vote-selection-status').textContent = 'Seleccione una opción';
     $('btn-vote-submit').disabled = true;
     document.querySelectorAll('#vote-ballot input[type="radio"]').forEach((input) => {
       input.checked = false;
     });
+    document.querySelectorAll('.tarjeton-candidato').forEach((card) => card.classList.remove('seleccionado', 'selected'));
     showScreen('ballot');
   }
 
   async function registrarVoto() {
-    if (!state.votante || !state.eleccion || !state.idCandidato) {
+    if (!state.votante || !state.eleccion || !state.seleccionRealizada) {
       return;
     }
 
@@ -198,12 +214,14 @@
     state.votante = null;
     state.permiso = null;
     state.idCandidato = null;
+    state.seleccionRealizada = false;
     $('verify-status').textContent = 'Cuando estés listo, inicia la verificación.';
     setMessage('verify-error', '');
     setMessage('identity-error', '');
     document.querySelectorAll('#vote-ballot input[type="radio"]').forEach((input) => {
       input.checked = false;
     });
+    document.querySelectorAll('.tarjeton-candidato').forEach((card) => card.classList.remove('seleccionado', 'selected'));
     showScreen('welcome');
   }
 
@@ -214,6 +232,55 @@
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;')
       .replace(/'/g, '&#039;');
+  }
+
+  function opcionesTarjeton(grupo) {
+    const candidatos = [...(grupo.candidatos || [])];
+    const tieneVotoBlanco = candidatos.some((candidato) =>
+      candidato.idCandidato == null ||
+      /voto\s+en\s+blanco/i.test(String(candidato.nombre || candidato.nombreCompleto || ''))
+    );
+    if (!tieneVotoBlanco) {
+      candidatos.push({
+        idCandidato: null,
+        numeroCampania: '',
+        nombre: 'Voto en blanco',
+        cargo: grupo.cargo || 'Cargo',
+        movimiento: 'Opcion oficial',
+        esVotoBlanco: true
+      });
+    }
+    return candidatos;
+  }
+
+  function renderOpcionTarjeton(candidato, grupo, index) {
+    const esVotoBlanco = candidato.esVotoBlanco || candidato.idCandidato == null;
+    const foto = candidato.fotoUrl || candidato.foto || candidato.foto_url || '';
+    const nombre = candidato.nombre || candidato.nombreCompleto || 'Candidato';
+    const movimiento = candidato.movimiento || candidato.partido || (esVotoBlanco ? 'Opcion oficial' : 'Universitario');
+    return `
+      <label class="kiosk-candidate tarjeton-candidato${esVotoBlanco ? ' blank-vote' : ''}" style="animation-delay:${index * 0.06}s">
+        <input type="radio" name="candidato" value="${candidato.idCandidato == null ? '' : Number(candidato.idCandidato)}" data-voto-blanco="${esVotoBlanco ? 'true' : 'false'}">
+        <span class="kiosk-candidate-check" aria-hidden="true"><i class="ti ti-check"></i></span>
+        <span class="candidate-top">
+          <span class="kiosk-candidate-number">${esVotoBlanco ? 'VB' : escapeHtml(formatNumeroCampania(candidato.numeroCampania))}</span>
+        </span>
+        <span class="kiosk-candidate-photo">
+          ${esVotoBlanco
+            ? '<span class="blank-vote-label">Voto en blanco</span>'
+            : `<img src="${escapeHtml(foto)}" alt="Foto de ${escapeHtml(nombre)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+              <span class="img-fallback" style="${foto ? 'display:none;' : ''}">
+                <span class="img-fallback-avatar">${escapeHtml(initials(nombre))}</span>
+                <span>Sin fotografia</span>
+              </span>`}
+        </span>
+        <span class="candidate-bottom">
+          <span class="kiosk-candidate-role">${escapeHtml(grupo.cargo || candidato.cargo || 'Cargo')}</span>
+          <span class="kiosk-candidate-name">${escapeHtml(nombre)}</span>
+          <span class="kiosk-candidate-party"><i class="ti ${esVotoBlanco ? 'ti-square-dashed' : 'ti-flag'}" aria-hidden="true"></i>${escapeHtml(movimiento)}</span>
+        </span>
+      </label>
+    `;
   }
 
   async function init() {
@@ -239,5 +306,15 @@
     if (value === null || value === undefined || value === '') return '--';
     const text = String(value);
     return /^\d+$/.test(text) ? text.padStart(2, '0') : text;
+  }
+
+  function initials(value) {
+    return String(value || '?')
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part.charAt(0))
+      .join('')
+      .toUpperCase();
   }
 })();

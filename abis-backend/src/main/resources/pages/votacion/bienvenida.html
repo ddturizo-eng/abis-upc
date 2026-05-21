@@ -1,0 +1,30 @@
+<section id="screen-welcome" class="kiosk-screen kiosk-welcome-screen">
+  <div class="glass-panel">
+    <span class="hud-corner tl"></span>
+    <span class="hud-corner tr"></span>
+    <span class="hud-corner bl"></span>
+    <span class="hud-corner br"></span>
+
+    <p class="institution-mark">ABIS - UPC</p>
+    <div class="welcome-icon" aria-hidden="true">
+      <span class="icon-glow"></span>
+      <span class="ring-a"></span>
+      <span class="ring-b"></span>
+      <i class="ti ti-ballot"></i>
+    </div>
+
+    <h1 class="welcome-title">Bienvenido a la <span id="welcome-election-name">jornada electoral</span></h1>
+    <p class="welcome-copy">Para continuar, confirma tu identidad mediante verificacion dactilar.</p>
+    <button id="btn-go-verify" type="button" class="kiosk-primary-action">
+      <i class="ti ti-fingerprint" aria-hidden="true"></i>
+      Ir a confirmar mi identidad
+      <i class="ti ti-arrow-right" aria-hidden="true"></i>
+    </button>
+    <div class="welcome-features" aria-label="Caracteristicas del sistema">
+      <article><i class="ti ti-shield-check"></i><strong>Seguro</strong><span>Tus datos estan protegidos</span></article>
+      <article><i class="ti ti-circle-check"></i><strong>Confiable</strong><span>Sistema transparente y auditado</span></article>
+      <article><i class="ti ti-users-group"></i><strong>Participativo</strong><span>Tu voto construye el futuro</span></article>
+    </div>
+    <div id="welcome-error" class="kiosk-message kiosk-message-error hidden"></div>
+  </div>
+</section>
