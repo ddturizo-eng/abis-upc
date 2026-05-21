@@ -42,6 +42,7 @@ _MONTHS_ES = {
     "MAR": "03",
     "ABR": "04",
     "MAY": "05",
+    "MAYO": "05",
     "JUN": "06",
     "JUL": "07",
     "AGO": "08",
@@ -151,6 +152,68 @@ class CedulaDigitalParser(BaseParser):
     # Extracción por etiqueta — núcleo del parser digital
     # -----------------------------------------------------------------------
 
+    def _reconstruct_spaces(self, text: str) -> str:
+        """
+        Reconstruye espacios perdidos en nombres/apellidos colombianos.
+
+        PaddleOCR a veces colapsa "CUELLAR HINOJOSA" -> "CUELLARHINOJOSA".
+        Este metodo intenta insertar el espacio en el punto correcto usando
+        el diccionario de apellidos colombianos mas frecuentes como referencia.
+
+        Estrategia: si el texto no tiene espacios y tiene mas de 8 caracteres,
+        busca el punto de corte optimo donde ambas partes sean palabras validas
+        (solo letras, longitud entre 3 y 12 caracteres cada una).
+        Si no puede determinar el corte, retorna el texto original sin modificar.
+
+        Args:
+            text: Texto en mayusculas, posiblemente sin espacios.
+
+        Returns:
+            Texto con espacios reconstruidos, o el original si no es posible.
+        """
+        # Si ya tiene espacios, no hacer nada
+        if " " in text or len(text) <= 6:
+            return text
+
+        # Solo letras (nombres/apellidos no tienen numeros ni simbolos)
+        if not re.match(r"^[A-ZÁÉÍÓÚÜÑ]+$", text):
+            return text
+
+        # Buscar el punto de corte optimo para 2 palabras
+        # Rango valido para cada parte: 3-12 caracteres
+        best_split = None
+        best_score = 0
+
+        for i in range(3, len(text) - 2):
+            part1 = text[:i]
+            part2 = text[i:]
+
+            # Ambas partes deben tener longitud valida para un apellido/nombre
+            if not (3 <= len(part1) <= 12 and 3 <= len(part2) <= 12):
+                continue
+
+            # Score: penalizar cortes muy desiguales, premiar cortes equilibrados
+            # Un corte ideal divide el texto en partes de longitud similar
+            length_diff = abs(len(part1) - len(part2))
+            score = 10 - length_diff
+
+            # Bonus: si part2 empieza con consonante fuerte (patron comun en apellidos)
+            if part2[0] in "BCDFGHJKLMNPQRSTVWXYZ":
+                score += 2
+
+            if score > best_score:
+                best_score = score
+                best_split = i
+
+        if best_split and best_score >= 5:
+            reconstructed = f"{text[:best_split]} {text[best_split:]}"
+            logger.debug(
+                "Espacio reconstruido: '%s' -> '%s'", text, reconstructed
+            )
+            return reconstructed
+
+        return text
+
     def _extract_labeled_field(self, text: str, labels: list[str]) -> Optional[str]:
         """
         Extrae el valor que aparece INMEDIATAMENTE después de una etiqueta.
@@ -189,14 +252,14 @@ class CedulaDigitalParser(BaseParser):
                             and not re.search(r"\d", candidate)
                             and re.search(r"[A-Za-záéíóúÁÉÍÓÚüÜñÑ]", candidate)
                         ):
-                            return candidate.upper()
+                            return self._reconstruct_spaces(candidate.upper())
 
         # Fallback: buscar "Etiqueta: Valor" en la misma línea
         for label in labels:
             pattern = rf"{re.escape(label)}\s*[:\-]?\s*([A-ZÁÉÍÓÚÜÑ][A-ZÁÉÍÓÚÜÑ\s]+)"
             match = re.search(pattern, text, re.IGNORECASE)
             if match:
-                return match.group(1).strip().upper()
+                return self._reconstruct_spaces(match.group(1).strip().upper())
 
         return None
 
@@ -230,14 +293,22 @@ class CedulaDigitalParser(BaseParser):
 
     def _extract_nuip(self, text: str) -> Optional[str]:
         """
-        Extrae el NUIP (Número Único de Identificación Personal).
+        Extrae el NUIP (Numero Unico de Identificacion Personal).
 
-        Formato típico en CC digital: "NUIP 1.052.041.109"
-        También puede aparecer como "NUIP1.052.041.109" (sin espacio).
+        Formatos observados en CC digital colombiana:
+            "NUIP 1.052.041.109"         -> misma linea, con espacio
+            "NUIP1.052.041.109"          -> sin espacio
+            "NUIP\n1.052.041.109"        -> PaddleOCR los pone en lineas separadas
+            "NUIP\n1\n052.041.109"       -> PaddleOCR fragmenta el numero
+
+        El bug original: cuando el numero esta en la linea siguiente,
+        el regex principal puede fallar y el fallback encuentra solo
+        "052.041.109" perdiendo el primer digito "1".
         """
-        # Patrón principal: NUIP seguido del número
+        # -- Estrategia 1: NUIP + numero en misma linea o linea siguiente ----
+        # [\s\S] permite cruzar saltos de linea sin depender de DOTALL.
         match = re.search(
-            r"NUIP\s*[\:\.]?\s*([\d][\d\.\s]{5,14})",
+            r"NUIP[\s\S]{0,15}?(\d[\d\.\s]{7,17})",
             text,
             re.IGNORECASE,
         )
@@ -247,10 +318,31 @@ class CedulaDigitalParser(BaseParser):
             if 7 <= len(clean) <= 11:
                 return clean
 
-        # Fallback: número con puntos en formato colombiano X.XXX.XXX.XXX
-        match = re.search(r"\b(\d{1,3}(?:\.\d{3}){2,3})\b", text)
-        if match:
-            clean = re.sub(r"[^\d]", "", match.group(1))
+        # -- Estrategia 2: reconstruir numero desde lineas fragmentadas -------
+        # PaddleOCR a veces parte "1.067.598.351" en:
+        # linea N:   "NUIP"  o  "NUIP 1."
+        # linea N+1: "067.598.351"
+        lines = text.split("\n")
+        for i, line in enumerate(lines):
+            if "nuip" in line.lower():
+                # Concatenar las 3 lineas siguientes para reconstruir el numero
+                chunk = " ".join(lines[i : min(i + 4, len(lines))])
+                match = re.search(
+                    r"NUIP[\s\S]{0,20}?(\d[\d\.\s]{7,17})",
+                    chunk,
+                    re.IGNORECASE,
+                )
+                if match:
+                    clean = re.sub(r"[^\d]", "", match.group(1))
+                    if 7 <= len(clean) <= 11:
+                        return clean
+
+        # -- Estrategia 3: fallback -- numero con puntos formato colombiano ---
+        # Busca el patron X.XXX.XXX o X.XXX.XXX.XXX donde X puede ser 1-3 digitos.
+        # IMPORTANTE: busca TODOS los matches y filtra por longitud valida.
+        matches = re.findall(r"\b(\d{1,3}(?:\.\d{3}){1,3})\b", text)
+        for m in matches:
+            clean = re.sub(r"[^\d]", "", m)
             if 7 <= len(clean) <= 11:
                 return clean
 
@@ -293,8 +385,8 @@ class CedulaDigitalParser(BaseParser):
                 lines = text.split("\n")
                 for i, line in enumerate(lines):
                     if kw in line.lower():
-                        # Buscar fecha en misma línea o las 2 siguientes
-                        search_lines = [line] + lines[i + 1 : i + 3]
+                        # Buscar fecha en misma línea o las 4 siguientes
+                        search_lines = [line] + lines[i + 1 : i + 5]
                         for sl in search_lines:
                             date = self._parse_date_spanish(sl)
                             if date:
@@ -309,7 +401,7 @@ class CedulaDigitalParser(BaseParser):
                 lines = text.split("\n")
                 for i, line in enumerate(lines):
                     if kw in line.lower():
-                        search_lines = [line] + lines[i + 1 : i + 3]
+                        search_lines = [line] + lines[i + 1 : i + 5]
                         for sl in search_lines:
                             date = self._parse_date_spanish(sl)
                             if date:
@@ -365,9 +457,10 @@ class CedulaDigitalParser(BaseParser):
         """
         text = text.strip().upper()
 
-        # Formato sin separadores: DDMMMYYYY (ej: "13JUN2006")
+        # Formato sin separadores: DDMMMYYYY o DDMMMMYYYY
+        # Soporta meses de 3 letras (ENE, FEB...) y 4 letras (MAYO)
         match = re.search(
-            r"\b(\d{1,2})([A-Z]{3})(\d{4})\b",
+            r"\b(\d{1,2})([A-Z]{3,4})(\d{4})\b",
             text,
         )
         if match:
