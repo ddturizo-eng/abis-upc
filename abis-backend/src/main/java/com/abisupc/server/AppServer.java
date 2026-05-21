@@ -16,6 +16,7 @@ import com.abisupc.controller.BiometricProgressController;
 import com.abisupc.controller.JuradoController;
 import com.abisupc.controller.BiometriaController;
 import com.abisupc.controller.CertificadoController;
+import com.abisupc.controller.ContingenciaController;
 import com.abisupc.security.AuthMiddleware;
 import com.abisupc.service.EleccionLifecycleService;
 import io.javalin.Javalin;
@@ -46,6 +47,7 @@ public class AppServer {
         // Health check
         TestController.register(app);
         BiometricProgressController.register(app);
+        ContingenciaController.register(app);
 
         // Status
         app.get("/api/status", ctx ->
@@ -73,8 +75,11 @@ public class AppServer {
         app.get("/api/votantes/{id}/puede-votar", VotanteController::puedeVotar);
         app.get("/api/votacion/activa", VotacionController::activa);
         app.get("/api/votacion/votante", VotacionController::votante);
+        app.get("/api/jornada/estadisticas", VotacionController::jornadaEstadisticas);
         app.post("/api/votacion/registrar", VotacionController::registrar);
         app.post("/api/votos/registrar", VotacionController::registrar);
+        app.post("/api/contingencia/scan", ContingenciaController::scan);
+        app.post("/api/contingencia/tokens/generar", ContingenciaController::generarToken);
 
         // Auth (publica - login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
@@ -123,7 +128,10 @@ public class AppServer {
         app.before("/api/certificados", auth);
         app.before("/api/certificados/*", auth);
         app.before("/api/votantes", auth);
+        app.before("/api/votantes/{id}", auth);
         app.before("/api/votantes/estadisticas", auth);
+        app.before("/api/jornada/*", auth);
+        app.before("/api/contingencia/tokens/*", auth);
         app.before("/api/votantes/{id}/inhabilitar", auth);
         app.before("/api/votantes/{id}/habilitar", auth);
         app.before("/api/elecciones/{id}/cerrar", auth);
@@ -131,6 +139,7 @@ public class AppServer {
         app.get("/api/auditoria/reciente", AdminController::auditoriaReciente);
         app.get("/api/votantes", VotanteController::getAll);
         app.get("/api/votantes/estadisticas", AdminController::estadisticasVotantes);
+        app.put("/api/votantes/{id}", VotanteController::editar);
         app.put("/api/votantes/{id}/inhabilitar", VotanteController::inhabilitar);
         app.put("/api/votantes/{id}/habilitar", VotanteController::habilitar);
 
