@@ -6,6 +6,7 @@ public class Candidato extends Entity {
     private String segundoNombre;
     private String primerApellido;
     private String segundoApellido;
+    private String fotoUrl;
 
     public String getPrimerNombre() {
         return primerNombre;
@@ -37,5 +38,13 @@ public class Candidato extends Entity {
 
     public void setSegundoApellido(String segundoApellido) {
         this.segundoApellido = segundoApellido;
+    }
+
+    public String getFotoUrl() {
+        return fotoUrl;
+    }
+
+    public void setFotoUrl(String fotoUrl) {
+        this.fotoUrl = fotoUrl;
     }
 }
