@@ -7,8 +7,9 @@
 
     async function cargarComponentesAdmin() {
       await Promise.all([
-        cargarComponente('admin-header', '/components/header.html'),
-        cargarComponente('admin-bottom-nav', '/components/bottom-nav.html')
+        cargarComponente('admin-header', '/components/header.html')
+        // Dock flotante desactivado temporalmente. Reactivar junto con el contenedor en pages/admin/index.html.
+        // cargarComponente('admin-bottom-nav', '/components/bottom-nav.html')
       ]);
 
       if (window.AdminRouter) {
@@ -16,26 +17,7 @@
         AdminRouter.actualizarNavbar(seccion);
       }
 
-      actualizarEstadoOracleHeader();
       inicializarMenuAdministrador();
-    }
-
-    async function actualizarEstadoOracleHeader() {
-      try {
-        const data = await API.get('/api/health');
-        const ok = data.database === 'ok';
-        const badge = document.getElementById('admin-oracle-status');
-        if (badge) {
-          badge.innerHTML = ok
-            ? 'Oracle XE <span class="admin-status-dot">●</span>'
-            : 'Oracle XE <span style="color:#0a4a31">●</span>';
-        }
-      } catch (error) {
-        const badge = document.getElementById('admin-oracle-status');
-        if (badge) {
-          badge.innerHTML = 'Oracle XE <span style="color:#0a4a31">●</span>';
-        }
-      }
     }
 
     cargarComponentesAdmin();
@@ -46,7 +28,13 @@
       if (!button || !dropdown) return;
 
       const user = leerUsuarioAdmin();
-      document.querySelectorAll('.admin-profile-name, .admin-profile-summary-name').forEach((element) => {
+      document.querySelectorAll('.admin-profile-username, .admin-profile-summary-name').forEach((element) => {
+        element.textContent = user.usuario;
+      });
+      document.querySelectorAll('.admin-profile-role, .admin-profile-summary-role').forEach((element) => {
+        element.textContent = user.rol;
+      });
+      document.querySelectorAll('.admin-profile-fullname').forEach((element) => {
         element.textContent = user.nombre;
       });
       document.querySelectorAll('.admin-avatar').forEach((element) => {
@@ -78,18 +66,20 @@
     }
 
     function leerUsuarioAdmin() {
-      const fallback = { nombre: 'Administrador', iniciales: 'AD' };
+      const fallback = { usuario: 'abisadmin', nombre: 'Administrador', rol: 'Administrador', iniciales: 'AD' };
       try {
         const raw = localStorage.getItem('abis_user');
         const data = raw ? JSON.parse(raw) : {};
-        const nombre = data.nombre || data.usuario || localStorage.getItem('abis_admin_nombre') || fallback.nombre;
-        const iniciales = nombre
+        const usuario = data.usuario || localStorage.getItem('abis_admin_usuario') || fallback.usuario;
+        const nombre = data.nombre || localStorage.getItem('abis_admin_nombre') || fallback.nombre;
+        const rol = data.rol || fallback.rol;
+        const iniciales = (nombre || usuario)
           .split(/\s+/)
           .filter(Boolean)
           .slice(0, 2)
           .map((parte) => parte.charAt(0).toUpperCase())
           .join('') || fallback.iniciales;
-        return { nombre, iniciales };
+        return { usuario, nombre, rol, iniciales };
       } catch (error) {
         return fallback;
       }
@@ -120,6 +110,7 @@
       localStorage.removeItem('abis_token');
       localStorage.removeItem('abis_user');
       localStorage.removeItem('abis_admin_nombre');
+      localStorage.removeItem('abis_admin_usuario');
       window.location.href = '/pages/auth/login.html';
     }
 

@@ -204,6 +204,7 @@ span.textContent = '○';
 }
 
 function mapDocType(type) {
+  if (type === 'CE') return 'carnet_estudiantil';
   if (type === 'TI') return 'tarjeta_identidad';
   return 'auto';
 }

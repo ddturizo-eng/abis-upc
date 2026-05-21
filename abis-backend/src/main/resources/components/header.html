@@ -1,37 +1,52 @@
-<header class="admin-topbar">
-  <div class="admin-brand">
-    <img src="/assets/img/ABIS-UPC-letras.png" alt="ABIS-UPC Sistema automatizado de autenticación biométrica" class="admin-brand-logo">
-  </div>
+<header class="admin-topbar relative z-40 flex h-[76px] w-full items-center justify-between gap-4 bg-[#F2F3F5] px-5 lg:px-8">
+  <a href="#dashboard" onclick="AdminRouter.irA('dashboard')" class="flex items-center gap-3 no-underline" aria-label="Ir al dashboard de ABIS UPC">
+    <span class="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_8px_24px_rgba(13,61,43,0.08)] ring-1 ring-[#0d3d2b]/10">
+      <img src="/assets/img/ABIS-UPC-LOGO.png" alt="ABIS UPC" class="h-10 w-10 object-contain">
+    </span>
+    <span class="hidden flex-col leading-none sm:flex">
+      <span class="text-[18px] font-extrabold tracking-normal text-[#0d3d2b]">ABIS UPC</span>
+      <span class="mt-1 text-[10px] font-semibold text-[#0d3d2b]/45">Sistema Electoral</span>
+    </span>
+  </a>
 
-  <div class="admin-topbar-actions">
-    <span class="admin-status-pill admin-status-pill-active"><span>●</span> Sistema activo</span>
-    <span id="admin-oracle-status" class="admin-status-pill admin-status-pill-ghost">Oracle XE <span class="admin-status-dot">●</span></span>
-    <button type="button" class="admin-bell" aria-label="Notificaciones">
-      <span class="material-symbols-outlined">notifications</span>
-      <span class="admin-bell-count">3</span>
+  <nav class="admin-header-nav" aria-label="Navegacion principal">
+    <button type="button" data-section="dashboard" onclick="AdminRouter.irA('dashboard')" class="admin-header-nav-item active">Dashboard</button>
+    <button type="button" data-section="registro" onclick="AdminRouter.irA('registro')" class="admin-header-nav-item">Registro</button>
+    <button type="button" data-section="votantes" onclick="AdminRouter.irA('votantes')" class="admin-header-nav-item">Votantes</button>
+    <button type="button" data-section="elecciones" onclick="AdminRouter.irA('elecciones')" class="admin-header-nav-item">Elecciones</button>
+    <button type="button" data-section="candidatos" onclick="AdminRouter.irA('candidatos')" class="admin-header-nav-item">Candidatos</button>
+    <button type="button" data-section="jurados" onclick="AdminRouter.irA('jurados')" class="admin-header-nav-item">Jurados</button>
+    <button type="button" data-section="votacion" onclick="AdminRouter.irA('votacion')" class="admin-header-nav-item">Jornada</button>
+    <button type="button" data-section="certificados" onclick="AdminRouter.irA('certificados')" class="admin-header-nav-item">Certificados</button>
+  </nav>
+
+  <div class="flex shrink-0 items-center gap-3">
+    <button type="button" class="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0d3d2b] shadow-[0_8px_24px_rgba(13,61,43,0.08)] ring-1 ring-[#0d3d2b]/10 transition hover:bg-[#edfaf3]" aria-label="Notificaciones">
+      <span class="material-symbols-outlined text-[21px]">notifications</span>
+      <span class="absolute -right-0.5 -top-0.5 flex h-[17px] min-w-[17px] items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-extrabold leading-none text-white ring-2 ring-[#F2F3F5]">3</span>
     </button>
 
-    <div class="admin-profile-menu">
-      <button type="button" id="admin-profile-button" class="admin-profile" aria-label="Menú de administrador" aria-expanded="false" aria-controls="admin-profile-dropdown">
-        <span class="admin-avatar">AD</span>
-        <span class="admin-profile-name">Administrador</span>
-        <span class="material-symbols-outlined admin-profile-chevron">expand_more</span>
+    <div class="admin-profile-menu relative">
+      <button type="button" id="admin-profile-button" class="admin-profile flex h-10 items-center gap-2 rounded-full bg-white pl-1 pr-2 text-[#0d3d2b] shadow-[0_8px_24px_rgba(13,61,43,0.08)] ring-1 ring-[#0d3d2b]/10 transition hover:bg-[#edfaf3]" aria-label="Menu de administrador" aria-expanded="false" aria-controls="admin-profile-dropdown">
+        <span class="admin-avatar flex h-8 w-8 items-center justify-center rounded-full bg-[#0d3d2b] text-[11px] font-extrabold text-white">AD</span>
+        <span class="material-symbols-outlined text-[20px] text-[#0d3d2b]/70">person</span>
       </button>
-      <div id="admin-profile-dropdown" class="admin-profile-dropdown" role="menu">
-        <div class="admin-profile-summary">
-          <span class="admin-avatar">AD</span>
+
+      <div id="admin-profile-dropdown" class="admin-profile-dropdown pointer-events-none absolute right-0 top-[calc(100%+12px)] z-[3000] min-w-[250px] -translate-y-2 rounded-2xl bg-white p-2.5 opacity-0 shadow-[var(--shadow-float)] ring-1 ring-[#0d3d2b]/10 transition" role="menu">
+        <div class="flex items-center gap-3 rounded-xl bg-[#edfaf3] p-3">
+          <span class="admin-avatar flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#0d3d2b] text-xs font-extrabold text-white">AD</span>
           <div>
-            <p class="admin-profile-summary-name">Administrador</p>
-            <p class="admin-profile-summary-role">Panel administrativo</p>
+            <p class="admin-profile-summary-name text-sm font-extrabold text-[#0d3d2b]">abisadmin</p>
+            <p class="admin-profile-summary-role mt-0.5 text-xs text-[#0d3d2b]/55">Administrador</p>
           </div>
         </div>
-        <button type="button" class="admin-profile-option" role="menuitem" onclick="verPerfilAdministrador()">
-          <span class="material-symbols-outlined">account_circle</span>
+        <button type="button" class="mt-1.5 flex min-h-10 w-full items-center gap-2.5 rounded-[10px] border-0 bg-transparent px-3 text-left text-[13px] font-bold text-gray-700 transition hover:bg-gray-100 hover:text-[#158759]" role="menuitem" onclick="verPerfilAdministrador()">
+          <span class="material-symbols-outlined text-xl">account_circle</span>
           Ver perfil
         </button>
-        <button type="button" class="admin-profile-option admin-profile-option-danger" role="menuitem" onclick="cerrarSesion()">
-          <span class="material-symbols-outlined">logout</span>
-          Cerrar sesión
+        <button type="button" class="mt-1.5 flex min-h-10 w-full items-center gap-2.5 rounded-[10px] border-0 bg-transparent px-3 text-left text-[13px] font-bold text-gray-700 transition hover:bg-gray-100 hover:text-gray-900" role="menuitem" onclick="cerrarSesion()">
+          <span class="material-symbols-outlined text-xl">logout</span>
+          Cerrar sesion
         </button>
       </div>
     </div>
