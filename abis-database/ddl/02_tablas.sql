@@ -193,7 +193,8 @@ CREATE TABLE Candidatos (
     primer_nombre    VARCHAR2(50) NOT NULL,
     segundo_nombre   VARCHAR2(50),
     primer_apellido  VARCHAR2(50) NOT NULL,
-    segundo_apellido VARCHAR2(50)
+    segundo_apellido VARCHAR2(50),
+    foto_url         VARCHAR2(500)
 );
 
 ALTER TABLE Candidatos
@@ -230,7 +231,7 @@ CREATE TABLE Votos (
     fecha_hora       TIMESTAMP   DEFAULT SYSTIMESTAMP NOT NULL,
     peso_voto_aplicado NUMBER(5,2) NOT NULL,
     id_eleccion      NUMBER      NOT NULL,
-    id_candidato     NUMBER      NOT NULL
+    id_candidato     NUMBER
 );
 
 ALTER TABLE Votos
