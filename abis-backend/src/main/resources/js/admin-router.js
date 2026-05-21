@@ -1,5 +1,5 @@
 const AdminRouter = {
-  secciones: ['dashboard', 'votantes', 'elecciones', 'candidatos', 'jurados', 'votacion', 'certificados'],
+  secciones: ['dashboard', 'registro', 'votantes', 'elecciones', 'candidatos', 'jurados', 'votacion', 'certificados'],
 
   init() {
     const hash = window.location.hash.replace('#', '');
@@ -49,6 +49,10 @@ const AdminRouter = {
 
     document.querySelectorAll('.admin-navbar .nav-item').forEach((item) => {
       item.className = item.dataset.section === seccion ? activeClass : inactiveClass;
+    });
+
+    document.querySelectorAll('.admin-header-nav .admin-header-nav-item').forEach((item) => {
+      item.classList.toggle('active', item.dataset.section === seccion);
     });
   },
 
