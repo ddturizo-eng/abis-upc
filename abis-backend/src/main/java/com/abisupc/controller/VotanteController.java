@@ -8,6 +8,8 @@ import com.abisupc.repository.VotanteRepository;
 import com.abisupc.service.AdminService;
 import com.abisupc.service.VotacionService;
 import com.abisupc.util.OracleErrorHandler;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.Context;
 
 import java.util.HashMap;
@@ -23,6 +25,7 @@ public class VotanteController {
     private static final EleccionRepository eleccionRepository = new EleccionRepository();
     private static final AdminService adminService = new AdminService();
     private static final VotacionService votacionService = new VotacionService();
+    private static final ObjectMapper mapper = new ObjectMapper();
 
     public static void getAll(Context ctx) {
         List<Votante> votantes = repository.findAll();
@@ -111,6 +114,48 @@ public class VotanteController {
         }
     }
 
+    public static void editar(Context ctx) {
+        try {
+            String identificacion = ctx.pathParam("id");
+            Votante existente = repository.findByIdentificacion(identificacion)
+                    .orElseThrow(() -> new IllegalArgumentException("Votante no encontrado"));
+            JsonNode body = mapper.readTree(ctx.body());
+
+            String primerNombre = text(body, "primer_nombre", "primerNombre");
+            String primerApellido = text(body, "primer_apellido", "primerApellido");
+            if (primerNombre == null || primerNombre.isBlank()) {
+                throw new IllegalArgumentException("Primer nombre requerido");
+            }
+            if (primerApellido == null || primerApellido.isBlank()) {
+                throw new IllegalArgumentException("Primer apellido requerido");
+            }
+
+            existente.setCorreo(text(body, "correo"));
+            existente.setPrimerNombre(primerNombre.trim());
+            existente.setSegundoNombre(blankToNull(text(body, "segundo_nombre", "segundoNombre")));
+            existente.setPrimerApellido(primerApellido.trim());
+            existente.setSegundoApellido(blankToNull(text(body, "segundo_apellido", "segundoApellido")));
+            Long idRol = longValue(text(body, "rol_id", "idRol"));
+            Long idPuesto = longValue(text(body, "puesto_id", "idPuesto"));
+            if (idRol != null) {
+                existente.setIdRol(idRol);
+            }
+            if (idPuesto != null) {
+                existente.setIdPuesto(idPuesto);
+            }
+
+            repository.update(existente);
+            ctx.json(Map.of("success", true, "votante", existente));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            if (handleOracle(ctx, e)) {
+                return;
+            }
+            ctx.status(500).json(Map.of("error", "No fue posible actualizar el votante"));
+        }
+    }
+
     public static void inhabilitar(Context ctx) {
         cambiarEstadoAdministrativo(ctx, true);
     }
@@ -187,6 +232,22 @@ public class VotanteController {
             return null;
         }
         return Long.parseLong(value);
+    }
+
+    private static String text(JsonNode body, String... fields) {
+        if (body == null) {
+            return null;
+        }
+        for (String field : fields) {
+            if (body.hasNonNull(field)) {
+                return body.get(field).asText();
+            }
+        }
+        return null;
+    }
+
+    private static String blankToNull(String value) {
+        return value == null || value.isBlank() ? null : value.trim();
     }
 
     private static boolean handleOracle(Context ctx, Throwable e) {
