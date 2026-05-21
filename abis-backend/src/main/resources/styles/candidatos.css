@@ -631,69 +631,111 @@
 }
 
 .tarjeton-preview {
-  border: 2px solid var(--gray-300);
-  border-radius: 10px;
+  background: var(--white);
+  border: 2px solid var(--gray-900);
+  border-radius: 6px;
   display: grid;
-  gap: 10px;
+  gap: 0;
   min-height: 180px;
-  padding: 12px;
+  overflow: hidden;
+  padding: 0;
 }
 
 .tarjeton-cargo {
-  border-bottom: 1px solid var(--gray-200);
-  padding-bottom: 10px;
+  border-bottom: 1px solid var(--gray-900);
+  display: grid;
 }
 
 .tarjeton-cargo:last-child {
   border-bottom: 0;
-  padding-bottom: 0;
 }
 
 .tarjeton-cargo-title {
-  color: var(--green-800);
-  font-size: 0.68rem;
-  font-weight: 800;
+  background: var(--gray-50);
+  border-bottom: 1px solid var(--gray-900);
+  color: var(--gray-900);
+  font-size: 0.66rem;
+  font-weight: 900;
   letter-spacing: 0.08em;
-  margin-bottom: 8px;
+  margin: 0;
+  padding: 10px;
+  text-align: center;
   text-transform: uppercase;
 }
 
 .tarjeton-mini-grid {
   display: grid;
-  gap: 6px;
+  gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  padding: 10px;
 }
 
 .tarjeton-mini {
-  background: var(--gray-50);
-  border: 1px solid var(--gray-200);
-  border-radius: 6px;
+  background: var(--white);
+  border: 1px solid var(--gray-300);
+  border-radius: 4px;
   display: grid;
-  gap: 3px;
-  padding: 7px;
+  gap: 6px;
+  min-height: 88px;
+  padding: 8px;
+  text-align: center;
 }
 
 .tarjeton-mini-num {
-  color: var(--green-800);
+  align-items: center;
+  background: var(--green-800);
+  border-radius: 9999px;
+  color: var(--white);
+  display: inline-flex;
   font-family: var(--font-mono, monospace);
-  font-size: 0.78rem;
-  font-weight: 800;
+  font-size: 0.66rem;
+  font-weight: 900;
+  height: 24px;
+  justify-content: center;
+  justify-self: center;
+  width: 24px;
 }
 
 .tarjeton-mini-name {
-  color: var(--gray-700);
-  font-size: 0.68rem;
-  font-weight: 700;
+  color: var(--gray-900);
+  font-size: 0.64rem;
+  font-weight: 900;
+  line-height: 1.25;
   overflow: hidden;
   text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.tarjeton-mini-party {
+  align-self: end;
+  background: var(--green-100);
+  border: 1px solid #b7e4c7;
+  border-radius: 2px;
+  color: var(--green-800);
+  font-size: 0.55rem;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  overflow: hidden;
+  padding: 4px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
   white-space: nowrap;
+}
+
+.tarjeton-mini.blank {
+  border-style: dashed;
+}
+
+.tarjeton-mini.blank .tarjeton-mini-name {
+  align-self: center;
+  font-size: 0.76rem;
 }
 
 .tarjeton-legend {
   border-top: 1px solid var(--gray-200);
   color: var(--gray-500);
   font-size: 0.68rem;
-  padding-top: 8px;
+  padding: 8px 10px;
 }
 
 .auditoria-list {
