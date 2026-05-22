@@ -415,8 +415,7 @@ function hydratePaso1FromSession() {
     'f-segundoapellido': data.segundoApellido,
     'f-correo': data.correo,
     'f-rol': data.idRol,
-    'f-puesto': data.idPuesto,
-    'f-qr-cedula': data.qrCedula
+    'f-puesto': data.idPuesto
   };
 
   Object.entries(mappings).forEach(([id, value]) => {
@@ -438,7 +437,6 @@ async function enviarPreRegistro() {
     correo: document.getElementById('f-correo').value.trim(),
     idRol: parseInt(document.getElementById('f-rol').value, 10) || null,
     idPuesto: parseInt(document.getElementById('f-puesto').value, 10) || null,
-    qrCedula: ScannerHandler.normalize(document.getElementById('f-qr-cedula')?.value || ''),
     consentimiento: VotanteSession.getConsentimiento()
   };
 
@@ -785,8 +783,6 @@ document.getElementById('summary-fullname').textContent = [data.primerNombre, da
   document.getElementById('summary-correo').textContent = data.correo || '--';
   document.getElementById('summary-rol').textContent = data.idRol ? String(data.idRol) : '--';
   document.getElementById('summary-puesto').textContent = data.idPuesto ? String(data.idPuesto) : '--';
-  QrHandler.renderSummary(data.qrCedula);
-
   const fotoPreview = document.getElementById('summary-foto');
   const fotoPlaceholder = document.getElementById('summary-foto-placeholder');
   if (data.fotoPreview) {
