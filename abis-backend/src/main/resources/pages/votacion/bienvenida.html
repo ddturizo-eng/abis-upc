@@ -1,30 +1,361 @@
+<!-- Vista 1 — Pantalla de Bienvenida (fragmento visual reutilizable, sin lógica JS) -->
+<!-- Dependencias: DM Sans, Tailwind CSS, Tabler Icons -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  /* ─── VARIABLES ─────────────────────────────────────── */
+  :root {
+    --g-dark:   #1a6b3c;
+    --g-mid:    #2d8653;
+    --g-soft:   #14733b;
+    --g-pale:   #e8f5ed;
+    --g-lighter:#f0f8f4;
+    --ink:      #1f2d26;
+    --muted:    #6b7a71;
+    --border:   #e2e8e4;
+    --page:     #f8f9fa;
+    --white:    #ffffff;
+  }
+
+  /* ─── RESET ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  .hidden { display: none !important; }
+
+  /* ─── ANIMACIONES ───────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes drawStroke {
+    from { stroke-dashoffset: 30; }
+    to   { stroke-dashoffset: 0; }
+  }
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%       { transform: translateY(-8px); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: .5; transform: scale(1); }
+    50%       { opacity: 1; transform: scale(1.1); }
+  }
+  @keyframes revealText {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .anim-fade-up   { animation: fadeUp   500ms ease-out both; }
+  .anim-fade-down { animation: fadeDown 500ms ease-out both; }
+
+  /* ─── SHELL ─────────────────────────────────────────── */
+  .kiosk-screen { position: relative; z-index: 2; min-height: 100vh; }
+
+  .kiosk-welcome-screen {
+    min-height: 100vh;
+    padding: 24px 24px 80px;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--ink);
+  }
+
+  /* ─── BRANDING TOP-LEFT ─────────────────────────────── */
+  .welcome-brand {
+    position: fixed; top: 20px; left: 24px; z-index: 50;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .welcome-brand-icon {
+    width: 40px; height: 40px;
+    background: rgba(255,255,255,0.9);
+    border: 1.5px solid rgba(26,107,60,0.25);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(26,107,60,0.12);
+  }
+  .welcome-brand-text strong { display: block; font-size: 14px; font-weight: 700; color: var(--ink); }
+  .welcome-brand-text span { display: block; font-size: 11px; color: var(--muted); }
+
+  /* ─── BADGE SISTEMA ACTIVO ──────────────────────────── */
+  .system-active-badge {
+    position: fixed; top: 20px; right: 24px; z-index: 50;
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--white);
+    border: 1.5px solid var(--g-mid);
+    border-radius: 9999px;
+    padding: 6px 16px;
+    color: var(--g-dark);
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 2px; text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(26,107,60,.15);
+    font-family: 'DM Sans', sans-serif;
+  }
+  .system-active-badge span { animation: pulse 2s infinite; color: var(--g-mid); }
+
+  /* ─── WELCOME CONTENT ───────────────────────────────── */
+  .welcome-content {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 20px;
+    text-align: center;
+    animation: revealText .8s cubic-bezier(.16,1,.3,1) both;
+  }
+
+  .welcome-icon {
+    width: 80px; height: 80px;
+    background: rgba(255,255,255,.9);
+    border: 1.5px solid rgba(26,107,60,.25);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 4px 24px rgba(26,107,60,.15);
+    animation: float 3.5s ease-in-out infinite;
+  }
+
+  .welcome-title {
+    font-size: clamp(2.6rem, 6vw, 4rem);
+    font-weight: 800; color: var(--g-dark);
+    line-height: 1.05;
+    animation: fadeUp 500ms ease-out 100ms both;
+  }
+
+  .welcome-subtitle {
+    font-size: 18px; font-weight: 400; color: #34483d;
+    animation: fadeUp 500ms ease-out 200ms both;
+  }
+  .welcome-subtitle strong { color: var(--g-dark); font-weight: 700; }
+
+  .welcome-separator {
+    display: flex; align-items: center; gap: 8px;
+    animation: fadeUp 500ms ease-out 250ms both;
+  }
+  .welcome-separator-line { width: 40px; height: 2px; background: var(--g-dark); border-radius: 2px; }
+  .welcome-separator-dot  { width: 6px; height: 6px; border-radius: 50%; background: var(--g-dark); }
+
+  #welcome-election-name {
+    display: inline-block;
+    border: 2px solid var(--g-dark); border-radius: 9999px;
+    padding: 8px 28px;
+    background: transparent;
+    font-weight: 700; font-size: 16px; color: var(--g-dark);
+    letter-spacing: .08em; text-transform: uppercase;
+    animation: fadeUp 500ms ease-out 300ms both;
+  }
+
+  .welcome-values {
+    display: flex; align-items: center;
+    animation: fadeUp 500ms ease-out 400ms both;
+  }
+  .welcome-values-item {
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    padding: 0 28px;
+  }
+  .welcome-values-divider { width: 1px; height: 40px; background: var(--border); }
+  .welcome-values-label  { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .welcome-values-sub    { font-size: 12px; color: var(--muted); }
+
+  .welcome-cta-wrap { animation: fadeUp 500ms ease-out 500ms both; }
+  #btn-go-verify {
+    display: inline-flex; align-items: center; gap: 12px;
+    width: 420px; max-width: 90vw;
+    justify-content: center;
+    border: 0; border-radius: 9999px; padding: 18px 32px;
+    background: var(--g-dark); color: white;
+    font-size: 17px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    box-shadow: 0 4px 24px rgba(26,107,60,.25);
+    transition: all 200ms;
+  }
+  #btn-go-verify:hover { background: #145332; transform: scale(1.02); }
+
+  .welcome-tagline {
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    animation: fadeUp 500ms ease-out 600ms both;
+  }
+  .welcome-tagline-row { display: flex; align-items: center; gap: 8px; }
+  .welcome-tagline-text { font-size: 14px; color: var(--muted); }
+  .welcome-tagline-text strong { color: var(--ink); font-weight: 700; }
+  .welcome-tagline-line { width: 32px; height: 2px; background: var(--g-mid); border-radius: 2px; }
+
+  #welcome-error {
+    margin-top: 12px;
+    padding: 14px 16px; border-radius: 12px;
+    font-size: 14px; font-weight: 700; line-height: 1.45;
+  }
+  .kiosk-message-error {
+    color: #991b1b;
+    background: rgba(254,202,202,.5);
+    border: 1px solid rgba(248,113,113,.45);
+  }
+
+  .welcome-footer {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    border-top: 1px solid var(--border); padding: 14px;
+    text-align: center;
+    background: rgba(255,255,255,.85);
+    backdrop-filter: blur(8px);
+    z-index: 10;
+    font-family: 'DM Sans', sans-serif;
+  }
+  .welcome-footer span { font-size: 11px; color: var(--muted); }
+
+  /* ─── RESPONSIVE ────────────────────────────────────── */
+  @media (max-width: 768px) {
+    .welcome-title { font-size: 2rem; }
+    #welcome-election-name { white-space: normal; }
+    #btn-go-verify { width: 100%; }
+  }
+</style>
+
 <section id="screen-welcome" class="kiosk-screen kiosk-welcome-screen">
-  <div class="glass-panel">
-    <span class="hud-corner tl"></span>
-    <span class="hud-corner tr"></span>
-    <span class="hud-corner bl"></span>
-    <span class="hud-corner br"></span>
 
-    <p class="institution-mark">ABIS - UPC</p>
-    <div class="welcome-icon" aria-hidden="true">
-      <span class="icon-glow"></span>
-      <span class="ring-a"></span>
-      <span class="ring-b"></span>
-      <i class="ti ti-ballot"></i>
-    </div>
+  <!-- Fondo: imagen institucional + overlay claro -->
+  <div class="welcome-photo-bg" aria-hidden="true" style="position:fixed;inset:0;z-index:0;pointer-events:none;
+    background:linear-gradient(rgba(255,255,255,.58), rgba(240,248,244,.72)),
+    url('/assets/img/votacion-fondo.avif') center/cover no-repeat;"></div>
 
-    <h1 class="welcome-title">Bienvenido a la <span id="welcome-election-name">jornada electoral</span></h1>
-    <p class="welcome-copy">Para continuar, confirma tu identidad mediante verificacion dactilar.</p>
-    <button id="btn-go-verify" type="button" class="kiosk-primary-action">
-      <i class="ti ti-fingerprint" aria-hidden="true"></i>
-      Ir a confirmar mi identidad
-      <i class="ti ti-arrow-right" aria-hidden="true"></i>
-    </button>
-    <div class="welcome-features" aria-label="Caracteristicas del sistema">
-      <article><i class="ti ti-shield-check"></i><strong>Seguro</strong><span>Tus datos estan protegidos</span></article>
-      <article><i class="ti ti-circle-check"></i><strong>Confiable</strong><span>Sistema transparente y auditado</span></article>
-      <article><i class="ti ti-users-group"></i><strong>Participativo</strong><span>Tu voto construye el futuro</span></article>
+  <!-- Decoración: blob verde inferior izquierdo -->
+  <svg viewBox="0 0 460 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+    style="position:fixed;bottom:-80px;left:-70px;width:460px;pointer-events:none;z-index:0;opacity:0.15;">
+    <path d="M70,310 C0,285 -25,195 25,128 C75,62 165,28 230,62 C295,96 340,175 318,242 C296,310 208,355 140,348 Z" fill="#1a6b3c"/>
+    <path d="M110,338 C42,318 8,232 44,168 C80,104 168,76 234,108 C300,140 346,220 322,286 C298,352 210,378 146,360 Z" fill="#2d8653" opacity="0.55"/>
+  </svg>
+
+  <!-- Branding top-left (decorativo, sin ID) -->
+  <div class="welcome-brand" aria-hidden="true">
+    <div class="welcome-brand-icon">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+        <polyline points="9,12 11,14 15,10"/>
+      </svg>
     </div>
-    <div id="welcome-error" class="kiosk-message kiosk-message-error hidden"></div>
+    <div class="welcome-brand-text">
+      <strong>Sistema Activo</strong>
+      <span>Elecciones Universitarias</span>
+    </div>
   </div>
+
+  <!-- Badge SISTEMA ACTIVO -->
+  <div class="system-active-badge"><span>&#9679;</span> SISTEMA ACTIVO</div>
+
+  <!-- Contenido central -->
+  <div class="welcome-content">
+
+    <!-- Ícono urna -->
+    <div class="anim-fade-down" style="animation-delay:0ms;">
+      <div class="welcome-icon" aria-hidden="true">
+        <svg width="44" height="44" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="8" y="26" width="48" height="32" rx="4" stroke="#1a6b3c" stroke-width="1.8"/>
+          <rect x="22" y="22" width="20" height="7" rx="3" stroke="#1a6b3c" stroke-width="1.8"/>
+          <rect x="27" y="8" width="10" height="18" rx="2" stroke="#1a6b3c" stroke-width="1.8"/>
+          <polyline points="30,15 32.5,18.5 37,12" stroke="#1a6b3c" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" fill="none"
+            style="stroke-dasharray:30;stroke-dashoffset:30;animation:drawStroke 800ms ease-out 400ms both;"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- Título -->
+    <h1 class="welcome-title">¡Bienvenido!</h1>
+
+    <!-- Subtítulo -->
+    <p class="welcome-subtitle">
+      Te damos la bienvenida al proceso de <strong>elección</strong>
+    </p>
+
+    <!-- Separador decorativo -->
+    <div class="welcome-separator">
+      <div class="welcome-separator-line"></div>
+      <div class="welcome-separator-dot"></div>
+      <div class="welcome-separator-line"></div>
+    </div>
+
+    <!-- Badge nombre elección (id conservado, manipulado por JS) -->
+    <div class="anim-fade-up" style="animation-delay:300ms;">
+      <span id="welcome-election-name">jornada electoral</span>
+    </div>
+
+    <!-- Fila íconos valores -->
+    <div class="welcome-values">
+      <!-- Transparencia -->
+      <div class="welcome-values-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+          stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+          <polyline points="9,12 11,14 15,10"/>
+        </svg>
+        <span class="welcome-values-label">Transparencia</span>
+        <span class="welcome-values-sub">en cada paso</span>
+      </div>
+      <div class="welcome-values-divider"></div>
+      <!-- Tu participación -->
+      <div class="welcome-values-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+          stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/>
+          <path d="M3 20c0-3 2.5-5 6-5m6 0c3.5 0 6 2 6 5"/>
+          <path d="M9 15c0 2 1 3 3 3s3-1 3-3"/>
+        </svg>
+        <span class="welcome-values-label">Tu participación</span>
+        <span class="welcome-values-sub">hace la diferencia</span>
+      </div>
+      <div class="welcome-values-divider"></div>
+      <!-- Seguridad -->
+      <div class="welcome-values-item">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+          stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+          <circle cx="12" cy="12" r="2.5"/>
+        </svg>
+        <span class="welcome-values-label">Seguridad</span>
+        <span class="welcome-values-sub">y confianza</span>
+      </div>
+    </div>
+
+    <!-- Botón CTA principal (id y onclick conservados) -->
+    <div class="welcome-cta-wrap">
+      <button id="btn-go-verify" type="button">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+          <circle cx="12" cy="11" r="2.5"/>
+          <path d="M8 17c0-2 1.8-3.5 4-3.5s4 1.5 4 3.5"/>
+        </svg>
+        Verificar mi identidad
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- Tagline inferior -->
+    <div class="welcome-tagline">
+      <div class="welcome-tagline-row">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+          stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="9" cy="7" r="3"/><circle cx="15" cy="7" r="3"/>
+          <path d="M3 20c0-3 2.5-5 6-5m6 0c3.5 0 6 2 6 5"/>
+        </svg>
+        <span class="welcome-tagline-text">
+          Tu voto, tu voz,&nbsp;<strong>nuestro futuro.</strong>
+        </span>
+      </div>
+      <div class="welcome-tagline-line"></div>
+    </div>
+
+    <!-- Mensaje error (id conservado, manipulado por JS) -->
+    <div id="welcome-error" class="kiosk-message kiosk-message-error hidden"></div>
+
+  </div><!-- /welcome-content -->
+
+  <!-- Footer -->
+  <footer class="welcome-footer">
+    <span>© 2026 Universidad Popular del Cesar · Sistema Electoral ABIS</span>
+  </footer>
+
 </section>
