@@ -34,13 +34,17 @@ if not defined BIOMETRIC_SERVICE_URL set "BIOMETRIC_SERVICE_URL=http://localhost
 if not defined OCR_SERVICE_URL set "OCR_SERVICE_URL=http://localhost:8002"
 if not defined NATIVE_SERVICE_URL set "NATIVE_SERVICE_URL=http://localhost:8765"
 if not defined ABIS_EMAIL_SERVICE_URL set "ABIS_EMAIL_SERVICE_URL=http://localhost:8010"
+if not defined ABIS_JAVA_URL set "ABIS_JAVA_URL=http://localhost:7000"
+if not defined SCANNER_PORT set "SCANNER_PORT=COM9"
+if not defined SCANNER_BAUD set "SCANNER_BAUD=9600"
+if not defined SCANNER_ID set "SCANNER_ID=YHD9601D-01"
 
-echo [1/8] Verificando Oracle XE...
+echo [1/9] Verificando Oracle XE...
 echo     Oracle se mantiene corriendo (no se toca)
 echo.
 
 echo     Liberando puertos ABIS anteriores...
-for %%p in (7000 8001 8002 8765) do (
+for %%p in (7000 8001 8002 8765 8010) do (
     for /f "tokens=5" %%a in ('netstat -ano ^| findstr :%%p ^| findstr LISTENING') do (
         taskkill /F /PID %%a >nul 2>&1
     )
@@ -48,7 +52,7 @@ for %%p in (7000 8001 8002 8765) do (
 echo     Puertos ABIS listos
 echo.
 
-echo [2/8] Iniciando NativeService (huella digital, puerto 8765)...
+echo [2/9] Iniciando NativeService (huella digital, puerto 8765)...
 net start DpHost >nul 2>&1
 if %errorLevel% == 0 (
     echo     OK - DpHost iniciado
@@ -69,23 +73,23 @@ if exist "C:\PROYECTOS P3\abis-upc\abis-native\NativeService\bin\Debug\net48\Nat
 )
 echo.
 
-echo [3/8] Verificando/instalando dependencias biometricas...
+echo [3/9] Verificando/instalando dependencias biometricas...
 pip install python-dotenv httpx pymupdf --quiet 2>nul
 echo     Dependencias biometricas OK
 echo.
 
-echo [4/8] Iniciando Servicio Biometrico (puerto 8001)...
+echo [4/9] Iniciando Servicio Biometrico (puerto 8001)...
 cd /d "C:\PROYECTOS P3\abis-upc\abis-biometric"
 start "ABIS-Biometric" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:ABIS_DB_URL='%ABIS_DB_URL%'; $env:ABIS_DB_USER='%ABIS_DB_USER%'; $env:ABIS_DB_PASSWORD='%ABIS_DB_PASSWORD%'; $env:NATIVE_SERVICE_URL='%NATIVE_SERVICE_URL%'; Set-Location 'C:\PROYECTOS P3\abis-upc\abis-biometric'; if (Test-Path '.\venv\Scripts\Activate.ps1') { . '.\venv\Scripts\Activate.ps1' }; python -m uvicorn app.main:app --host 0.0.0.0 --port 8001 --reload"
 echo     Biometrico iniciado en puerto 8001
 echo.
 
-echo [5/8] Verificando/instalando dependencias OCR...
+echo [5/9] Verificando/instalando dependencias OCR...
 cd /d "C:\PROYECTOS P3\abis-upc\abis-ocr"
 pip install -r requirements.txt --quiet 2>nul || echo     Dependencias OCR con advertencias, continuando...
 echo.
 
-echo [6/8] Iniciando Servicio OCR (puerto 8002)...
+echo [6/9] Iniciando Servicio OCR (puerto 8002)...
 if exist "api\main.py" (
     start "ABIS-OCR" powershell -NoExit -ExecutionPolicy Bypass -Command "Set-Location 'C:\PROYECTOS P3\abis-upc\abis-ocr'; if (Test-Path '.\venv\Scripts\Activate.ps1') { . '.\venv\Scripts\Activate.ps1' }; python -m uvicorn api.main:app --host 0.0.0.0 --port 8002"
     echo     OCR iniciado en puerto 8002
@@ -94,7 +98,7 @@ if exist "api\main.py" (
 )
 echo.
 
-echo [7/8] Iniciando Email Service (puerto 8010)...
+echo [7/9] Iniciando Email Service (puerto 8010)...
 cd /d "C:\PROYECTOS P3\abis-upc\abis-email-service"
 if exist "package.json" (
     start "ABIS-EmailService" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:PORT='8010'; $env:ABIS_EMAIL_SERVICE_TOKEN='%ABIS_EMAIL_SERVICE_TOKEN%'; $env:ABIS_RESEND_API_KEY='%ABIS_RESEND_API_KEY%'; $env:ABIS_RESEND_FROM_EMAIL='%ABIS_RESEND_FROM_EMAIL%'; Set-Location 'C:\PROYECTOS P3\abis-upc\abis-email-service'; npm start"
@@ -104,7 +108,16 @@ if exist "package.json" (
 )
 echo.
 
-echo [8/8] Iniciando Backend Java (puerto 7000)...
+echo [8/9] Iniciando Backend Java (puerto 7000)...
+cd /d "C:\PROYECTOS P3\abis-upc\abis-backend"
+echo     Compilando backend para incluir rutas recientes...
+call mvn -q -DskipTests package
+if %errorlevel% neq 0 (
+    echo     ERROR: No se pudo compilar el backend Java.
+    echo     Revisa la salida de Maven antes de continuar.
+    pause
+    exit /b 1
+)
 cd /d "C:\PROYECTOS P3\abis-upc\abis-backend\target"
 if not exist "abis-backend-1.0-SNAPSHOT.jar" (
     echo     ERROR: No se encontro abis-backend-1.0-SNAPSHOT.jar
@@ -114,6 +127,13 @@ if not exist "abis-backend-1.0-SNAPSHOT.jar" (
 )
 start "ABIS-Backend" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:ABIS_DB_URL='%ABIS_DB_URL%'; $env:ABIS_DB_USER='%ABIS_DB_USER%'; $env:ABIS_DB_PASSWORD='%ABIS_DB_PASSWORD%'; $env:BIOMETRIC_SERVICE_URL='%BIOMETRIC_SERVICE_URL%'; $env:OCR_SERVICE_URL='%OCR_SERVICE_URL%'; $env:NATIVE_SERVICE_URL='%NATIVE_SERVICE_URL%'; $env:ABIS_EMAIL_SERVICE_URL='%ABIS_EMAIL_SERVICE_URL%'; $env:ABIS_EMAIL_SERVICE_TOKEN='%ABIS_EMAIL_SERVICE_TOKEN%'; Set-Location 'C:\PROYECTOS P3\abis-upc\abis-backend\target'; java -jar abis-backend-1.0-SNAPSHOT.jar"
 echo     Backend Java iniciado en puerto 7000
+echo.
+
+echo [9/9] Iniciando Scanner de Contingencia (puerto %SCANNER_PORT%)...
+cd /d "%ABIS_ROOT%"
+python -m pip install pyserial requests python-dotenv --quiet 2>nul
+start "ABIS-ScannerContingencia" powershell -NoExit -ExecutionPolicy Bypass -Command "$env:SCANNER_PORT='%SCANNER_PORT%'; $env:SCANNER_BAUD='%SCANNER_BAUD%'; $env:ABIS_JAVA_URL='%ABIS_JAVA_URL%'; $env:SCANNER_ID='%SCANNER_ID%'; $env:SCANNER_PUESTO_ID='%SCANNER_PUESTO_ID%'; Set-Location '%ABIS_ROOT%'; python scripts\contingencia_scanner.py --port '%SCANNER_PORT%' --baud %SCANNER_BAUD% --java-url '%ABIS_JAVA_URL%' --scanner-id '%SCANNER_ID%'"
+echo     Scanner de contingencia iniciado
 echo.
 
 echo ==========================================
@@ -127,6 +147,7 @@ echo   Biometr.:  http://localhost:8001/status
 echo   OCR:       http://localhost:8002/health
 echo   NativeSvc: http://localhost:8765
 echo   EmailSvc:  http://localhost:8010/health
+echo   Scanner:   %SCANNER_PORT% (%SCANNER_ID%)
 echo.
 echo Abriendo navegador con el frontend...
 echo     Esperando respuesta del backend...
@@ -146,6 +167,7 @@ curl -s http://localhost:8001/status >nul 2>&1 && echo   [OK] Biometr. (8001) ||
 curl -s http://localhost:8002/health >nul 2>&1 && echo   [OK] OCR (8002) || echo   [FAIL] OCR (8002)
 curl -s http://localhost:8765/status >nul 2>&1 && echo   [OK] NativeService (8765) || echo   [FAIL] NativeService (8765)
 curl -s http://localhost:8010/health >nul 2>&1 && echo   [OK] EmailSvc (8010) || echo   [FAIL] EmailSvc (8010)
+echo   [INFO] Scanner serial: revisar ventana ABIS-ScannerContingencia
 echo.
 echo Listo. Usa DETENER_SERVICIOS.bat para detener.
 echo.
