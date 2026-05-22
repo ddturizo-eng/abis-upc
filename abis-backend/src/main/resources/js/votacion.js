@@ -5,7 +5,8 @@
     votante: null,
     permiso: null,
     idCandidato: null,
-    seleccionRealizada: false
+    seleccionRealizada: false,
+    contingenciaSocket: null
   };
 
   const $ = (id) => document.getElementById(id);
@@ -38,6 +39,15 @@
       $(`screen-${screen}`).classList.toggle('hidden', screen !== name);
     });
     document.body.classList.toggle('welcome-lock', name !== 'ballot');
+    document.body.dataset.kioskScreen = name;
+    const globalBadge = document.querySelector('.system-active-badge');
+    if (globalBadge) {
+      globalBadge.classList.toggle('hidden', name !== 'welcome');
+    }
+    const welcomeBg = document.querySelector('.welcome-photo-bg');
+    if (welcomeBg) {
+      welcomeBg.classList.toggle('hidden', name !== 'welcome');
+    }
   }
 
   function setMessage(id, message) {
@@ -91,6 +101,128 @@
     } finally {
       $('btn-start-verify').disabled = false;
     }
+  }
+
+  function conectarContingencia() {
+    if (state.contingenciaSocket && state.contingenciaSocket.readyState <= 1) {
+      activarModoQR();
+      return;
+    }
+    setContingenciaStatus('Conectando al escaner de contingencia...', 'waiting');
+    const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    const socket = new WebSocket(`${protocol}://${window.location.host}/ws/contingencia-ui`);
+    state.contingenciaSocket = socket;
+
+    socket.addEventListener('open', () => activarModoQR());
+    socket.addEventListener('message', (event) => manejarEscaneoContingencia(event.data));
+    socket.addEventListener('close', () => {
+      desactivarModoQR();
+      setContingenciaStatus('Contingencia desconectada. Presiona el boton para reintentar.', 'error');
+    });
+    socket.addEventListener('error', () => {
+      desactivarModoQR();
+      setContingenciaStatus('No fue posible conectar contingencia.', 'error');
+    });
+  }
+
+  function activarModoQR() {
+    const fingerprintStage = document.querySelector('.fingerprint-stage');
+    const verifyTips = document.querySelector('.verify-tips');
+    const verifySubstatus = document.querySelector('.verify-substatus');
+    const btnStart = $('btn-start-verify');
+    let qrPanel = $('qr-waiting-panel');
+
+    if (fingerprintStage) fingerprintStage.style.display = 'none';
+    if (verifyTips) verifyTips.style.display = 'none';
+    if (verifySubstatus) verifySubstatus.style.display = 'none';
+    if (btnStart) btnStart.style.display = 'none';
+
+    if (!qrPanel) {
+      qrPanel = document.createElement('div');
+      qrPanel.id = 'qr-waiting-panel';
+      qrPanel.innerHTML = `
+        <div style="margin:28px auto 0;width:140px;height:140px;display:flex;align-items:center;justify-content:center;
+          background:rgba(20,115,59,0.12);border:2px solid rgba(74,222,128,0.35);border-radius:20px;
+          animation:subtle-pulse 2s ease-in-out infinite;">
+          <i class="ti ti-qr-code" style="font-size:72px;color:#4ade80;"></i>
+        </div>
+        <p style="margin:20px 0 0;color:#4ade80;font-size:18px;font-weight:800;">Modo Contingencia QR activo</p>
+        <p style="margin:8px 0 0;color:rgba(255,255,255,0.5);font-size:14px;">Pide al votante que presente el QR recibido en su correo.<br>El escaner lo leera automaticamente.</p>
+      `;
+      const verifyActions = document.querySelector('.verify-actions');
+      if (verifyActions) verifyActions.parentNode.insertBefore(qrPanel, verifyActions);
+    }
+    qrPanel.style.display = 'block';
+
+    const btnContingency = $('btn-contingency-qr');
+    if (btnContingency) {
+      btnContingency.innerHTML = '<i class="ti ti-fingerprint"></i> Volver a huella';
+      btnContingency.onclick = desactivarModoQR;
+    }
+
+    setContingenciaStatus('Listo. Acerca el QR al escaner.', 'active');
+    setMessage('verify-error', '');
+  }
+
+  function desactivarModoQR() {
+    const fingerprintStage = document.querySelector('.fingerprint-stage');
+    const verifyTips = document.querySelector('.verify-tips');
+    const verifySubstatus = document.querySelector('.verify-substatus');
+    const btnStart = $('btn-start-verify');
+    const qrPanel = $('qr-waiting-panel');
+
+    if (fingerprintStage) fingerprintStage.style.display = '';
+    if (verifyTips) verifyTips.style.display = '';
+    if (verifySubstatus) verifySubstatus.style.display = '';
+    if (btnStart) btnStart.style.display = '';
+    if (qrPanel) qrPanel.style.display = 'none';
+
+    const btnContingency = $('btn-contingency-qr');
+    if (btnContingency) {
+      btnContingency.innerHTML = '<i class="ti ti-qr-code"></i> Usar QR de contingencia';
+      btnContingency.onclick = conectarContingencia;
+    }
+
+    setContingenciaStatus('Contingencia en espera del escaner serial.', '');
+  }
+
+  function manejarEscaneoContingencia(raw) {
+    let event;
+    try {
+      event = JSON.parse(raw);
+    } catch (error) {
+      setMessage('verify-error', 'Escaneo de contingencia no reconocido.');
+      return;
+    }
+
+    if (!event.success) {
+      const mensaje = event.message || 'QR de contingencia rechazado.';
+      setMessage('verify-error', mensaje);
+      setContingenciaStatus(mensaje, 'error');
+      return;
+    }
+
+    state.votante = event.votante || null;
+    state.permiso = event.permiso || { puede: 'S' };
+    if (!state.votante) {
+      setMessage('verify-error', 'El QR no retorno datos del votante.');
+      return;
+    }
+    setMessage('verify-error', '');
+    setContingenciaStatus('QR validado. Confirma visualmente la identidad.', 'active');
+    desactivarModoQR();
+    renderIdentidad();
+    showScreen('identity');
+  }
+
+  function setContingenciaStatus(message, type) {
+    const element = $('contingency-status');
+    if (!element) return;
+    element.textContent = message;
+    element.style.color = type === 'active' ? '#4ade80'
+      : type === 'error' ? '#fca5a5'
+      : type === 'waiting' ? '#fbbf24'
+      : 'rgba(255,255,255,0.4)';
   }
 
   function renderIdentidad() {
@@ -215,6 +347,7 @@
     state.permiso = null;
     state.idCandidato = null;
     state.seleccionRealizada = false;
+    desactivarModoQR();
     $('verify-status').textContent = 'Cuando estés listo, inicia la verificación.';
     setMessage('verify-error', '');
     setMessage('identity-error', '');
@@ -287,6 +420,7 @@
     if (!(await verificarSesion())) return;
     $('btn-go-verify').addEventListener('click', () => showScreen('verify'));
     $('btn-start-verify').addEventListener('click', iniciarVerificacion);
+    $('btn-contingency-qr').addEventListener('click', conectarContingencia);
     $('btn-cancel-verify').addEventListener('click', () => showScreen('welcome'));
     $('jury-confirm-identity').addEventListener('change', () => {
       $('btn-go-ballot').disabled = !$('jury-confirm-identity').checked;
