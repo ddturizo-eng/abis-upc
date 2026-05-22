@@ -246,23 +246,23 @@ public class VotacionController {
     }
 
     private static List<Map<String, Object>> resultadosPorRol(Connection conn, Long idEleccion) throws SQLException {
-        String sql = "SELECT r.NOMBRE AS ROL, ce.ID_CANDIDATO, ce.NUMERO_CAMPANIA, ce.CARGO, c.PRIMER_NOMBRE, c.SEGUNDO_NOMBRE, " +
-                "c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO, COUNT(*) AS VOTOS, NVL(SUM(v." + pesoColumn(conn) + "), 0) AS VOTOS_PONDERADOS " +
-                "FROM Votos v JOIN Roles r ON r.ID_ROL = v.ID_ROL " +
-                "JOIN Candidatos_eleccion ce ON ce.ID_ELECCION = v.ID_ELECCION AND ce.ID_CANDIDATO = v.ID_CANDIDATO " +
-                "JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
-                "WHERE v.ID_ELECCION = ? " +
-                "GROUP BY r.NOMBRE, ce.ID_CANDIDATO, ce.NUMERO_CAMPANIA, ce.CARGO, c.PRIMER_NOMBRE, c.SEGUNDO_NOMBRE, c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO " +
-                "ORDER BY r.NOMBRE, VOTOS DESC";
+        // Votos es anonimo por diseno: no almacena identificacion ni id_rol.
+        // El peso ponderado por rol se obtiene desde Eleccion_roles, que define
+        // cuantos votos ponderados aporta cada rol a la eleccion.
+        String sql = "SELECT r.NOMBRE AS ROL, er.PESO_VOTO, " +
+                "(SELECT COUNT(*) FROM Registro_votos rv " +
+                " JOIN Votantes vt ON vt.IDENTIFICACION = rv.IDENTIFICACION " +
+                " WHERE rv.ID_ELECCION = er.ID_ELECCION AND vt.ID_ROL = er.ID_ROL) AS PARTICIPANTES " +
+                "FROM Eleccion_roles er " +
+                "JOIN Roles r ON r.ID_ROL = er.ID_ROL " +
+                "WHERE er.ID_ELECCION = ? " +
+                "ORDER BY PARTICIPANTES DESC";
         return queryRows(conn, sql, idEleccion, rs -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("rol", rs.getString("ROL"));
-            row.put("idCandidato", rs.getLong("ID_CANDIDATO"));
-            row.put("numeroCampania", rs.getInt("NUMERO_CAMPANIA"));
-            row.put("cargo", rs.getString("CARGO"));
-            row.put("nombre", nombre(rs));
-            row.put("votos", rs.getLong("VOTOS"));
-            row.put("votosPonderados", rs.getDouble("VOTOS_PONDERADOS"));
+            row.put("pesoVoto", rs.getDouble("PESO_VOTO"));
+            row.put("participantes", rs.getLong("PARTICIPANTES"));
+            row.put("nota", "Votos anonimos: no se vincula candidato con rol del votante");
             return row;
         });
     }

@@ -2,6 +2,7 @@ package com.abisupc.service;
 
 import com.abisupc.repository.VotanteAdminRepository;
 import com.abisupc.repository.VotoOracleRepository;
+import com.abisupc.repository.TokenContingenciaRepository;
 
 import java.sql.SQLException;
 import java.util.Map;
@@ -14,21 +15,25 @@ public class VotacionService {
     private final VotanteAdminRepository votanteAdminRepo;
     private final CertificadoService certificadoService;
     private final ExecutorService certificadoExecutor;
+    private final TokenContingenciaRepository tokenContingenciaRepo;
 
     public VotacionService() {
-        this(new VotoOracleRepository(), new VotanteAdminRepository(), new CertificadoService(), Executors.newSingleThreadExecutor());
+        this(new VotoOracleRepository(), new VotanteAdminRepository(), new CertificadoService(), Executors.newSingleThreadExecutor(),
+                new TokenContingenciaRepository());
     }
 
     public VotacionService(
             VotoOracleRepository votoRepo,
             VotanteAdminRepository votanteAdminRepo,
             CertificadoService certificadoService,
-            ExecutorService certificadoExecutor
+            ExecutorService certificadoExecutor,
+            TokenContingenciaRepository tokenContingenciaRepo
     ) {
         this.votoRepo = votoRepo;
         this.votanteAdminRepo = votanteAdminRepo;
         this.certificadoService = certificadoService;
         this.certificadoExecutor = certificadoExecutor;
+        this.tokenContingenciaRepo = tokenContingenciaRepo;
     }
 
     public Map<String, String> votantePuedeVotar(String identificacion, Long idEleccion) throws SQLException {
@@ -48,6 +53,7 @@ public class VotacionService {
         }
 
         votoRepo.registrarVoto(identificacion, idEleccion, idCandidato, idPuesto);
+        tokenContingenciaRepo.marcarUsado(identificacion, idEleccion, idPuesto, "REGISTRO_VOTO");
         solicitarCertificadoAsync(identificacion, idEleccion);
     }
 
