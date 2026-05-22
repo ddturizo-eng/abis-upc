@@ -52,3 +52,40 @@ export async function enviarCertificadoPorCorreo(payload, pdfBuffer) {
 
   return data;
 }
+
+function contingenciaHtml(payload) {
+  return `
+    <p>Hola ${payload.nombre},</p>
+    <p>Adjuntamos tu QR de contingencia para <strong>${payload.nombreEleccion}</strong>.</p>
+    <p>Presenta este QR unicamente si la verificacion biometrica no puede completarse durante la jornada.</p>
+    <p>Codigo de referencia: <strong>${payload.tokenHint}</strong></p>
+    <p>Este codigo es personal e intransferible.</p>
+  `;
+}
+
+export async function enviarQrContingenciaPorCorreo(payload, qrPngBuffer) {
+  ensureResendConfig();
+
+  const resend = new Resend(config.resendApiKey);
+  const { data, error } = await resend.emails.send({
+    from: config.resendFromEmail,
+    to: [payload.correo],
+    subject: `QR de contingencia - ${payload.nombreEleccion}`,
+    html: contingenciaHtml(payload),
+    attachments: [
+      {
+        filename: `qr-contingencia-${payload.identificacion}.png`,
+        content: Buffer.from(qrPngBuffer).toString('base64')
+      }
+    ]
+  });
+
+  if (error) {
+    const sendError = new Error(error.message || 'Resend no pudo enviar el QR de contingencia');
+    sendError.statusCode = 502;
+    sendError.publicMessage = 'No fue posible enviar el QR de contingencia por correo';
+    throw sendError;
+  }
+
+  return data;
+}
