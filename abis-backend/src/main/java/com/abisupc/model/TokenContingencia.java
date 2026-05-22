@@ -8,6 +8,7 @@ public class TokenContingencia {
     private Long idEleccion;
     private String tokenHash;
     private String tokenHint;
+    private String tokenValor;
     private String estado;
     private LocalDateTime fechaEmision;
     private LocalDateTime fechaExpiracion;
@@ -53,6 +54,14 @@ public class TokenContingencia {
 
     public void setTokenHint(String tokenHint) {
         this.tokenHint = tokenHint;
+    }
+
+    public String getTokenValor() {
+        return tokenValor;
+    }
+
+    public void setTokenValor(String tokenValor) {
+        this.tokenValor = tokenValor;
     }
 
     public String getEstado() {

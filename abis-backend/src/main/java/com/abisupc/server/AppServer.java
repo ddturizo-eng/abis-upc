@@ -80,6 +80,13 @@ public class AppServer {
         app.post("/api/votos/registrar", VotacionController::registrar);
         app.post("/api/contingencia/scan", ContingenciaController::scan);
         app.post("/api/contingencia/tokens/generar", ContingenciaController::generarToken);
+        app.get("/api/contingencia/resumen", ContingenciaController::resumen);
+        app.get("/api/contingencia/tokens", ContingenciaController::listarTokens);
+        app.get("/api/contingencia/auditoria", ContingenciaController::auditoria);
+        app.post("/api/contingencia/emisiones", ContingenciaController::emitirLote);
+        app.post("/api/contingencia/tokens/{idToken}/reenviar", ContingenciaController::reenviar);
+        app.post("/api/contingencia/tokens/{idToken}/revocar", ContingenciaController::revocar);
+        app.post("/api/contingencia/tokens/{idToken}/regenerar", ContingenciaController::regenerar);
 
         // Auth (publica - login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
@@ -131,6 +138,10 @@ public class AppServer {
         app.before("/api/votantes/{id}", auth);
         app.before("/api/votantes/estadisticas", auth);
         app.before("/api/jornada/*", auth);
+        app.before("/api/contingencia/resumen", auth);
+        app.before("/api/contingencia/auditoria", auth);
+        app.before("/api/contingencia/emisiones", auth);
+        app.before("/api/contingencia/tokens", auth);
         app.before("/api/contingencia/tokens/*", auth);
         app.before("/api/votantes/{id}/inhabilitar", auth);
         app.before("/api/votantes/{id}/habilitar", auth);

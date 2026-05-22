@@ -47,6 +47,92 @@ public class ContingenciaController {
         }
     }
 
+    public static void resumen(Context ctx) {
+        try {
+            Long idEleccion = number(firstQuery(ctx, "eleccionId", "idEleccion"));
+            ctx.json(service.resumen(idEleccion));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("[ContingenciaController] resumen: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "No fue posible cargar resumen de contingencia"));
+        }
+    }
+
+    public static void listarTokens(Context ctx) {
+        try {
+            Long idEleccion = number(firstQuery(ctx, "eleccionId", "idEleccion"));
+            String estadoEnvio = text(ctx.queryParam("estadoEnvio"));
+            ctx.json(service.listarTokens(idEleccion, estadoEnvio));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("[ContingenciaController] listarTokens: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "No fue posible listar tokens de contingencia"));
+        }
+    }
+
+    public static void auditoria(Context ctx) {
+        try {
+            Long idEleccion = number(firstQuery(ctx, "eleccionId", "idEleccion"));
+            Integer limit = intValue(ctx.queryParam("limit"));
+            ctx.json(service.auditoria(idEleccion, limit != null ? limit : 100));
+        } catch (Exception e) {
+            System.err.println("[ContingenciaController] auditoria: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "No fue posible cargar auditoria de contingencia"));
+        }
+    }
+
+    public static void emitirLote(Context ctx) {
+        try {
+            Map<?, ?> body = ctx.bodyAsClass(Map.class);
+            Long idEleccion = number(first(body, "idEleccion", "eleccionId", "id_eleccion"));
+            ctx.json(service.emitirLote(idEleccion));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("[ContingenciaController] emitirLote: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "No fue posible emitir QR de contingencia"));
+        }
+    }
+
+    public static void reenviar(Context ctx) {
+        try {
+            ctx.json(service.reenviar(Long.parseLong(ctx.pathParam("idToken"))));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (IllegalStateException e) {
+            // Token sin valor recuperable (creado antes de columna token_valor)
+            // o error de servicio externo: devuelve 409 con mensaje claro
+            ctx.status(409).json(Map.of("error", e.getMessage(), "accion_requerida", "regenerar"));
+        } catch (Exception e) {
+            System.err.println("[ContingenciaController] reenviar: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", e.getMessage()));
+        }
+    }
+
+    public static void revocar(Context ctx) {
+        try {
+            ctx.json(service.revocar(Long.parseLong(ctx.pathParam("idToken"))));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("[ContingenciaController] revocar: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "No fue posible revocar token"));
+        }
+    }
+
+    public static void regenerar(Context ctx) {
+        try {
+            ctx.json(service.regenerar(Long.parseLong(ctx.pathParam("idToken"))));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(Map.of("error", e.getMessage()));
+        } catch (Exception e) {
+            System.err.println("[ContingenciaController] regenerar: " + e.getMessage());
+            ctx.status(500).json(Map.of("error", "No fue posible regenerar token"));
+        }
+    }
+
     public static void scan(Context ctx) {
         try {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -124,5 +210,25 @@ public class ContingenciaController {
             return n.longValue();
         }
         return Long.parseLong(String.valueOf(value));
+    }
+
+    private static Integer intValue(Object value) {
+        if (value == null || String.valueOf(value).isBlank()) {
+            return null;
+        }
+        if (value instanceof Number n) {
+            return n.intValue();
+        }
+        return Integer.parseInt(String.valueOf(value));
+    }
+
+    private static String firstQuery(Context ctx, String... keys) {
+        for (String key : keys) {
+            String value = ctx.queryParam(key);
+            if (value != null) {
+                return value;
+            }
+        }
+        return null;
     }
 }
