@@ -175,9 +175,6 @@ const ApiPreRegistro = {
             id_rol: parseInt(data.idRol),
             id_puesto: parseInt(data.idPuesto)
         };
-        if (data.qrCedula) {
-            payload.qr_cedula = data.qrCedula;
-        }
         return await API.post('/api/registro/preregistro', payload);
     }
 };
@@ -245,3 +242,24 @@ const ApiCertificados = {
 };
 
 window.ApiCertificados = ApiCertificados;
+
+const ApiContingencia = {
+    resumen: (eleccionId) => API.get(`/api/contingencia/resumen?eleccionId=${encodeURIComponent(eleccionId)}`),
+    tokens: (eleccionId, estadoEnvio = '') => {
+        const params = new URLSearchParams({ eleccionId });
+        if (estadoEnvio) params.set('estadoEnvio', estadoEnvio);
+        return API.get(`/api/contingencia/tokens?${params.toString()}`);
+    },
+    auditoria: (eleccionId = '', limit = 100) => {
+        const params = new URLSearchParams();
+        if (eleccionId) params.set('eleccionId', eleccionId);
+        params.set('limit', limit);
+        return API.get(`/api/contingencia/auditoria?${params.toString()}`);
+    },
+    emitir: (idEleccion) => API.post('/api/contingencia/emisiones', { idEleccion }),
+    reenviar: (idToken) => API.post(`/api/contingencia/tokens/${encodeURIComponent(idToken)}/reenviar`, {}),
+    revocar: (idToken) => API.post(`/api/contingencia/tokens/${encodeURIComponent(idToken)}/revocar`, {}),
+    regenerar: (idToken) => API.post(`/api/contingencia/tokens/${encodeURIComponent(idToken)}/regenerar`, {})
+};
+
+window.ApiContingencia = ApiContingencia;

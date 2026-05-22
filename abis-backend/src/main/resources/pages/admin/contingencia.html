@@ -1,0 +1,96 @@
+<section class="admin-section">
+  <div class="grid gap-5">
+    <div class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+      <div class="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <p class="dashboard-label">Contingencia electoral</p>
+          <h1 class="mt-1 text-2xl font-extrabold text-[#075521]">QR de contingencia</h1>
+          <p class="mt-1 max-w-3xl text-sm text-[#5f6f67]">Emision, envio y auditoria de codigos QR para votantes que requieran verificacion alternativa durante la jornada.</p>
+        </div>
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <label class="grid gap-1">
+            <span class="text-xs font-bold uppercase tracking-wide text-[#6b7280]">Eleccion</span>
+            <span class="relative block">
+              <i class="ti ti-calendar-event pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-[#075521]"></i>
+              <select id="contingencia-eleccion" class="h-11 min-w-[280px] rounded-md border border-[#dbe5df] bg-white pl-10 pr-3 text-sm font-bold text-[#1f2925]"></select>
+            </span>
+          </label>
+          <button type="button" id="contingencia-refresh" class="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#dbe5df] bg-white px-4 text-sm font-extrabold text-[#075521]">
+            <i class="ti ti-refresh text-lg"></i>
+            Actualizar
+          </button>
+          <button type="button" id="contingencia-emitir" class="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#075521] px-4 text-sm font-extrabold text-white">
+            <i class="ti ti-send text-lg"></i>
+            Emitir lote
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="contingencia-message" class="hidden rounded-lg border p-3 text-sm font-bold"></div>
+
+    <div class="grid gap-4 md:grid-cols-5" id="contingencia-kpis">
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-4"><p class="dashboard-label">Elegibles</p><strong id="cont-kpi-elegibles" class="mt-2 block text-2xl text-[#1f2925]">--</strong></article>
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-4"><p class="dashboard-label">Tokens</p><strong id="cont-kpi-tokens" class="mt-2 block text-2xl text-[#1f2925]">--</strong></article>
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-4"><p class="dashboard-label">Enviados</p><strong id="cont-kpi-enviados" class="mt-2 block text-2xl text-[#075521]">--</strong></article>
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-4"><p class="dashboard-label">Fallidos</p><strong id="cont-kpi-fallidos" class="mt-2 block text-2xl text-[#b42318]">--</strong></article>
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-4"><p class="dashboard-label">Pendientes</p><strong id="cont-kpi-pendientes" class="mt-2 block text-2xl text-[#92400e]">--</strong></article>
+    </div>
+
+    <div class="rounded-xl border border-[#e8ede9] bg-white p-4">
+      <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+        <div class="inline-flex rounded-md border border-[#dbe5df] bg-[#f7faf8] p-1">
+          <button type="button" class="cont-tab rounded px-4 py-2 text-sm font-extrabold text-[#075521] bg-white" data-tab="tokens">Votantes con QR</button>
+          <button type="button" class="cont-tab rounded px-4 py-2 text-sm font-extrabold text-[#5f6f67]" data-tab="auditoria">Auditoria</button>
+        </div>
+        <div class="flex gap-2">
+          <select id="contingencia-filter-envio" class="h-10 rounded-md border border-[#dbe5df] bg-white px-3 text-sm font-bold text-[#1f2925]">
+            <option value="">Todos los estados</option>
+            <option value="ENVIADO">Enviados</option>
+            <option value="FALLIDO">Fallidos</option>
+            <option value="PENDIENTE">Pendientes</option>
+          </select>
+          <input id="contingencia-search" class="h-10 rounded-md border border-[#dbe5df] px-3 text-sm" placeholder="Buscar votante">
+        </div>
+      </div>
+    </div>
+
+    <article id="contingencia-panel-tokens" class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[860px] text-left">
+          <thead>
+            <tr class="border-b border-[#e8ede9] text-xs font-extrabold uppercase tracking-wide text-[#6b7280]">
+              <th class="py-3 pr-3">Votante</th>
+              <th class="py-3 pr-3">Correo</th>
+              <th class="py-3 pr-3">Token</th>
+              <th class="py-3 pr-3">Envio</th>
+              <th class="py-3 pr-3">Uso</th>
+              <th class="py-3 text-right">Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="contingencia-tokens-tbody"></tbody>
+        </table>
+      </div>
+    </article>
+
+    <article id="contingencia-panel-auditoria" class="hidden rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-[780px] text-left">
+          <thead>
+            <tr class="border-b border-[#e8ede9] text-xs font-extrabold uppercase tracking-wide text-[#6b7280]">
+              <th class="py-3 pr-3">Fecha</th>
+              <th class="py-3 pr-3">Votante</th>
+              <th class="py-3 pr-3">Correo</th>
+              <th class="py-3 pr-3">Estado</th>
+              <th class="py-3 pr-3">Intento</th>
+              <th class="py-3">Detalle</th>
+            </tr>
+          </thead>
+          <tbody id="contingencia-auditoria-tbody"></tbody>
+        </table>
+      </div>
+    </article>
+  </div>
+</section>
+
+<script src="../../js/contingencia-admin.js"></script>
