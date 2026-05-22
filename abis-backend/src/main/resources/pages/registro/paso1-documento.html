@@ -64,12 +64,10 @@
             </div>
 
             <div class="mt-5 border-t border-slate-300 pt-4">
-                <h4 class="font-mono text-[10px] uppercase text-[#6B7280] mb-3">Lectura del reverso con lector USB</h4>
-                <button id="btn-qr-focus" type="button" class="w-full border border-[#004D33] text-[#004D33] py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-emerald-50">
-                    <span class="material-symbols-outlined text-[18px]">keyboard</span>
-                    Enfocar campo de lectura
-                </button>
-                <p id="qr-status" class="text-center font-mono text-[10px] text-[#9CA3AF] mt-2">QR_CEDULA pendiente</p>
+                <h4 class="font-mono text-[10px] uppercase text-[#6B7280] mb-3">Contingencia QR</h4>
+                <div class="rounded-lg border border-[#C8CBD2] bg-white px-4 py-3 text-[12px] text-[#6B7280]">
+                    El QR de contingencia se generara por lote desde el modulo administrativo cuando exista una eleccion seleccionada.
+                </div>
             </div>
         </div>
 
@@ -129,11 +127,6 @@
                     <select class="form-field" id="f-puesto">
                         <option value="">Seleccionar puesto...</option>
                     </select>
-                </div>
-                <div class="col-span-2">
-                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">QR_CEDULA reverso</label>
-                    <textarea class="form-field min-h-[86px] resize-none font-mono text-xs" id="f-qr-cedula" maxlength="500" placeholder="Escanee el reverso de la cédula"></textarea>
-                    <p class="mt-1 text-[11px] text-slate-400">Opcional por ahora. El lector YHD-9601D escribe el contenido y finaliza con Enter.</p>
                 </div>
             </div>
 
