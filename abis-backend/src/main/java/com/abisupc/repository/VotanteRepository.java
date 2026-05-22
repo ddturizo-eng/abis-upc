@@ -195,6 +195,22 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    public List<Votante> findHabilitadosParaContingencia() {
+        String sql = SELECT_BASE + " WHERE UPPER(ESTADO_VOTO) = 'PENDIENTE' AND CORREO IS NOT NULL " +
+                "ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
+        List<Votante> lista = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql);
+             ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(mapRow(rs));
+            }
+            return lista;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error consultando votantes habilitados para contingencia", e);
+        }
+    }
+
     public boolean estaHabilitado(String identificacion) {
         String sql = "SELECT ESTADO_VOTO FROM Votantes WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
