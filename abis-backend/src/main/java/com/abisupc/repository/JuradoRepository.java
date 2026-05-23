@@ -102,7 +102,7 @@ public class JuradoRepository {
     }
 
     public void asignarJurado(Long idMesa, String identificacion, String cargo) throws SQLException {
-        String sql = "{ call prc_asignar_jurado(?, ?, ?) }";
+        String sql = "{ call PKG_JURADOS.prc_asignar(?, ?, ?) }";
         try (Connection conn = AppConfig.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setLong(1, idMesa);
