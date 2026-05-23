@@ -57,8 +57,14 @@ public final class OracleErrorHandler {
         if (oraCode == 20001 ||
                 inRange(oraCode, 20020, 20022) ||
                 inRange(oraCode, 20050, 20051) ||
-                inRange(oraCode, 20060, 20061)) {
+                inRange(oraCode, 20060, 20062) ||
+                inRange(oraCode, 20064, 20064) ||
+                inRange(oraCode, 20200, 20201)) {
             return 409;
+        }
+
+        if (oraCode == 20063) {
+            return 400;
         }
 
         return 400;
@@ -98,6 +104,9 @@ public final class OracleErrorHandler {
             case 20051 -> "El numero de tarjeton ya esta asignado.";
             case 20060 -> "El candidato no puede ser jurado.";
             case 20061 -> "El jurado se encuentra inhabilitado.";
+            case 20062 -> "Solo DOCENTES y ADMINISTRATIVOS pueden ser jurados.";
+            case 20063 -> "El votante no tiene fecha de nacimiento registrada.";
+            case 20064 -> "El votante debe tener al menos 30 anos para ser jurado.";
             case 20070 -> "El votante no puede votar.";
             case 20090, 20091 -> "El voto es inmutable segun Art. 258.";
             case 20092, 20093 -> "El registro de participacion es inmutable.";
@@ -117,6 +126,12 @@ public final class OracleErrorHandler {
         }
         if (inRange(code, 20140, 20144)) {
             return "La asignacion de jurado es invalida.";
+        }
+        if (code == 20200) {
+            return "Esta identificacion no pertenece al censo institucional de la UPC.";
+        }
+        if (code == 20201) {
+            return "Este usuario esta inactivo en el sistema institucional.";
         }
         return "Error de regla de negocio Oracle.";
     }
