@@ -134,9 +134,18 @@ public class AppServer {
         app.before("/api/biometria/enrolar", auth);
         app.before("/api/certificados", auth);
         app.before("/api/certificados/*", auth);
-        app.before("/api/votantes", auth);
-        app.before("/api/votantes/{id}", auth);
         app.before("/api/votantes/estadisticas", auth);
+        app.before("/api/votantes/*", ctx -> {
+            String path = ctx.path();
+            if (path.equals("/api/votantes/foto") ||
+                path.equals("/api/votantes/segunda-llave") ||
+                path.matches("/api/votantes/\\d+/puede-votar")) {
+                return;
+            }
+            auth.handle(ctx);
+        });
+        app.before("/api/votantes/{id}/inhabilitar", auth);
+        app.before("/api/votantes/{id}/habilitar", auth);
         app.before("/api/jornada/*", auth);
         app.before("/api/contingencia/resumen", auth);
         app.before("/api/contingencia/auditoria", auth);
