@@ -4,6 +4,7 @@ import com.abisupc.model.EstadoVotante;
 import com.abisupc.model.RegistroRequest;
 import com.abisupc.model.Votante;
 import com.abisupc.repository.VotanteRepository;
+import com.abisupc.util.OracleErrorHandler;
 import io.javalin.http.Context;
 
 import java.sql.Date;
@@ -86,9 +87,15 @@ public class RegistroController {
 
         } catch (RuntimeException e) {
             System.err.println("[RegistroController] Error: " + e.getMessage());
+            if (OracleErrorHandler.from(e).map(error -> {
+                ctx.status(error.statusCode()).json(Map.of("error", error.message(), "oraCode", error.oraCode()));
+                return true;
+            }).orElse(false)) {
+                return;
+            }
             if (e.getMessage() != null && e.getMessage().contains("identificaci")) {
                 ctx.status(409).json("{\"error\":\"Votante ya registrado\"}");
-            } else if (e.getMessage() != null && e.getMessage().contains("UNIQUE") || 
+            } else if (e.getMessage() != null && e.getMessage().contains("UNIQUE") ||
                        (e.getMessage() != null && e.getMessage().contains("CORREO"))) {
                 ctx.status(409).json("{\"error\":\"Correo ya registrado\"}");
             } else {
@@ -96,6 +103,12 @@ public class RegistroController {
             }
         } catch (Exception e) {
             System.err.println("[RegistroController] Error: " + e.getMessage());
+            if (OracleErrorHandler.from(e).map(error -> {
+                ctx.status(error.statusCode()).json(Map.of("error", error.message(), "oraCode", error.oraCode()));
+                return true;
+            }).orElse(false)) {
+                return;
+            }
             ctx.status(500).json(Map.of("error", "Error interno al registrar votante"));
         }
     }
