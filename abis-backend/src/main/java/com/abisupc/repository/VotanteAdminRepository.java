@@ -12,7 +12,7 @@ import java.util.Map;
 public class VotanteAdminRepository {
 
     public void inhabilitarVotante(String identificacion, Long idAdmin, String motivo) throws SQLException {
-        String sql = "{ call prc_inhabilitar_votante(?, ?, ?) }";
+        String sql = "{ call PKG_VOTANTES.prc_inhabilitar(?, ?, ?) }";
         try (Connection conn = AppConfig.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, identificacion);
@@ -23,7 +23,7 @@ public class VotanteAdminRepository {
     }
 
     public void habilitarVotante(String identificacion, Long idAdmin, String motivo) throws SQLException {
-        String sql = "{ call prc_habilitar_votante(?, ?, ?) }";
+        String sql = "{ call PKG_VOTANTES.prc_habilitar(?, ?, ?) }";
         try (Connection conn = AppConfig.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, identificacion);
@@ -34,7 +34,7 @@ public class VotanteAdminRepository {
     }
 
     public Map<String, String> votantePuedeVotar(String identificacion, Long idEleccion) throws SQLException {
-        String sql = "{ ? = call fnc_votante_puede_votar(?, ?, ?) }";
+        String sql = "{ ? = call PKG_VOTANTES.fn_puede_votar(?, ?, ?) }";
         try (Connection conn = AppConfig.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.registerOutParameter(1, Types.VARCHAR);

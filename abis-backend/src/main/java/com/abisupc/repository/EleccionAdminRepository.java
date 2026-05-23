@@ -9,7 +9,7 @@ import java.sql.SQLException;
 public class EleccionAdminRepository {
 
     public void cerrarEleccion(Long idEleccion, Long idAdmin) throws SQLException {
-        String sql = "{ call prc_cerrar_eleccion(?, ?) }";
+        String sql = "{ call PKG_ELECTORAL.prc_cerrar_eleccion(?, ?) }";
         try (Connection conn = AppConfig.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setLong(1, idEleccion);
