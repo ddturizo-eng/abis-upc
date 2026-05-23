@@ -6,6 +6,7 @@ import com.abisupc.model.Votante;
 import com.abisupc.repository.VotanteRepository;
 import io.javalin.http.Context;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Map;
 
@@ -68,6 +69,7 @@ public class RegistroController {
             votante.setCorreo(body.correo);
             votante.setEstadoVoto(EstadoVotante.PENDIENTE.name());
             votante.setFechaConsentimiento(new Timestamp(System.currentTimeMillis()));
+            votante.setFechaNacimiento(parsearFecha(body.fechaNacimiento));
             votante.setIdRol(body.idRol);
             votante.setIdPuesto(body.idPuesto);
             votante.setQrCedula(body.qrCedula);
@@ -95,6 +97,17 @@ public class RegistroController {
         } catch (Exception e) {
             System.err.println("[RegistroController] Error: " + e.getMessage());
             ctx.status(500).json(Map.of("error", "Error interno al registrar votante"));
+        }
+    }
+
+    private static Date parsearFecha(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        try {
+            return Date.valueOf(value.trim());
+        } catch (IllegalArgumentException e) {
+            return null;
         }
     }
 

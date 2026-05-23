@@ -117,6 +117,14 @@ const Paso1State = {
   cameraStream: null
 };
 
+let _cameraGuide = null;
+
+// ── Estado IP Webcam ──────────────────────────────────────────────────────
+let _ipWebcamInterval = null;   // Intervalo de polling de frames
+let _ipWebcamConnected = false; // Estado de conexión
+let _ipWebcamGuide = null;      // Instancia CameraGuide para el overlay
+const IP_WEBCAM_FPS = 10;       // Frames por segundo del polling (10 = fluido sin saturar)
+
 function actualizarEstadoOCR(estado, mensaje) {
   const statusBar = document.getElementById('ocr-status-bar');
   const statusIcon = document.getElementById('ocr-status-icon');
@@ -234,7 +242,8 @@ function fillFormFromOCR(data) {
     'f-segundonombre': data.segundo_nombre,
     'f-primerapellido': data.primer_apellido,
     'f-segundoapellido': data.segundo_apellido,
-    'f-identificacion': data.numero
+    'f-identificacion': data.numero,
+    'f-fecha-nacimiento': data.fecha_nacimiento
   };
 
   Object.entries(fields).forEach(([id, value]) => {
@@ -331,58 +340,421 @@ if (!Paso1State.currentFile) return;
 }
 
 async function toggleCamera() {
-  const panel = document.getElementById('cameraPanel');
-  const video = document.getElementById('videoPreview');
-  const button = document.getElementById('btnCamera');
-
-  if (Paso1State.cameraStream) {
-    stopCamera();
-    return;
-  }
+  const modal = document.getElementById("cameraModal");
+  const video = document.getElementById("videoPreview");
+  const guideCanvas = document.getElementById("canvasGuide");
 
   try {
-    Paso1State.cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
-    video.srcObject = Paso1State.cameraStream;
-    panel.classList.remove('hidden');
-    button.innerHTML = '<span class="material-symbols-outlined text-[18px]">close</span>Cerrar Camara';
-  } catch (error) {
-    showPaso1Error('No se pudo acceder a la camara: ' + error.message);
+    // Obtener lista de todas las cámaras disponibles
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    const cameras = devices.filter(d => d.kind === "videoinput");
+
+    // Buscar DroidCam primero (prioridad), luego cualquier otra
+    const droidcam = cameras.find(c =>
+      c.label.toLowerCase().includes("droidcam")
+    );
+    const selectedCamera = droidcam || cameras[cameras.length - 1];
+
+    console.log("Cámaras disponibles:", cameras.map(c => c.label));
+    console.log("Usando:", selectedCamera?.label || "default");
+
+    const constraints = {
+      video: selectedCamera
+        ? {
+            deviceId: { exact: selectedCamera.deviceId },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          }
+        : {
+            width: { ideal: 1920 },
+            height: { ideal: 1080 },
+          },
+    };
+
+    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+    Paso1State.cameraStream = stream;
+    video.srcObject = stream;
+
+    await new Promise((resolve) => {
+      video.onloadedmetadata = () => resolve();
+    });
+
+    _cameraGuide = new CameraGuide(video, guideCanvas);
+    _cameraGuide.calcGuideRect();
+    _cameraGuide.startLoop();
+
+    modal.classList.add("active");
+
+    document.getElementById("btnCapturarCamera")
+      .addEventListener("click", capturePhoto, { once: true });
+    document.getElementById("btnCancelarCamera")
+      .addEventListener("click", stopCamera, { once: true });
+
+  } catch (err) {
+    console.error("Error accediendo a la cámara:", err);
+    alert("No se pudo acceder a la cámara. Verifique los permisos.");
   }
 }
 
 function stopCamera() {
+  const video = document.getElementById('videoPreview');
+  const modal = document.getElementById('cameraModal');
+  const processing = document.getElementById('cameraProcessing');
+
+  if (_cameraGuide) {
+    _cameraGuide.stopLoop();
+    _cameraGuide = null;
+  }
+
   if (Paso1State.cameraStream) {
     Paso1State.cameraStream.getTracks().forEach((track) => track.stop());
     Paso1State.cameraStream = null;
   }
 
-  const panel = document.getElementById('cameraPanel');
-  const button = document.getElementById('btnCamera');
-  const video = document.getElementById('videoPreview');
-  if (video) video.srcObject = null;
-  if (panel) panel.classList.add('hidden');
-  if (button) {
-    button.innerHTML = '<span class="material-symbols-outlined text-[18px]">photo_camera</span>Camara';
+  if (video) {
+    video.srcObject = null;
+  }
+
+  if (modal) {
+    modal.classList.remove('active');
+  }
+  if (processing) {
+    processing.style.display = 'none';
   }
 }
 
-function capturePhoto() {
+async function capturePhoto() {
   const video = document.getElementById('videoPreview');
-  const canvas = document.getElementById('canvasCapture');
+  const canvasCapture = document.getElementById('canvasCapture');
+  const processing = document.getElementById('cameraProcessing');
   const preview = document.getElementById('preview');
   const captureContent = document.getElementById('capture-content');
 
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-  canvas.toBlob(async (blob) => {
-    Paso1State.currentFile = new File([blob], 'captura.jpg', { type: 'image/jpeg' });
-    preview.src = URL.createObjectURL(blob);
-    preview.classList.remove('hidden');
-    captureContent.classList.add('hidden');
+  if (!_cameraGuide || !video || !canvasCapture) return;
+
+  try {
+    await _cameraGuide.showReadyFeedback();
+
+    if (processing) {
+      processing.style.display = 'flex';
+    }
+
+    canvasCapture.width = video.videoWidth;
+    canvasCapture.height = video.videoHeight;
+    const captureCtx = canvasCapture.getContext('2d');
+    captureCtx.drawImage(video, 0, 0);
+
+    const blob = await new Promise((resolve) => {
+      canvasCapture.toBlob(resolve, 'image/jpeg', 0.92);
+    });
+
     stopCamera();
+
+    const formData = new FormData();
+    formData.append('front', blob, 'capture.jpg');
+
+    const cropResponse = await fetch('http://localhost:8002/crop', {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!cropResponse.ok) {
+      throw new Error('Error en /crop: ' + cropResponse.status);
+    }
+
+    const cropData = await cropResponse.json();
+
+    if (preview && cropData.cropped_image) {
+      preview.src = cropData.cropped_image;
+      preview.classList.remove('hidden');
+      if (captureContent) {
+        captureContent.classList.add('hidden');
+      }
+    }
+
+    const croppedBlob = await fetch(cropData.cropped_image).then((r) => r.blob());
+    Paso1State.currentFile = new File([croppedBlob], 'captura.jpg', { type: 'image/jpeg' });
+
+    if (processing) {
+      processing.style.display = 'none';
+    }
+
     await scanDocument();
-  }, 'image/jpeg');
+  } catch (err) {
+    console.error('Error en capturePhoto:', err);
+    if (processing) {
+      processing.style.display = 'none';
+    }
+    showPaso1Error('Error procesando la imagen. Intente nuevamente.');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Funciones IP Webcam
+// ═══════════════════════════════════════════════════════════════════════════
+
+/**
+ * Abre el modal de IP Webcam.
+ * No conecta automáticamente — el operador debe presionar "Conectar"
+ * para evitar intentos fallidos si la IP cambió.
+ */
+function toggleIpWebcam() {
+  const modal = document.getElementById("ipWebcamModal");
+  modal.style.display = "flex";
+
+  // Intentar conectar automáticamente con la IP guardada
+  const savedUrl = sessionStorage.getItem("ipWebcamUrl");
+  if (savedUrl) {
+    document.getElementById("ipWebcamUrl").value = savedUrl;
+    connectIpWebcam();
+  }
+}
+
+/**
+ * Conecta al servidor IP Webcam y comienza el polling de frames.
+ * Primero verifica que el servidor esté disponible vía /shot.jpg
+ * luego inicia el loop de refresco de imagen.
+ */
+async function connectIpWebcam() {
+  const urlInput = document.getElementById("ipWebcamUrl");
+  const statusDot = document.getElementById("ipStatusDot");
+  const statusText = document.getElementById("ipStatusText");
+  const btnConnect = document.getElementById("btnIpConnect");
+  const btnCapture = document.getElementById("btnIpCapture");
+  const frame = document.getElementById("ipWebcamFrame");
+  const placeholder = document.getElementById("ipWebcamPlaceholder");
+  const guideCanvas = document.getElementById("ipWebcamGuide");
+
+  let baseUrl = urlInput.value.trim().replace(/\/$/, "");
+  if (!baseUrl.startsWith("http")) baseUrl = "http://" + baseUrl;
+
+  // Guardar URL en sesión para reconexión automática
+  sessionStorage.setItem("ipWebcamUrl", baseUrl);
+
+  // UI: estado "conectando"
+  statusDot.style.background = "#f59e0b";
+  statusText.textContent = "Conectando...";
+  btnConnect.disabled = true;
+  btnConnect.textContent = "Conectando...";
+
+  // Detener polling anterior si existía
+  _stopIpPolling();
+
+  // ── Verificar conectividad con /shot.jpg ──
+  const testUrl = baseUrl + "/shot.jpg?t=" + Date.now();
+  let connected = false;
+
+  try {
+    const testImg = new Image();
+    connected = await new Promise((resolve) => {
+      testImg.onload = () => resolve(true);
+      testImg.onerror = () => resolve(false);
+      setTimeout(() => resolve(false), 4000);
+      testImg.src = testUrl;
+    });
+  } catch (e) {
+    connected = false;
+  }
+
+  btnConnect.disabled = false;
+  btnConnect.textContent = "Conectar";
+
+  if (!connected) {
+    statusDot.style.background = "#ef4444";
+    statusText.textContent = "Sin conexión — verifica la IP";
+    statusText.style.color = "#ef4444";
+    _ipWebcamConnected = false;
+    return;
+  }
+
+  // ── Conexión exitosa ──────────────────────────────────────────────────
+  _ipWebcamConnected = true;
+
+  statusDot.style.background = "#00C896";
+  statusText.textContent = "Conectado";
+  statusText.style.color = "#00C896";
+
+  frame.style.display = "block";
+  placeholder.style.display = "none";
+
+  btnCapture.disabled = false;
+  btnCapture.style.background = "#00C896";
+  btnCapture.style.color = "#fff";
+  btnCapture.style.cursor = "pointer";
+
+  guideCanvas.style.display = "block";
+
+  // ── Iniciar polling de frames ─────────────────────────────────────────
+  const intervalMs = Math.round(1000 / IP_WEBCAM_FPS);
+
+  _ipWebcamInterval = setInterval(() => {
+    if (!_ipWebcamConnected) return;
+
+    const newSrc = baseUrl + "/shot.jpg?t=" + Date.now();
+    frame.src = newSrc;
+
+    frame.onerror = () => {
+      _handleIpDisconnect();
+    };
+
+    frame.onload = () => {
+      _drawIpGuideOverlay();
+    };
+  }, intervalMs);
+
+  // Primer frame inmediato
+  frame.src = baseUrl + "/shot.jpg?t=" + Date.now();
+  frame.onerror = () => _handleIpDisconnect();
+}
+
+/**
+ * Captura el frame actual del stream IP Webcam, lo envía al backend
+ * para recorte con OpenCV y luego al pipeline OCR.
+ */
+async function captureIpWebcam() {
+  if (!_ipWebcamConnected) return;
+
+  const urlInput = document.getElementById("ipWebcamUrl");
+  const processing = document.getElementById("ipWebcamProcessing");
+  const baseUrl = urlInput.value.trim().replace(/\/$/, "");
+
+  processing.style.display = "flex";
+
+  // Pausar polling durante la captura
+  _stopIpPolling();
+
+  try {
+    const shotUrl = baseUrl + "/shot.jpg?t=" + Date.now();
+    const response = await fetch(shotUrl);
+
+    if (!response.ok) {
+      throw new Error("HTTP " + response.status + " al capturar frame");
+    }
+
+    const imageBlob = await response.blob();
+
+    // ── Enviar al backend /crop para recorte con OpenCV ─────────────────
+    const formData = new FormData();
+    formData.append("front", imageBlob, "ip_capture.jpg");
+
+    const cropResponse = await fetch("http://localhost:8002/crop", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!cropResponse.ok) {
+      throw new Error("Error en /crop: " + cropResponse.status);
+    }
+
+    const cropData = await cropResponse.json();
+
+    // ── Cerrar modal IP Webcam ──────────────────────────────────────────
+    stopIpWebcam();
+
+    // ── Actualizar preview con imagen recortada ─────────────────────────
+    const previewEl = document.getElementById("preview");
+    const captureContent = document.getElementById("capture-content");
+    if (previewEl && cropData.cropped_image) {
+      previewEl.src = cropData.cropped_image;
+      previewEl.classList.remove("hidden");
+      if (captureContent) {
+        captureContent.classList.add("hidden");
+      }
+    }
+
+    // ── Convertir base64 a Blob, setear como archivo actual y ejecutar OCR ──
+    const croppedBlob = await fetch(cropData.cropped_image).then((r) => r.blob());
+    Paso1State.currentFile = new File([croppedBlob], "ip_capture.jpg", { type: "image/jpeg" });
+
+    await scanDocument();
+  } catch (err) {
+    console.error("Error en captureIpWebcam:", err);
+    processing.style.display = "none";
+
+    if (_ipWebcamConnected) {
+      connectIpWebcam();
+    }
+
+    showPaso1Error("Error al capturar: " + err.message + ". Intente nuevamente.");
+  }
+}
+
+/**
+ * Cierra el modal IP Webcam y detiene el polling.
+ */
+function stopIpWebcam() {
+  _stopIpPolling();
+  _ipWebcamConnected = false;
+
+  const modal = document.getElementById("ipWebcamModal");
+  const processing = document.getElementById("ipWebcamProcessing");
+  const btnCapture = document.getElementById("btnIpCapture");
+
+  modal.style.display = "none";
+  processing.style.display = "none";
+
+  btnCapture.disabled = true;
+  btnCapture.style.background = "#555";
+  btnCapture.style.color = "#999";
+  btnCapture.style.cursor = "not-allowed";
+}
+
+/**
+ * Detiene el intervalo de polling de frames.
+ */
+function _stopIpPolling() {
+  if (_ipWebcamInterval) {
+    clearInterval(_ipWebcamInterval);
+    _ipWebcamInterval = null;
+  }
+}
+
+/**
+ * Maneja la desconexión inesperada de la cámara IP.
+ */
+function _handleIpDisconnect() {
+  if (!_ipWebcamConnected) return;
+
+  _ipWebcamConnected = false;
+  _stopIpPolling();
+
+  const statusDot = document.getElementById("ipStatusDot");
+  const statusText = document.getElementById("ipStatusText");
+  const btnCapture = document.getElementById("btnIpCapture");
+
+  statusDot.style.background = "#ef4444";
+  statusText.textContent = "Conexión perdida — reconectando...";
+  statusText.style.color = "#ef4444";
+  btnCapture.disabled = true;
+  btnCapture.style.background = "#555";
+  btnCapture.style.cursor = "not-allowed";
+
+  setTimeout(() => {
+    if (document.getElementById("ipWebcamModal").style.display !== "none") {
+      connectIpWebcam();
+    }
+  }, 3000);
+}
+
+/**
+ * Dibuja el recuadro guía sobre el canvas del modal IP Webcam.
+ * Reutiliza la clase CameraGuide con el elemento <img> como referencia.
+ */
+function _drawIpGuideOverlay() {
+  const frame = document.getElementById("ipWebcamFrame");
+  const guideCanvas = document.getElementById("ipWebcamGuide");
+
+  if (!frame || !guideCanvas || !window.CameraGuide) return;
+
+  const rect = frame.getBoundingClientRect();
+  if (rect.width === 0) return;
+
+  guideCanvas.width = rect.width;
+  guideCanvas.height = rect.height;
+
+  const tempGuide = new CameraGuide(frame, guideCanvas);
+  tempGuide.calcGuideRect();
+  tempGuide.drawOverlay(false);
 }
 
 async function cargarPuestos() {
@@ -437,6 +809,7 @@ async function enviarPreRegistro() {
     correo: document.getElementById('f-correo').value.trim(),
     idRol: parseInt(document.getElementById('f-rol').value, 10) || null,
     idPuesto: parseInt(document.getElementById('f-puesto').value, 10) || null,
+    fechaNacimiento: document.getElementById('f-fecha-nacimiento').value || null,
     consentimiento: VotanteSession.getConsentimiento()
   };
 
@@ -514,8 +887,6 @@ const file = fileInput.files[0];
   });
 
   document.getElementById('btnCamera').addEventListener('click', toggleCamera);
-  document.getElementById('btn-capture').addEventListener('click', capturePhoto);
-  document.getElementById('btn-close-camera').addEventListener('click', stopCamera);
   resetButton.addEventListener('click', resetForm);
   continueButton.addEventListener('click', enviarPreRegistro);
 

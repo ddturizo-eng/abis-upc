@@ -2,6 +2,7 @@ package com.abisupc.model;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.sql.Date;
 import java.sql.Timestamp;
 
 public class Votante extends Entity {
@@ -38,6 +39,9 @@ public class Votante extends Entity {
 
     @JsonProperty("puesto_id")
     private Long idPuesto;
+
+    @JsonProperty("fecha_nacimiento")
+    private Date fechaNacimiento;
 
     @JsonProperty("qr_cedula")
     private String qrCedula;
@@ -128,6 +132,14 @@ public class Votante extends Entity {
 
     public void setIdPuesto(Long idPuesto) {
         this.idPuesto = idPuesto;
+    }
+
+    public Date getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
+    public void setFechaNacimiento(Date fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
     }
 
     public String getQrCedula() {

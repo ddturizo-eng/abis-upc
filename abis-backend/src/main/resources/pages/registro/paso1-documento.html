@@ -50,18 +50,15 @@
                         <span class="material-symbols-outlined text-[18px]">photo_camera</span>
                         Camara
                     </button>
+                    <button id="btnIpWebcam" type="button" onclick="toggleIpWebcam()"
+                            class="flex-1 bg-[#1a1a2e] text-white py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90 border-2 border-[#00C896]">
+                        <span class="material-symbols-outlined text-[18px]">phone_android</span>
+                        Cámara IP
+                    </button>
                 </div>
                 <p class="text-center font-mono text-[10px] text-[#9CA3AF] mt-2">PNG, JPG o PDF</p>
             </div>
 
-            <div id="cameraPanel" class="hidden mt-4">
-                <video id="videoPreview" class="w-full rounded-lg" autoplay playsinline></video>
-                <canvas id="canvasCapture" class="hidden"></canvas>
-                <div class="flex gap-2 mt-2">
-                    <button id="btn-capture" class="flex-1 bg-[#004D33] text-white py-2 rounded-lg text-xs font-bold">Capturar</button>
-                    <button id="btn-close-camera" class="flex-1 border border-[#C8CBD2] text-[#6B7280] py-2 rounded-lg text-xs">Cerrar</button>
-                </div>
-            </div>
 
             <div class="mt-5 border-t border-slate-300 pt-4">
                 <h4 class="font-mono text-[10px] uppercase text-[#6B7280] mb-3">Contingencia QR</h4>
@@ -99,6 +96,10 @@
                 <div class="col-span-1">
                     <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Numero de Identificacion *</label>
                     <input class="form-field" id="f-identificacion" type="text" placeholder="Numero de documento">
+                </div>
+                <div class="col-span-1">
+                    <label class="block text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1.5 ml-1">Fecha de Nacimiento</label>
+                    <input class="form-field" id="f-fecha-nacimiento" type="date" placeholder="AAAA-MM-DD">
                 </div>
             </div>
 
@@ -145,3 +146,156 @@
         </div>
     </div>
 </div>
+
+<!-- Modal fullscreen de captura guiada -->
+<div id="cameraModal" style="display:none; position:fixed; inset:0; z-index:9999;
+     background:#000; flex-direction:column; align-items:center; justify-content:center;">
+
+  <div id="cameraContainer" style="position:relative; width:100%; max-width:900px;
+       height:100%; max-height:75vh; overflow:hidden; background:#000;">
+
+    <video id="videoPreview" autoplay playsinline muted
+           style="width:100%; height:100%; object-fit:cover; display:block;">
+    </video>
+
+    <canvas id="canvasGuide"
+            style="position:absolute; top:0; left:0; width:100%; height:100%;
+                   pointer-events:none;">
+    </canvas>
+
+    <canvas id="canvasCapture" style="display:none;"></canvas>
+  </div>
+
+  <div id="cameraControls" style="display:flex; gap:16px; padding:20px;
+       width:100%; max-width:900px; justify-content:center; align-items:center;">
+
+    <button id="btnCancelarCamera"
+            style="padding:12px 32px; border:2px solid rgba(255,255,255,0.4);
+                   background:transparent; color:#fff; border-radius:8px;
+                   font-size:15px; cursor:pointer; min-width:130px;">
+      Cancelar
+    </button>
+
+    <button id="btnCapturarCamera"
+            style="padding:12px 40px; background:#00C896; color:#fff;
+                   border:none; border-radius:8px; font-size:16px;
+                   font-weight:600; cursor:pointer; min-width:160px;
+                   display:flex; align-items:center; gap:8px; justify-content:center;">
+      <span>📷</span> Capturar
+    </button>
+  </div>
+
+  <div id="cameraProcessing" style="display:none; position:absolute; inset:0;
+       background:rgba(0,0,0,0.75); align-items:center; justify-content:center;
+       flex-direction:column; gap:12px; color:#fff; font-size:16px;">
+    <div style="width:40px; height:40px; border:3px solid #00C896;
+                border-top-color:transparent; border-radius:50%;
+                animation:spin 0.8s linear infinite;"></div>
+    <span>Procesando documento...</span>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════
+     MODAL IP WEBCAM — Cámara fija de teléfono Android
+     ═══════════════════════════════════════════════════════════════ -->
+<div id="ipWebcamModal" style="display:none; position:fixed; inset:0;
+     z-index:9998; background:#000; flex-direction:column;
+     align-items:center; justify-content:center;">
+
+  <!-- Header con configuración de IP -->
+  <div id="ipWebcamHeader" style="width:100%; max-width:900px; padding:12px 16px;
+       display:flex; align-items:center; gap:12px; background:#111;">
+
+    <span style="color:#fff; font-size:13px; white-space:nowrap;">IP Webcam:</span>
+
+    <input id="ipWebcamUrl" type="text"
+           value="http://192.168.1.14:8080"
+           placeholder="http://192.168.x.x:8080"
+           style="flex:1; padding:8px 12px; border-radius:6px; border:1px solid #333;
+                  background:#222; color:#fff; font-size:13px; font-family:monospace;">
+
+    <button id="btnIpConnect" onclick="connectIpWebcam()"
+            style="padding:8px 16px; background:#00C896; color:#fff; border:none;
+                   border-radius:6px; font-size:13px; font-weight:600; cursor:pointer;
+                   white-space:nowrap;">
+      Conectar
+    </button>
+
+    <!-- Indicador de estado de conexión -->
+    <div id="ipStatusDot" style="width:10px; height:10px; border-radius:50%;
+         background:#666; flex-shrink:0;" title="Sin conexión"></div>
+    <span id="ipStatusText" style="color:#888; font-size:12px; white-space:nowrap;">
+      Sin conexión
+    </span>
+  </div>
+
+  <!-- Contenedor de video (imagen que se refresca) -->
+  <div id="ipWebcamContainer" style="position:relative; width:100%; max-width:900px;
+       flex:1; overflow:hidden; background:#0a0a0a; display:flex;
+       align-items:center; justify-content:center;">
+
+    <!-- Imagen del stream (polling de /shot.jpg) -->
+    <img id="ipWebcamFrame" alt="Stream IP Webcam"
+         style="max-width:100%; max-height:100%; object-fit:contain; display:none;">
+
+    <!-- Placeholder mientras no hay conexión -->
+    <div id="ipWebcamPlaceholder" style="text-align:center; color:#444;">
+      <div style="font-size:48px; margin-bottom:12px;">📱</div>
+      <div style="font-size:16px; margin-bottom:8px;">Cámara IP no conectada</div>
+      <div style="font-size:13px; color:#333;">
+        Ingresa la IP del teléfono y presiona Conectar
+      </div>
+    </div>
+
+    <!-- Canvas overlay con recuadro guía (reutiliza CameraGuide) -->
+    <canvas id="ipWebcamGuide" style="position:absolute; top:0; left:0;
+            width:100%; height:100%; pointer-events:none; display:none;">
+    </canvas>
+
+    <!-- Spinner de procesamiento -->
+    <div id="ipWebcamProcessing" style="display:none; position:absolute; inset:0;
+         background:rgba(0,0,0,0.75); align-items:center; justify-content:center;
+         flex-direction:column; gap:12px; color:#fff; font-size:16px;">
+      <div style="width:40px; height:40px; border:3px solid #00C896;
+                  border-top-color:transparent; border-radius:50%;
+                  animation:spin 0.8s linear infinite;"></div>
+      <span>Procesando documento...</span>
+    </div>
+  </div>
+
+  <!-- Controles -->
+  <div style="display:flex; gap:16px; padding:16px; width:100%; max-width:900px;
+       justify-content:center;">
+
+    <button onclick="stopIpWebcam()"
+            style="padding:12px 32px; border:2px solid rgba(255,255,255,0.4);
+                   background:transparent; color:#fff; border-radius:8px;
+                   font-size:15px; cursor:pointer; min-width:130px;">
+      Cancelar
+    </button>
+
+    <button id="btnIpCapture" onclick="captureIpWebcam()" disabled
+            style="padding:12px 40px; background:#555; color:#999;
+                   border:none; border-radius:8px; font-size:16px;
+                   font-weight:600; cursor:not-allowed; min-width:160px;
+                   display:flex; align-items:center; gap:8px; justify-content:center;
+                   transition: all 0.2s;">
+      📷 Capturar
+    </button>
+  </div>
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+
+#cameraModal { display: none; }
+#cameraModal.active { display: flex !important; }
+
+#btnCapturarCamera:hover { background: #00a87d; }
+#btnCancelarCamera:hover { border-color: rgba(255,255,255,0.8); }
+
+@media (max-width: 600px) {
+  #cameraContainer { max-height: 80vh; }
+  #btnCapturarCamera { min-width: 140px; font-size: 15px; }
+}
+</style>

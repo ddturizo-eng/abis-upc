@@ -30,6 +30,9 @@ public class RegistroRequest {
     @JsonProperty("id_puesto")
     public Long idPuesto;
 
+    @JsonProperty("fecha_nacimiento")
+    public String fechaNacimiento;
+
     @JsonProperty("qr_cedula")
     public String qrCedula;
 }

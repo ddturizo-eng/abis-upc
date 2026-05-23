@@ -173,7 +173,8 @@ const ApiPreRegistro = {
             segundo_apellido: data.segundoApellido || '',
             correo: data.correo,
             id_rol: parseInt(data.idRol),
-            id_puesto: parseInt(data.idPuesto)
+            id_puesto: parseInt(data.idPuesto),
+            fecha_nacimiento: data.fechaNacimiento || null
         };
         return await API.post('/api/registro/preregistro', payload);
     }
