@@ -15,7 +15,7 @@ import java.util.Optional;
 public class VotanteRepository implements Repository<Votante> {
 
     private static final String SELECT_BASE = "SELECT IDENTIFICACION, CORREO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, " +
-            "PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, FECHA_CONSENTIMIENTO, ID_ROL, ID_PUESTO, QR_CEDULA FROM Votantes";
+            "PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, FECHA_CONSENTIMIENTO, FECHA_NACIMIENTO, ID_ROL, ID_PUESTO, QR_CEDULA FROM Votantes";
 
     private Votante mapRow(ResultSet rs) throws SQLException {
         Votante votante = new Votante();
@@ -28,6 +28,7 @@ public class VotanteRepository implements Repository<Votante> {
         votante.setEstadoVoto(rs.getString("ESTADO_VOTO"));
         votante.setFotoUrl(rs.getString("FOTO_URL"));
         votante.setFechaConsentimiento(rs.getTimestamp("FECHA_CONSENTIMIENTO"));
+        votante.setFechaNacimiento(rs.getDate("FECHA_NACIMIENTO"));
         votante.setIdRol(rs.getLong("ID_ROL"));
         votante.setIdPuesto(rs.getLong("ID_PUESTO"));
         votante.setQrCedula(rs.getString("QR_CEDULA"));
@@ -58,8 +59,8 @@ public class VotanteRepository implements Repository<Votante> {
     @Override
     public void save(Votante entity) {
         String sql = "INSERT INTO Votantes (IDENTIFICACION, CORREO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, " +
-                "PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, FECHA_CONSENTIMIENTO, ID_ROL, ID_PUESTO, QR_CEDULA) " +
-                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+                "PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, FECHA_CONSENTIMIENTO, FECHA_NACIMIENTO, ID_ROL, ID_PUESTO, QR_CEDULA) " +
+                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, entity.getIdentificacion());
@@ -71,9 +72,10 @@ public class VotanteRepository implements Repository<Votante> {
             ps.setString(7, entity.getEstadoVoto() != null ? entity.getEstadoVoto() : EstadoVotante.PENDIENTE.name());
             ps.setString(8, entity.getFotoUrl());
             ps.setTimestamp(9, entity.getFechaConsentimiento());
-            ps.setLong(10, entity.getIdRol());
-            ps.setLong(11, entity.getIdPuesto());
-            ps.setString(12, entity.getQrCedula());
+            ps.setDate(10, entity.getFechaNacimiento());
+            ps.setLong(11, entity.getIdRol());
+            ps.setLong(12, entity.getIdPuesto());
+            ps.setString(13, entity.getQrCedula());
             ps.executeUpdate();
         } catch (SQLException e) {
             if (e.getErrorCode() == 1) {
@@ -87,7 +89,7 @@ public class VotanteRepository implements Repository<Votante> {
     public void update(Votante entity) {
         String sql = "UPDATE Votantes SET CORREO = ?, PRIMER_NOMBRE = ?, SEGUNDO_NOMBRE = ?, " +
                 "PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, FOTO_URL = ?, " +
-                "FECHA_CONSENTIMIENTO = ?, ID_ROL = ?, ID_PUESTO = ?, QR_CEDULA = ? WHERE IDENTIFICACION = ?";
+                "FECHA_CONSENTIMIENTO = ?, FECHA_NACIMIENTO = ?, ID_ROL = ?, ID_PUESTO = ?, QR_CEDULA = ? WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, entity.getCorreo());
@@ -97,10 +99,11 @@ public class VotanteRepository implements Repository<Votante> {
             ps.setString(5, entity.getSegundoApellido());
             ps.setString(6, entity.getFotoUrl());
             ps.setTimestamp(7, entity.getFechaConsentimiento());
-            ps.setLong(8, entity.getIdRol());
-            ps.setLong(9, entity.getIdPuesto());
-            ps.setString(10, entity.getQrCedula());
-            ps.setString(11, entity.getIdentificacion());
+            ps.setDate(8, entity.getFechaNacimiento());
+            ps.setLong(9, entity.getIdRol());
+            ps.setLong(10, entity.getIdPuesto());
+            ps.setString(11, entity.getQrCedula());
+            ps.setString(12, entity.getIdentificacion());
             int filas = ps.executeUpdate();
             if (filas == 0) {
                 throw new RuntimeException("No se encontro el votante con identificacion: " + entity.getIdentificacion());
