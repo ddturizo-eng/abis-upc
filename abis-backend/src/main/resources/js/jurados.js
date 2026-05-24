@@ -982,15 +982,16 @@
     const btn = $('btnEjecutarAsignacion');
     const btnPaso3 = $('btnGenerarDesdePaso3');
     const confirmado = $('confirmRevision')?.checked || false;
-    const pool = poolCount();
-    const total = JuradosState.distribucionConfig.valorFijo * mesasCount();
+    const pool = JuradosState.resumenAsignacion?.pool || poolCount();
+    const mesas = JuradosState.resumenAsignacion?.mesas || mesasCount();
+    const total = JuradosState.distribucionConfig.valorFijo * mesas;
     const bloqueado = !confirmado || pool === 0 || total === 0;
 
     [btn, btnPaso3].forEach(b => {
       if (!b) return;
       b.disabled = bloqueado;
       if (bloqueado) {
-        b.setAttribute('title', !confirmado ? 'Debe confirmar la revisión antes de generar' : 'Pool vacío o sin mesas');
+        b.setAttribute('title', !confirmado ? 'Debe confirmar la revisión antes de generar' : pool === 0 ? 'El pool de elegibles está vacío' : 'Sin mesas configuradas');
       } else {
         b.removeAttribute('title');
       }
