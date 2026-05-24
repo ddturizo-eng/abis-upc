@@ -87,7 +87,45 @@
 
     function verPerfilAdministrador() {
       cerrarMenuAdministrador();
-      alert('Perfil del administrador próximamente.');
+      const user = leerUsuarioAdmin();
+      let modal = document.getElementById('admin-profile-modal');
+      if (!modal) {
+        modal = document.createElement('div');
+        modal.id = 'admin-profile-modal';
+        modal.className = 'admin-profile-overlay';
+        modal.innerHTML = `
+          <div class="admin-profile-card">
+            <div class="admin-profile-card-header">
+              <span class="admin-profile-card-avatar">${escapeHtml(user.iniciales)}</span>
+              <div>
+                <h2>${escapeHtml(user.nombre)}</h2>
+                <p>${escapeHtml(user.rol)}</p>
+              </div>
+              <button class="admin-profile-card-close" onclick="document.getElementById('admin-profile-modal').classList.add('hidden')">&times;</button>
+            </div>
+            <div class="admin-profile-card-body">
+              <div class="admin-profile-field">
+                <span class="admin-profile-field-icon"><span class="material-symbols-outlined">badge</span></span>
+                <div><small>Usuario</small><strong>${escapeHtml(user.usuario)}</strong></div>
+              </div>
+              <div class="admin-profile-field">
+                <span class="admin-profile-field-icon"><span class="material-symbols-outlined">shield_person</span></span>
+                <div><small>Rol</small><strong>${escapeHtml(user.rol)}</strong></div>
+              </div>
+              <div class="admin-profile-field">
+                <span class="admin-profile-field-icon"><span class="material-symbols-outlined">schedule</span></span>
+                <div><small>Sesion iniciada</small><strong id="admin-session-time">Activa</strong></div>
+              </div>
+            </div>
+            <div class="admin-profile-card-actions">
+              <button class="admin-profile-btn" onclick="cerrarSesion()"><span class="material-symbols-outlined">logout</span> Cerrar sesion</button>
+            </div>
+          </div>
+        `;
+        document.body.appendChild(modal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) modal.classList.add('hidden'); });
+      }
+      modal.classList.remove('hidden');
     }
 
     async function cerrarSesion() {
