@@ -250,10 +250,12 @@
     const menu = `<button type="button" class="action-menu" onclick="toggleMenuEleccion(event, ${id})"><span class="material-symbols-outlined">more_horiz</span></button>`;
     if (estado === 'PROGRAMADA') {
       return `<button type="button" class="action-primary" onclick="iniciarEleccion(${id})">Iniciar</button>
-        <button type="button" class="action-ghost" onclick="editarEleccion(${id})">Editar</button>${menu}`;
+        <button type="button" class="action-ghost" onclick="editarEleccion(${id})">Editar</button>
+        <button type="button" class="action-ghost" onclick="verElegibilidad(${id})">Elegibilidad</button>${menu}`;
     }
     if (estado === 'EN_CURSO') {
-      return `<button type="button" class="action-ghost" onclick="verCandidatos(${id})">Candidatos</button>${menu}`;
+      return `<button type="button" class="action-ghost" onclick="verCandidatos(${id})">Candidatos</button>
+        <button type="button" class="action-ghost" onclick="verElegibilidad(${id})">Elegibilidad</button>${menu}`;
     }
     if (estado === 'FINALIZADA') {
       return `<button type="button" class="action-ghost" onclick="verResumen(${id})">Ver resumen</button>${menu}`;
@@ -482,9 +484,61 @@
     AdminRouter.irA('candidatos');
   };
 
-  window.verResumen = function verResumen() {
-    showToast('Resumen electoral en preparación.', 'warning');
+  window.verResumen = async function verResumen(idEleccion) {
+    try {
+      const data = await ApiElecciones.resultados(idEleccion);
+      const resumen = data.data || data;
+      if (resumen && resumen.candidatos) {
+        let html = '<div class="elegibilidad-panel"><h3>Resultados de la eleccion</h3><table><thead><tr><th>Candidato</th><th>Cargo</th><th>Votos</th></tr></thead><tbody>';
+        resumen.candidatos.forEach(c => {
+          html += `<tr><td>${c.candidato || c.nombre || ''}</td><td>${c.cargo || ''}</td><td>${c.votos || c.total_votos || 0}</td></tr>`;
+        });
+        html += '</tbody></table></div>';
+        mostrarModalElegibilidad(html, 'Resultados');
+      } else {
+        showToast('No hay resultados disponibles aun.', 'info');
+      }
+    } catch (error) {
+      showToast('Error al cargar resultados: ' + error.message, 'error');
+    }
   };
+
+  window.verElegibilidad = async function verElegibilidad(idEleccion) {
+    try {
+      const data = await ApiElecciones.elegibilidad(idEleccion);
+      const eleg = data.data || data;
+      if (eleg && eleg.roles) {
+        let html = `<div class="elegibilidad-panel"><h3>Elegibilidad de la Eleccion #${idEleccion}</h3>`;
+        html += '<table><thead><tr><th>Rol</th><th>Peso</th><th>Total</th><th>Pendientes</th><th>Ejercido</th></tr></thead><tbody>';
+        eleg.roles.forEach(r => {
+          html += `<tr><td><span class="badge-rol">${r.nombre}</span></td><td>${r.pesoVoto}</td><td>${r.total}</td><td>${r.pendientes}</td><td>${r.ejercido}</td></tr>`;
+        });
+        html += '</tbody></table>';
+        html += `<div class="elegibilidad-totales"><span>Total elegibles: <strong>${eleg.totalElegibles}</strong></span><span class="mx-4">|</span><span>Pendientes: <strong>${eleg.totalPendientes}</strong></span><span class="mx-4">|</span><span>Ya votaron: <strong>${eleg.totalEjercido}</strong></span></div>`;
+        html += '</div>';
+        mostrarModalElegibilidad(html, 'Elegibilidad');
+      } else {
+        showToast('No hay roles configurados para esta eleccion.', 'warning');
+      }
+    } catch (error) {
+      showToast('Error al cargar elegibilidad: ' + error.message, 'error');
+    }
+  };
+
+  function mostrarModalElegibilidad(html, titulo) {
+    let modal = document.getElementById('modal-elegibilidad');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-elegibilidad';
+      modal.className = 'modal-overlay';
+      modal.innerHTML = `<div class="modal-card"><div class="modal-header"><h2 id="modal-elegibilidad-titulo">${titulo}</h2><button class="modal-close" onclick="document.getElementById('modal-elegibilidad').classList.add('hidden')">&times;</button></div><div id="modal-elegibilidad-body" class="modal-body"></div></div>`;
+      document.body.appendChild(modal);
+    }
+    document.getElementById('modal-elegibilidad-titulo').textContent = titulo;
+    document.getElementById('modal-elegibilidad-body').innerHTML = html;
+    modal.classList.remove('hidden');
+    modal.onclick = (e) => { if (e.target === modal) modal.classList.add('hidden'); };
+  }
 
   window.abrirDetalleEleccion = function abrirDetalleEleccion(id) {
     const election = state.elecciones.find((e) => Number(e.id) === Number(id));
@@ -528,18 +582,21 @@
       return `
         <button type="button" onclick="editarEleccion(${id})">Editar</button>
         <button type="button" onclick="verCandidatos(${id})">Agregar candidatos</button>
+        <button type="button" onclick="verElegibilidad(${id})">Ver elegibilidad</button>
         <button type="button" class="danger" onclick="eliminarEleccion(${id})">Eliminar</button>
       `;
     }
     if (estado === 'EN_CURSO') {
       return `
         <button type="button" onclick="verCandidatos(${id})">Ver candidatos</button>
+        <button type="button" onclick="verElegibilidad(${id})">Ver elegibilidad</button>
         <button type="button" class="danger" onclick="cerrarEleccion(${id})">Cerrar elección</button>
       `;
     }
     if (estado === 'FINALIZADA') {
       return `
         <button type="button" onclick="verResumen(${id})">Ver resultados</button>
+        <button type="button" onclick="verElegibilidad(${id})">Ver elegibilidad</button>
       `;
     }
     return `

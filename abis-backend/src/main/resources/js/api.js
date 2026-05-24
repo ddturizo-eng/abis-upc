@@ -196,6 +196,9 @@ const ApiElecciones = {
     cerrar: (id) => API.request(`/api/elecciones/${id}/cerrar`, { method: 'PUT', body: {} }),
     eliminar: (id) => API.request(`/api/elecciones/${id}`, { method: 'DELETE' }),
     candidatos: (id) => API.get(`/api/elecciones/${id}/candidatos`),
+    elegibilidad: (id) => API.get(`/api/elecciones/${id}/elegibilidad`),
+    resultados: (id) => API.get(`/api/elecciones/${id}/resultados`),
+    votantesPorEleccion: (idEleccion) => API.get(`/api/votantes/por-eleccion?idEleccion=${idEleccion}`),
 };
 
 const ApiCandidatos = {
