@@ -1774,8 +1774,39 @@ select:focus {
   display: block;
 }
 
-/* ── NUEVO: LAYOUT SIN SIDEBAR ── */
-.assignment-layout-v2 {
+/* ── NUEVO: SELECTOR DE ELECCIÓN ── */
+.eleccion-selector-wrap {
+  align-items: center;
+  display: flex;
+  gap: 8px;
+}
+.eleccion-selector-label {
+  color: var(--abis-text-2);
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+.eleccion-selector {
+  background: var(--abis-card);
+  border: 1px solid var(--abis-border);
+  border-radius: 8px;
+  color: var(--abis-text);
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  min-height: 40px;
+  min-width: 220px;
+  outline: none;
+  padding: 0 12px;
+  transition: border-color 0.2s ease;
+}
+.eleccion-selector:focus {
+  border-color: var(--abis-green);
+  box-shadow: 0 0 0 3px var(--abis-green-light);
+}
   display: grid;
   gap: 20px;
   grid-template-columns: 1fr;
