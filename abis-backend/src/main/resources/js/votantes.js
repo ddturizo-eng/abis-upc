@@ -131,11 +131,35 @@
     return { title: 'Registro inicial', detail: 'Pendiente de biometria' };
   }
 
+  let kpiStats = { total: 0, votaron: 0, pendientes: 0, inhabilitados: 0 };
+
+  async function loadKpiStats() {
+    try {
+      const response = await fetch('/api/admin/estadisticas-votantes', { headers });
+      if (response.ok) {
+        const data = await response.json();
+        kpiStats = {
+          total: Number(data.total || 0),
+          votaron: Number(data.votaron || data.ejercidos || 0),
+          pendientes: Number(data.pendientes || 0),
+          inhabilitados: Number(data.inhabilitados || 0)
+        };
+        return;
+      }
+    } catch (e) { /* fallback a calculo local */ }
+    kpiStats = {
+      total: state.voters.length,
+      votaron: 0,
+      pendientes: state.voters.filter(v => stateLabel(v) === 'PENDIENTE').length,
+      inhabilitados: state.voters.filter(v => stateLabel(v) === 'INHABILITADO').length
+    };
+  }
+
   function renderKpis() {
-    const total = state.voters.length;
-    const pending = state.voters.filter((v) => stateLabel(v) === 'PENDIENTE').length;
-    const voted = state.voters.filter((v) => stateLabel(v) === 'EJERCIDO').length;
-    const disabled = state.voters.filter((v) => stateLabel(v) === 'INHABILITADO').length;
+    const total = kpiStats.total || state.voters.length;
+    const pending = kpiStats.pendientes;
+    const voted = kpiStats.votaron;
+    const disabled = kpiStats.inhabilitados;
     const bio = state.voters.filter(isBiometric).length;
 
     document.getElementById('voters-kpis').innerHTML = [
@@ -796,6 +820,7 @@
       if (!response.ok) throw new Error('No fue posible cargar votantes');
       state.voters = await response.json();
       state.filtered = [...state.voters];
+      await loadKpiStats();
       renderKpis();
       populateFilters();
       renderTable();
