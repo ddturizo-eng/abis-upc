@@ -1865,6 +1865,68 @@ select:focus {
   font-weight: 800;
 }
 
+/* ── PASO 3: REVISION ── */
+.revision-table-wrap {
+  border: 1px solid var(--abis-border);
+  border-radius: 10px;
+  max-height: 44vh;
+  overflow: auto;
+}
+.revision-loading {
+  color: var(--abis-text-2);
+  font-size: 0.84rem;
+  padding: 28px;
+  text-align: center;
+}
+.revision-table {
+  border-collapse: collapse;
+  font-size: 0.8rem;
+  width: 100%;
+}
+.revision-table th {
+  background: var(--abis-green-light);
+  border-bottom: 2px solid var(--abis-border);
+  color: var(--abis-green-dark);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  padding: 9px 10px;
+  position: sticky;
+  text-align: left;
+  text-transform: uppercase;
+  top: 0;
+  white-space: nowrap;
+}
+.revision-table td {
+  border-bottom: 1px solid var(--abis-border);
+  color: var(--abis-text);
+  padding: 9px 10px;
+}
+.revision-table .estado-badge {
+  border-radius: 999px;
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 2px 10px;
+}
+.revision-table .estado-completa {
+  background: #d1fae5;
+  color: #065f46;
+}
+.revision-table .estado-incompleta {
+  background: #fef3c7;
+  color: #92400e;
+}
+.revision-table .estado-critica {
+  background: #fee2e2;
+  color: #991b1b;
+}
+.revision-alertas {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 @keyframes rotateSpinner {
   to { transform: rotate(360deg); }
 }

@@ -19,7 +19,7 @@
       cargos: { PRESIDENTE: 1, VOCAL: 2, SECRETARIO: 1 },
       puestoAsignado: 'distinto'
     },
-    turnos: [{ inicio: '08:00', fin: '12:00' }],
+    turnos: [{ inicio: '09:00', fin: '21:00' }],
     poolElegibles: [],
     votantes: [],
     mesas: [],
@@ -67,7 +67,6 @@
 
   async function initJurados() {
     bindEvents();
-    renderTurnos();
     resetMetricas();
     mostrarSkeletonMetricas(true);
     await Promise.all([cargarPuestos(), cargarVotantes(), cargarElecciones()]);
@@ -165,6 +164,7 @@
       calcularPool();
       calcularTotalEstimado();
     }
+    actualizarEstadoBotonGenerar();
   }
 
   function switchTab(tabId) {
@@ -393,29 +393,6 @@
     animateCounter('metricJurados', assignable);
     animateCounter('metricMesas', mesas);
     animateCounter('metricCobertura', coverage);
-  }
-
-  function renderTurnos() {
-    $('turnosGrid').innerHTML = JuradosState.turnos.map((turno, index) => `
-      <div class="turno-row">
-        <label>Turno ${index + 1}</label>
-        <input type="time" value="${turno.inicio}" data-turno="${index}" data-field="inicio" aria-label="Inicio turno ${index + 1}">
-        <span>—</span>
-        <input type="time" value="${turno.fin}" data-turno="${index}" data-field="fin" aria-label="Fin turno ${index + 1}">
-        ${index === JuradosState.turnos.length - 1 ? '<button class="btn-outline" type="button" id="btnAgregarTurno"><i class="ti ti-plus"></i> Agregar turno</button>' : ''}
-      </div>
-    `).join('');
-    document.querySelectorAll('[data-turno]').forEach((input) => {
-      input.addEventListener('input', () => {
-        JuradosState.turnos[Number(input.dataset.turno)][input.dataset.field] = input.value;
-      });
-    });
-    $('btnAgregarTurno')?.addEventListener('click', agregarTurno);
-  }
-
-  function agregarTurno() {
-    JuradosState.turnos.push({ inicio: '12:00', fin: '16:00' });
-    renderTurnos();
   }
 
   function requestBody() {
@@ -951,7 +928,6 @@
   window.generarPreviewPlanilla = generarPreviewPlanilla;
   window.exportarPlanillaPDF = exportarPlanillaPDF;
   window.mostrarNotificacion = mostrarNotificacion;
-  window.agregarTurno = agregarTurno;
   window.seleccionarPuesto = seleccionarPuesto;
   window.abrirModalAsignarJurado = abrirModalAsignarJurado;
   window.cerrarModal = cerrarModal;
@@ -959,7 +935,9 @@
   window.juradosWizardNext = function (fromStep) {
     const steps = document.querySelectorAll('.wizard-step');
     const allSteps = document.querySelectorAll('#stepperProgreso .step-dot');
-    let allComplete = true;
+    if (fromStep === 2) {
+      ejecutarSimulacionRevision();
+    }
     for (let i = 1; i <= 3; i++) {
       if (i <= fromStep) continue;
       const nextStep = document.querySelector(`.wizard-step[data-step="${i}"]`);
@@ -973,11 +951,10 @@
           if (ds < i) d.classList.add('completado');
           if (ds === i) d.classList.add('activo');
         });
-        if (i === 3) allComplete = true;
         break;
       }
     }
-    actualizarEstadoBotonGenerar(allComplete && fromStep >= 2);
+    actualizarEstadoBotonGenerar();
   };
 
   window.juradosWizardPrev = function (fromStep) {
@@ -1001,14 +978,111 @@
     actualizarEstadoBotonGenerar(false);
   };
 
-  function actualizarEstadoBotonGenerar(todosCompletos) {
+  function actualizarEstadoBotonGenerar() {
     const btn = $('btnEjecutarAsignacion');
-    if (!btn) return;
-    btn.disabled = !todosCompletos;
-    if (!todosCompletos) {
-      btn.setAttribute('title', 'Completa todos los pasos del wizard antes de generar');
-    } else {
-      btn.removeAttribute('title');
+    const btnPaso3 = $('btnGenerarDesdePaso3');
+    const confirmado = $('confirmRevision')?.checked || false;
+    const pool = poolCount();
+    const total = JuradosState.distribucionConfig.valorFijo * mesasCount();
+    const bloqueado = !confirmado || pool === 0 || total === 0;
+
+    [btn, btnPaso3].forEach(b => {
+      if (!b) return;
+      b.disabled = bloqueado;
+      if (bloqueado) {
+        b.setAttribute('title', !confirmado ? 'Debe confirmar la revisión antes de generar' : 'Pool vacío o sin mesas');
+      } else {
+        b.removeAttribute('title');
+      }
+    });
+  }
+
+  window.onConfirmRevision = function () {
+    actualizarEstadoBotonGenerar();
+  };
+
+  window.confirmarYGenerar = function () {
+    ejecutarAsignacion();
+  };
+
+  async function ejecutarSimulacionRevision() {
+    const wrap = $('revisionTableWrap');
+    if (wrap) wrap.innerHTML = '<div class="revision-loading">Ejecutando simulación...</div>';
+    try {
+      leerPoolConfig();
+      leerDistribucionConfig();
+      const result = await API.post('/api/jurados/asignar-aleatorio?dry_run=true', requestBody());
+      JuradosState.simulacionResultado = (result?.data ?? result)?.jurados || [];
+      renderRevisionTable(JuradosState.simulacionResultado);
+    } catch (error) {
+      if (wrap) wrap.innerHTML = '<div class="revision-loading">Error al simular: ' + escapeHtml(error.message) + '</div>';
+    }
+  }
+
+  function renderRevisionTable(jurados) {
+    const wrap = $('revisionTableWrap');
+    if (!wrap) return;
+    const mesas = JuradosState.mesas || [];
+    if (mesas.length === 0) {
+      wrap.innerHTML = '<div class="revision-loading">No hay mesas configuradas para esta elección.</div>';
+      return;
+    }
+
+    const mesaMap = new Map();
+    mesas.forEach(m => {
+      const id = m.idMesa || m.id_mesa;
+      mesaMap.set(id, { ...m, titulares: 0, suplentes: 0, total: 0 });
+    });
+    jurados.forEach(j => {
+      const id = j.idMesa || j.id_mesa_asignada;
+      if (mesaMap.has(id)) {
+        const mesa = mesaMap.get(id);
+        mesa.total++;
+        if (j.cargo && j.cargo.toUpperCase().includes('SUPLENTE')) {
+          mesa.suplentes++;
+        } else {
+          mesa.titulares++;
+        }
+      }
+    });
+
+    let criticas = 0, incompletas = 0, completas = 0;
+    const filas = [];
+    mesaMap.forEach(m => {
+      let clase, estado;
+      if (m.total >= 6) { clase = 'estado-completa'; estado = 'Completa'; completas++; }
+      else if (m.titulares >= 3) { clase = 'estado-incompleta'; estado = 'Incompleta'; incompletas++; }
+      else { clase = 'estado-critica'; estado = 'Crítica'; criticas++; }
+      filas.push(`
+        <tr>
+          <td>Mesa ${m.idMesa || m.id_mesa}</td>
+          <td>${escapeHtml(m.sede || '—')}</td>
+          <td>${m.titulares}/3</td>
+          <td>${m.suplentes}/3</td>
+          <td><span class="estado-badge ${clase}">${estado}</span></td>
+        </tr>
+      `);
+    });
+
+    wrap.innerHTML = `
+      <table class="revision-table">
+        <thead><tr><th>Mesa</th><th>Sede</th><th>Titulares</th><th>Suplentes</th><th>Estado</th></tr></thead>
+        <tbody>${filas.join('')}</tbody>
+      </table>
+    `;
+
+    const alertas = $('revisionAlertas');
+    if (alertas) {
+      let html = '';
+      if (criticas > 0) html += `<div class="alert-banner critico"><i class="ti ti-alert-triangle"></i> ${criticas} mesa(s) crítica(s) — menos de 3 titulares. No debería generar la asignación.</div>`;
+      if (incompletas > 0) html += `<div class="alert-banner advertencia"><i class="ti ti-alert-triangle"></i> ${incompletas} mesa(s) incompleta(s) — faltan suplentes.</div>`;
+      if (html) {
+        alertas.innerHTML = html;
+        alertas.style.display = 'flex';
+      } else {
+        alertas.innerHTML = '<div class="alert-banner info"><i class="ti ti-check"></i> Todas las mesas están completas (6/6).</div>';
+        alertas.style.display = 'flex';
+      }
     }
   }
 

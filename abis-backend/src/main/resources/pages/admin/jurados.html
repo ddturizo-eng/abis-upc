@@ -74,11 +74,11 @@
         </div>
         <div class="step-dot" data-step="2">
           <div class="step-bubble">2</div>
-          <div class="stepper-info"><strong>Distribución</strong><small>Cantidad y reglas</small></div>
+          <div class="stepper-info"><strong>Distribución</strong><small>Cantidad y modo</small></div>
         </div>
         <div class="step-dot" data-step="3">
           <div class="step-bubble">3</div>
-          <div class="stepper-info"><strong>Turnos</strong><small>Horarios</small></div>
+          <div class="stepper-info"><strong>Revisión</strong><small>Confirmar y generar</small></div>
         </div>
       </div>
 
@@ -217,14 +217,33 @@
           </div>
         </section>
 
-        <!-- PASO 3: TURNOS -->
+        <!-- PASO 3: REVISION Y CONFIRMACION -->
         <section class="wizard-card wizard-step" data-step="3">
-          <h2><span>3.</span> Configurar turnos y jornadas</h2>
-          <div class="turnos-grid" id="turnosGrid"></div>
+          <h2><span>3.</span> Revisión y confirmación</h2>
+          <p style="color:var(--abis-text-2);font-size:0.84rem;margin-bottom:16px;">Revise la distribución propuesta antes de generar la asignación oficial.</p>
+
+          <div class="revision-table-wrap" id="revisionTableWrap">
+            <div class="revision-loading">Ejecutando simulación...</div>
+          </div>
+
+          <div class="alert-banner info" style="margin-top:14px;">
+            <i class="ti ti-info-circle"></i>
+            <span>Jornada electoral: <strong>9:00 a.m. – 9:00 p.m.</strong> — continua, sin turnos rotativos (Acuerdo 032/1994)</span>
+          </div>
+
+          <div class="revision-alertas" id="revisionAlertas" style="display:none;"></div>
+
+          <label class="switch-row" style="margin-top:16px;">
+            <input type="checkbox" id="confirmRevision" onchange="onConfirmRevision()">
+            <span class="switch-ui"></span>
+            <span>Confirmo que la distribución ha sido revisada y autorizo la generación de la asignación oficial.</span>
+          </label>
+
           <div class="wizard-nav">
             <button onclick="juradosWizardPrev(3)">← Anterior</button>
             <span style="color:var(--abis-text-2);font-size:0.78rem;">Paso 3 de 3</span>
-            <button class="btn-primary-wizard" disabled>Completado ✓</button>
+            <button class="btn-primary-wizard" id="btnGenerarDesdePaso3" disabled
+                    onclick="confirmarYGenerar()">Generar asignación oficial →</button>
           </div>
         </section>
 
