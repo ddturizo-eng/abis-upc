@@ -65,7 +65,7 @@
   }
 
   function isBiometric(voter) {
-    return Boolean(voter.fecha_consentimiento || voter.biometrico || voter.enrolado);
+    return Boolean(voter.biometrico);
   }
 
   function stateLabel(voter) {

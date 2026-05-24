@@ -45,7 +45,7 @@ public class VotanteController {
         if (biometrico != null && !biometrico.isBlank()) {
             boolean requerido = Boolean.parseBoolean(biometrico) || "S".equalsIgnoreCase(biometrico) || "true".equalsIgnoreCase(biometrico);
             votantes = votantes.stream()
-                    .filter(v -> (v.getFechaConsentimiento() != null) == requerido)
+                    .filter(v -> v.isBiometrico() == requerido)
                     .collect(Collectors.toList());
         }
         ctx.json(votantes);

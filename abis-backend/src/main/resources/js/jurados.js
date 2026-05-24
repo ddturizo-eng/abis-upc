@@ -252,7 +252,7 @@
     JuradosState.poolElegibles = JuradosState.votantes.filter((v) => {
       const rol = rolNombre(v);
       const estado = v.estado_voto || v.estadoVoto || 'PENDIENTE';
-      const tieneBio = Boolean(v.fecha_consentimiento || v.tieneBiometrico || v.biometrico || v.foto_url);
+      const tieneBio = Boolean(v.biometrico || v.foto_url);
       if (!JuradosState.poolConfig.roles.includes(rol)) return false;
       if (!JuradosState.poolConfig.estados.includes(estado)) return false;
       if (JuradosState.poolConfig.requerirBiometrico && !tieneBio) return false;

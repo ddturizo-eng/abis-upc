@@ -46,6 +46,9 @@ public class Votante extends Entity {
     @JsonProperty("qr_cedula")
     private String qrCedula;
 
+    @JsonProperty("biometrico")
+    private boolean biometrico;
+
     public String getIdentificacion() {
         return identificacion;
     }
@@ -148,5 +151,13 @@ public class Votante extends Entity {
 
     public void setQrCedula(String qrCedula) {
         this.qrCedula = qrCedula;
+    }
+
+    public boolean isBiometrico() {
+        return biometrico;
+    }
+
+    public void setBiometrico(boolean biometrico) {
+        this.biometrico = biometrico;
     }
 }

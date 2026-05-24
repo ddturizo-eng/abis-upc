@@ -14,8 +14,14 @@ import java.util.Optional;
 
 public class VotanteRepository implements Repository<Votante> {
 
-    private static final String SELECT_BASE = "SELECT IDENTIFICACION, CORREO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, " +
-            "PRIMER_APELLIDO, SEGUNDO_APELLIDO, ESTADO_VOTO, FOTO_URL, FECHA_CONSENTIMIENTO, FECHA_NACIMIENTO, ID_ROL, ID_PUESTO, QR_CEDULA FROM Votantes";
+    private static final String SELECT_BASE = """
+            SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE,
+                   v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, v.ESTADO_VOTO, v.FOTO_URL,
+                   v.FECHA_CONSENTIMIENTO, v.FECHA_NACIMIENTO, v.ID_ROL, v.ID_PUESTO, v.QR_CEDULA,
+                   CASE WHEN bv.ACTIVO = 'S' THEN 1 ELSE 0 END AS BIOMETRICO
+            FROM Votantes v
+            LEFT JOIN BIOMETRIA_VOTANTES bv ON v.IDENTIFICACION = bv.IDENTIFICACION
+            """;
 
     private Votante mapRow(ResultSet rs) throws SQLException {
         Votante votante = new Votante();
@@ -32,6 +38,7 @@ public class VotanteRepository implements Repository<Votante> {
         votante.setIdRol(rs.getLong("ID_ROL"));
         votante.setIdPuesto(rs.getLong("ID_PUESTO"));
         votante.setQrCedula(rs.getString("QR_CEDULA"));
+        votante.setBiometrico(rs.getInt("BIOMETRICO") == 1);
         return votante;
     }
 
@@ -42,7 +49,7 @@ public class VotanteRepository implements Repository<Votante> {
 
     @Override
     public List<Votante> findAll() {
-        String sql = SELECT_BASE + " ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
+        String sql = SELECT_BASE + " ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
@@ -126,7 +133,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public Optional<Votante> findByIdentificacion(String identificacion) {
-        String sql = SELECT_BASE + " WHERE IDENTIFICACION = ?";
+        String sql = SELECT_BASE + " WHERE v.IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, identificacion);
@@ -139,7 +146,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public Optional<Votante> findByCorreo(String correo) {
-        String sql = SELECT_BASE + " WHERE CORREO = ?";
+        String sql = SELECT_BASE + " WHERE v.CORREO = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, correo);
@@ -152,7 +159,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public Optional<Votante> findByQrCedula(String qrCedula) {
-        String sql = SELECT_BASE + " WHERE QR_CEDULA = ?";
+        String sql = SELECT_BASE + " WHERE v.QR_CEDULA = ?";
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, qrCedula);
@@ -165,7 +172,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public List<Votante> findByIdRol(Long idRol) {
-        String sql = SELECT_BASE + " WHERE ID_ROL = ? ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
+        String sql = SELECT_BASE + " WHERE v.ID_ROL = ? ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -182,7 +189,7 @@ public class VotanteRepository implements Repository<Votante> {
     }
 
     public List<Votante> findByIdPuesto(Long idPuesto) {
-        String sql = SELECT_BASE + " WHERE ID_PUESTO = ? ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
+        String sql = SELECT_BASE + " WHERE v.ID_PUESTO = ? ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql)) {
