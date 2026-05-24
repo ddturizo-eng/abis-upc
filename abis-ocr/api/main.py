@@ -197,6 +197,53 @@ async def health():
     )
 
 
+@app.post("/crop", tags=["OCR"])
+async def crop_document_endpoint(
+    front: UploadFile = File(...),
+):
+    """
+    Recibe una imagen, detecta el documento con OpenCV y retorna
+    la imagen recortada en base64 lista para previsualizar en el frontend.
+
+    Este endpoint es llamado por el frontend después de capturar
+    para obtener la imagen limpia antes de enviarla al OCR completo.
+
+    Returns:
+        JSON con:
+            - cropped_image: string base64 de la imagen recortada (JPEG)
+            - success: bool
+            - message: descripción del resultado
+    """
+    import base64
+
+    allowed = {"image/jpeg", "image/png", "image/bmp", "image/webp"}
+    if front.content_type not in allowed:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Formato no soportado: {front.content_type}",
+        )
+
+    image_bytes = await front.read()
+
+    try:
+        cropped_bytes = ImagePreprocessor.crop_document(image_bytes)
+        cropped_b64 = base64.b64encode(cropped_bytes).decode("utf-8")
+
+        return {
+            "success": True,
+            "cropped_image": f"data:image/jpeg;base64,{cropped_b64}",
+            "message": "Documento detectado y recortado correctamente",
+        }
+    except Exception as e:
+        logger.error("Error en /crop: %s", e, exc_info=True)
+        original_b64 = base64.b64encode(image_bytes).decode("utf-8")
+        return {
+            "success": False,
+            "cropped_image": f"data:image/jpeg;base64,{original_b64}",
+            "message": f"No se pudo detectar el documento: {str(e)}",
+        }
+
+
 @app.get("/types", response_model=list[DocumentTypeInfo], tags=["Sistema"])
 async def document_types():
     """Lista los tipos de documento soportados con su descripción."""
