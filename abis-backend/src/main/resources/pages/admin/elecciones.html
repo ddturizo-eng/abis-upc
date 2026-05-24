@@ -213,25 +213,10 @@
         <input id="eleccion-fin" class="election-field" type="datetime-local">
       </label>
       <div class="role-weight-box">
-        <p class="dashboard-label">Peso de voto por rol</p>
-        <p class="role-weight-copy">El peso determina cuánto vale el voto de cada tipo de participante en el resultado ponderado.</p>
-        <div class="role-weight-grid">
-          <label>
-            <span class="form-label">Estudiante</span>
-            <input id="peso-estudiante" class="election-field" type="number" step="0.01" min="0.01" value="1.00">
-          </label>
-          <label>
-            <span class="form-label">Docente</span>
-            <input id="peso-docente" class="election-field" type="number" step="0.01" min="0.01" value="2.00">
-          </label>
-          <label>
-            <span class="form-label">Egresado</span>
-            <input id="peso-egresado" class="election-field" type="number" step="0.01" min="0.01" value="1.00">
-          </label>
-          <label>
-            <span class="form-label">Administrativo</span>
-            <input id="peso-administrativo" class="election-field" type="number" step="0.01" min="0.01" value="1.50">
-          </label>
+        <p class="dashboard-label">Roles habilitados para esta elección</p>
+        <p class="role-weight-copy">Selecciona los roles que pueden votar y asigna un peso a cada voto.</p>
+        <div class="role-toggle-grid" id="roles-grid">
+          <!-- JS genera las filas dinámicamente -->
         </div>
       </div>
       <div class="modal-footer">
