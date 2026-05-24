@@ -818,6 +818,11 @@ async function enviarPreRegistro() {
     return;
   }
 
+  if (!data.correo.includes('@') || data.correo.split('@').length !== 2 || !data.correo.split('@')[1].includes('.')) {
+    showPaso1Error('Ingrese un correo electronico valido (debe contener @ y un dominio).');
+    return;
+  }
+
   hidePaso1Error();
   const button = document.getElementById('btn-continuar');
   if (button) {

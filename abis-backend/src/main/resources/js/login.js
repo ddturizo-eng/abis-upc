@@ -14,11 +14,16 @@
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             errorMsg.classList.remove('show');
-            btnSubmit.disabled = true;
-            btnSubmit.textContent = 'Verificando...';
 
             const usuario = document.getElementById('usuario').value.trim();
             const password = passwordInput.value;
+
+            if (!usuario) { errorMsg.textContent = 'Ingrese su usuario'; errorMsg.classList.add('show'); return; }
+            if (password.length > 25) { errorMsg.textContent = 'La contraseña no puede exceder 25 caracteres'; errorMsg.classList.add('show'); return; }
+            if (!password) { errorMsg.textContent = 'Ingrese su contraseña'; errorMsg.classList.add('show'); return; }
+
+            btnSubmit.disabled = true;
+            btnSubmit.textContent = 'Verificando...';
 
             try {
                 const response = await fetch('http://localhost:7000/api/auth/login', {
