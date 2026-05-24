@@ -299,6 +299,7 @@
       if (!JuradosState.poolConfig.estados.includes(estado)) return false;
       if (JuradosState.poolConfig.requerirBiometrico && !tieneBio) return false;
       if (JuradosState.poolConfig.soloNoVotaron && estado === 'EJERCIDO') return false;
+      if (!v.fecha_nacimiento) return false;
       return true;
     });
     actualizarMetricas(JuradosState.poolElegibles.length);
