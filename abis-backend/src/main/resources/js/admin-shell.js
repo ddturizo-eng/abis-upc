@@ -1,4 +1,6 @@
-﻿async function cargarComponente(id, url) {
+﻿const eHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+async function cargarComponente(id, url) {
       const target = document.getElementById(id);
       if (!target) return;
       const response = await fetch(url);
@@ -96,21 +98,21 @@
         modal.innerHTML = `
           <div class="admin-profile-card">
             <div class="admin-profile-card-header">
-              <span class="admin-profile-card-avatar">${escapeHtml(user.iniciales)}</span>
+              <span class="admin-profile-card-avatar">${eHtml(user.iniciales)}</span>
               <div>
-                <h2>${escapeHtml(user.nombre)}</h2>
-                <p>${escapeHtml(user.rol)}</p>
+                <h2>${eHtml(user.nombre)}</h2>
+                <p>${eHtml(user.rol)}</p>
               </div>
               <button class="admin-profile-card-close" onclick="document.getElementById('admin-profile-modal').classList.add('hidden')">&times;</button>
             </div>
             <div class="admin-profile-card-body">
               <div class="admin-profile-field">
                 <span class="admin-profile-field-icon"><span class="material-symbols-outlined">badge</span></span>
-                <div><small>Usuario</small><strong>${escapeHtml(user.usuario)}</strong></div>
+                <div><small>Usuario</small><strong>${eHtml(user.usuario)}</strong></div>
               </div>
               <div class="admin-profile-field">
                 <span class="admin-profile-field-icon"><span class="material-symbols-outlined">shield_person</span></span>
-                <div><small>Rol</small><strong>${escapeHtml(user.rol)}</strong></div>
+                <div><small>Rol</small><strong>${eHtml(user.rol)}</strong></div>
               </div>
               <div class="admin-profile-field">
                 <span class="admin-profile-field-icon"><span class="material-symbols-outlined">schedule</span></span>
