@@ -415,27 +415,28 @@ public class EleccionController {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
             String nombre = "";
-            StringBuilder resultados = new StringBuilder();
+            String fecha = "";
+            StringBuilder filas = new StringBuilder();
             String ganador = "";
+            long totalVotos = 0;
+            int nCandidatos = 0;
             try (Connection conn = AppConfig.getConnection()) {
-                String sqlNombre = "SELECT NOMBRE FROM ELECCIONES WHERE ID_ELECCION = ?";
-                try (PreparedStatement ps = conn.prepareStatement(sqlNombre)) {
+                String sqlInfo = "SELECT NOMBRE, TO_CHAR(FECHA_HORA_INICIO,'DD/MM/YYYY') AS FECHA FROM ELECCIONES WHERE ID_ELECCION = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlInfo)) {
                     ps.setLong(1, idEleccion);
                     try (ResultSet rs = ps.executeQuery()) {
-                        if (rs.next()) nombre = rs.getString("NOMBRE");
+                        if (rs.next()) { nombre = rs.getString("NOMBRE"); fecha = rs.getString("FECHA"); }
                     }
                 }
 
-                String sqlResultados = """
-                        SELECT c.PRIMER_NOMBRE || ' ' || c.PRIMER_APELLIDO AS candidato,
-                               ce.CARGO, COUNT(v.ID_VOTOS) AS votos
-                        FROM Candidatos_eleccion ce
-                        JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO
-                        LEFT JOIN Votos v ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION
-                        WHERE ce.ID_ELECCION = ?
-                        GROUP BY c.PRIMER_NOMBRE, c.PRIMER_APELLIDO, ce.CARGO
-                        ORDER BY votos DESC
-                        """;
+                String sqlResultados = "SELECT c.PRIMER_NOMBRE || ' ' || c.PRIMER_APELLIDO AS candidato, " +
+                        "ce.CARGO, COUNT(v.ID_VOTOS) AS votos " +
+                        "FROM Candidatos_eleccion ce " +
+                        "JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
+                        "LEFT JOIN Votos v ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION " +
+                        "WHERE ce.ID_ELECCION = ? " +
+                        "GROUP BY c.PRIMER_NOMBRE, c.PRIMER_APELLIDO, ce.CARGO " +
+                        "ORDER BY votos DESC";
                 try (PreparedStatement ps = conn.prepareStatement(sqlResultados)) {
                     ps.setLong(1, idEleccion);
                     try (ResultSet rs = ps.executeQuery()) {
@@ -444,34 +445,57 @@ public class EleccionController {
                             String c = rs.getString("candidato");
                             String cargo = rs.getString("CARGO");
                             long v = rs.getLong("votos");
-                            if (first) { ganador = c; first = false; }
-                            resultados.append(String.format("%-30s %-20s %8d%n", c, cargo, v));
+                            totalVotos += v;
+                            nCandidatos++;
+                            if (first && v > 0) { ganador = c; first = false; }
+                            String clase = (!first && v > 0) || (first && v > 0) ? "winner" : "";
+                            filas.append("<tr class=\"")
+                                 .append(ganador.equals(c) ? "winner" : "")
+                                 .append("\"><td>").append(esc(c))
+                                 .append("</td><td>").append(esc(cargo))
+                                 .append("</td><td>").append(v).append("</td></tr>");
                         }
                     }
                 }
             }
 
-            StringBuilder pdf = new StringBuilder("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n");
-            pdf.append("2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n");
-            pdf.append("3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R/Resources<</Font<</F1 5 0 R/F2 6 0 R>>>>>>endobj\n");
-            pdf.append("4 0 obj<</Length ").append(5000).append(">>stream\nBT\n/F1 18 Tf 50 720 Td (ACTA DE GANADORES) Tj\n");
-            pdf.append("/F2 12 Tf 50 695 Td (").append(escapePDF(nombre)).append(") Tj\n");
-            pdf.append("/F2 11 Tf 50 675 Td (Candidato                          Cargo                Votos) Tj\n");
-            pdf.append("/F2 10 Tf 50 660 Td (").append(escapePDF(resultados.toString().replace("\n", "\\n"))).append(") Tj\n");
-            pdf.append("/F1 14 Tf 50 100 Td (Ganador: ").append(escapePDF(ganador)).append(") Tj\n");
-            pdf.append("ET\nendstream\nendobj\n");
-            pdf.append("5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold>>endobj\n");
-            pdf.append("6 0 obj<</Type/Font/Subtype/Type1/BaseFont/Courier>>endobj\n");
-            pdf.append("xref\n0 7\n0000000000 65535 f \n");
-            pdf.append("0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n");
-            pdf.append(String.format("%010d 00000 n \n", 300));
-            pdf.append(String.format("%010d 00000 n \n", 400));
-            pdf.append(String.format("%010d 00000 n \n", 500));
-            pdf.append("trailer<</Size 7/Root 1 0 R>>startxref\n").append(600).append("\n%%EOF");
+            String html = "<!DOCTYPE html>\n<html lang=\"es\">\n<head><meta charset=\"UTF-8\">" +
+                    "<title>Acta de Ganadores - " + esc(nombre) + "</title>\n" +
+                    "<style>" +
+                    "*{margin:0;padding:0;box-sizing:border-box}" +
+                    "body{font-family:'Segoe UI',system-ui,sans-serif;color:#1a3a2a;max-width:800px;margin:0 auto;padding:40px 24px}" +
+                    ".header{text-align:center;border-bottom:3px solid #1a3a2a;padding-bottom:20px;margin-bottom:24px}" +
+                    ".header h1{font-size:1.5rem;font-weight:800;letter-spacing:0.03em}" +
+                    ".header p{color:#6b7280;font-size:0.9rem;margin-top:4px}" +
+                    ".header .badge{display:inline-block;background:#1a3a2a;color:#fff;border-radius:6px;padding:4px 14px;font-size:0.75rem;font-weight:700;margin-top:8px}" +
+                    "table{width:100%;border-collapse:collapse;margin:20px 0}" +
+                    "th{background:#f8faf9;border-bottom:2px solid #d1d5db;color:#6b7280;font-size:0.72rem;font-weight:700;letter-spacing:0.05em;padding:10px 12px;text-align:left;text-transform:uppercase}" +
+                    "td{border-bottom:1px solid #eee;padding:10px 12px;font-size:0.88rem}" +
+                    "tr.winner td{background:#f0fdf4;font-weight:700}" +
+                    "tr.winner td:first-child::before{content:\"\\2605 \";color:#158759}" +
+                    ".totals{background:#f8faf9;border-radius:8px;padding:14px 18px;margin-top:16px;display:flex;gap:24px}" +
+                    ".totals div strong{display:block;font-size:1.1rem;color:#1a3a2a}" +
+                    ".totals div small{color:#6b7280;font-size:0.72rem}" +
+                    ".footer{border-top:1px solid #eee;margin-top:32px;padding-top:16px;text-align:center;color:#9ca3af;font-size:0.75rem}" +
+                    "@media print{body{padding:20px}.no-print{display:none}}" +
+                    ".no-print{margin-top:20px;text-align:center}" +
+                    ".no-print button{background:#1a3a2a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.84rem;font-weight:700;padding:10px 24px}" +
+                    "</style>\n</head>\n<body>\n" +
+                    "<div class=\"header\"><h1>Acta de Ganadores</h1><p>" + esc(nombre) + "</p>" +
+                    "<span class=\"badge\">" + esc(fecha) + "</span></div>\n" +
+                    "<table><thead><tr><th>Candidato</th><th>Cargo</th><th>Votos</th></tr></thead>" +
+                    "<tbody>" + filas.toString() + "</tbody></table>\n" +
+                    "<div class=\"totals\">" +
+                    "<div><small>Total votos</small><strong>" + totalVotos + "</strong></div>" +
+                    "<div><small>Candidatos</small><strong>" + nCandidatos + "</strong></div>" +
+                    "<div><small>Ganador</small><strong>" + esc(ganador.isEmpty() ? "Sin votos" : ganador) + "</strong></div>" +
+                    "</div>\n" +
+                    "<div class=\"footer\">ABIS-UPC · Sistema Electoral · Tribunal de Garantias Electorales</div>\n" +
+                    "<div class=\"no-print\"><button onclick=\"window.print()\">Imprimir / Guardar como PDF</button></div>\n" +
+                    "</body></html>";
 
-            ctx.header("Content-Disposition", "attachment; filename=\"acta-ganadores-" + idEleccion + ".pdf\"");
-            ctx.contentType("application/pdf");
-            ctx.result(pdf.toString().getBytes());
+            ctx.contentType("text/html; charset=UTF-8");
+            ctx.result(html);
         } catch (NumberFormatException e) {
             ctx.status(400).json(ApiResponse.error("ID de eleccion invalido"));
         } catch (Exception e) {
@@ -479,8 +503,8 @@ public class EleccionController {
         }
     }
 
-    private static String escapePDF(String text) {
+    private static String esc(String text) {
         if (text == null) return "";
-        return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
+        return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
     }
 }
