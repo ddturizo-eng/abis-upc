@@ -58,6 +58,8 @@ El sistema cumple con la **Ley 1581 de 2012** (proteccion de datos personales) y
 
 ## Arquitectura
 
+El sistema sigue un modelo **hibrido** que combina **Modelo C4** (Contexto, Contenedores, Componentes, Codigo) para la documentacion estructural, con una arquitectura de **microservicios** para la separacion de responsabilidades (biometria, OCR, correo) y un diseno interno por **capas** (controllers, services, repositories) dentro del backend principal.
+
 ```
 [Frontend HTML/JS/CSS]
         |
@@ -329,24 +331,6 @@ abis-upc/
 
 ## Base de datos
 
-### Tablas principales
-
-| Tabla | Descripcion |
-|---|---|
-| VOTANTES | Censo electoral completo |
-| BIOMETRIA_VOTANTES | Plantillas biometricas cifradas (Ley 1581) |
-| ELECCIONES | Procesos electorales |
-| CANDIDATOS_ELECCION | Candidatos por eleccion y cargo |
-| ELECCION_ROLES | Configuracion de roles y pesos por eleccion |
-| VOTOS | Registro anonimo de votos (sin identificacion) |
-| REGISTRO_VOTOS | Auditoria de participacion (sin candidato) |
-| MESA_JURADOS | Mesas de votacion |
-| JURADOS | Asignacion de jurados |
-| AUDITORIA_VOTANTES | Log de cambios sobre votantes |
-| AUDITORIA_CORREOS | Trazabilidad de envios de certificados |
-| POTENCIAL_VOTANTES | Censo institucional de validacion |
-| SESIONES | Tokens activos de administrador |
-
 ### Principio de anonimato
 
 `VOTOS` contiene `ID_CANDIDATO` pero **NO** contiene `IDENTIFICACION`.  
@@ -377,9 +361,8 @@ STARTUP.SQL
 |---|---|---|
 | Daniel Turizo | Tech Lead + Full Stack | [@ddturizo-eng](https://github.com/ddturizo-eng) |
 | Daniel Florez | Backend Security | [@IngDanielflorezz](https://github.com/IngDanielflorezz) |
-| Mateo Calderon | Backend DAO | |
-| Jorge Herrera | Backend DAO | |
-| Ana Laura Cuellar | Frontend | |
+| Mateo Calderon | Backend DAO | [@mcalderona](https://github.com/mcalderona) |
+| Jorge Herrera | Backend DAO | [@JorgeHg2006](https://github.com/JorgeHg2006) |
 
 ---
 
