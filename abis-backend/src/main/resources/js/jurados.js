@@ -10,7 +10,9 @@
     },
     distribucionConfig: {
       modo: 'fijo_por_puesto',
-      valorFijo: 3,
+      titularesPorMesa: 3,
+      suplentesPorMesa: 3,
+      valorFijo: 6,
       porcentaje: 5,
       totalManual: 0,
       distribucion: 'equitativa',
@@ -111,12 +113,6 @@
       $(id)?.addEventListener('change', programarRecalculo);
     });
 
-    $('juradosPorPuesto')?.addEventListener('input', programarRecalculo);
-    $('decrementJurados')?.addEventListener('click', () => ajustarJuradosPorMesa(-1));
-    $('incrementJurados')?.addEventListener('click', () => ajustarJuradosPorMesa(1));
-    $('btnRefreshSummary')?.addEventListener('click', () => {
-      programarRecalculo();
-    });
     $('btnVerPool')?.addEventListener('click', abrirPoolElegible);
     $('buscarPoolElegible')?.addEventListener('input', () => renderPoolElegible($('buscarPoolElegible').value));
     $('btnSimular')?.addEventListener('click', simularAsignacion);
@@ -147,13 +143,6 @@
       const input = item.querySelector(inputSelector);
       if (input) input.checked = item === card;
     });
-  }
-
-  function ajustarJuradosPorMesa(delta) {
-    const input = $('juradosPorPuesto');
-    const next = Math.max(Number(input.min || 1), Math.min(Number(input.max || 20), Number(input.value || 3) + delta));
-    input.value = next;
-    programarRecalculo();
   }
 
   function programarRecalculo() {
@@ -275,7 +264,9 @@
   function leerDistribucionConfig() {
     const modoEl = document.querySelector('.mode-card-v2.active');
     JuradosState.distribucionConfig.modo = modoEl?.dataset?.value || 'fijo_por_puesto';
-    JuradosState.distribucionConfig.valorFijo = Number($('juradosPorPuesto')?.value || 3);
+    JuradosState.distribucionConfig.titularesPorMesa = Number($('titularesPorMesa')?.value || 3);
+    JuradosState.distribucionConfig.suplentesPorMesa = Number($('suplentesPorMesa')?.value || 3);
+    JuradosState.distribucionConfig.valorFijo = JuradosState.distribucionConfig.titularesPorMesa + JuradosState.distribucionConfig.suplentesPorMesa;
     JuradosState.distribucionConfig.porcentaje = Number($('porcentajeJurados')?.value || 5);
     JuradosState.distribucionConfig.totalManual = Number($('totalManual')?.value || 0);
     JuradosState.distribucionConfig.distribucion = $('distribucionPuestos')?.value || 'equitativa';
@@ -319,7 +310,7 @@
     leerDistribucionConfig();
     const mesas = mesasCount();
     const pool = poolCount();
-    let total = JuradosState.distribucionConfig.valorFijo * mesas;
+    const total = JuradosState.distribucionConfig.valorFijo * mesas;
 
     if (JuradosState.distribucionConfig.modo === 'porcentaje') {
       total = pool ? Math.max(1, Math.ceil(pool * (JuradosState.distribucionConfig.porcentaje / 100))) : 0;
@@ -328,6 +319,7 @@
       total = JuradosState.distribucionConfig.totalManual || total;
     }
 
+    setText('totalPorMesa', JuradosState.distribucionConfig.valorFijo);
     $('totalEstimado').textContent = number(total);
     actualizarResumen(total);
     return total;
@@ -335,7 +327,7 @@
 
   function actualizarMetricas(pool) {
     const mesas = mesasCount();
-    const total = Number($('juradosPorPuesto')?.value || 3) * mesas;
+    const total = JuradosState.distribucionConfig.valorFijo * mesas;
     setText('metricPool', number(pool));
     setText('metricMesas', number(mesas));
     setText('metricJurados', number(total));
@@ -356,9 +348,9 @@
     setText('metricMesas', number(mesas));
     setText('metricPool', number(pool));
     setText('footerAsignar', number(total));
-    setText('distMesas3', number(completas));
-    setText('distMesas2', number(incompletas));
-    setText('distMesas1', number(Math.max(0, mesas - completas - incompletas)));
+    setText('distMesasCompletas', number(completas));
+    setText('distMesasParciales', number(incompletas));
+    setText('distMesasCriticas', number(Math.max(0, mesas - completas - incompletas)));
 
     if (pool < total * 0.5) {
       mostrarAlertaCritica('Solo hay ' + number(pool) + ' jurados elegibles disponibles para ' + number(total) + ' requeridos');
@@ -386,9 +378,9 @@
     setText('totalEstimado', number(total));
     setText('metricCobertura', coverage);
     setText('metricCoberturaUnit', '%');
-    setText('distMesas3', number(completas));
-    setText('distMesas2', number(incompletas));
-    setText('distMesas1', number(criticas));
+    setText('distMesasCompletas', number(completas));
+    setText('distMesasParciales', number(incompletas));
+    setText('distMesasCriticas', number(criticas));
 
     if (pool < total) {
       mostrarAlertaCritica('Solo hay ' + number(pool) + ' jurados elegibles para ' + number(total) + ' requeridos');
@@ -834,9 +826,9 @@
   function resetMetricas() {
     [
       'metricPool', 'metricJurados', 'metricMesas', 'metricCobertura',
-      'totalEstimado', 'distMesas3', 'distMesas2', 'footerAsignar'
+      'totalEstimado', 'distMesasCompletas', 'distMesasParciales', 'footerAsignar'
     ].forEach((id) => setText(id, '—'));
-    setText('distMesas1', '0');
+    setText('distMesasCriticas', '0');
     setText('metricCoberturaUnit', '');
     ocultarAlertaCritica();
     if ($('btnEjecutarAsignacion')) $('btnEjecutarAsignacion').disabled = true;

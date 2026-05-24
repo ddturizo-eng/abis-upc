@@ -158,12 +158,23 @@
           <div class="distribution-grid">
             <div>
               <label class="field-label">Jurados por mesa</label>
-              <div class="stepper-input">
-                <button type="button" id="decrementJurados">−</button>
-                <input type="number" min="1" max="20" value="3" id="juradosPorPuesto">
-                <button type="button" id="incrementJurados">+</button>
-                <span>jurados por mesa</span>
+              <div class="jurados-mesa-grid">
+                <div class="jurados-mesa-field">
+                  <span class="field-label" style="margin-bottom:6px;">Titulares</span>
+                  <input type="number" min="1" max="10" value="3" id="titularesPorMesa" readonly>
+                  <small>Presidente, Vicepresidente, Vocal</small>
+                </div>
+                <div class="jurados-mesa-field">
+                  <span class="field-label" style="margin-bottom:6px;">Suplentes</span>
+                  <input type="number" min="1" max="10" value="3" id="suplentesPorMesa" readonly>
+                  <small>Uno por cada titular</small>
+                </div>
+                <div class="jurados-mesa-total">
+                  <span>Total por mesa</span>
+                  <strong id="totalPorMesa">6</strong>
+                </div>
               </div>
+              <p class="info-note"><i class="ti ti-info-circle"></i> El Acuerdo 032/1994 establece 3 titulares y 3 suplentes por mesa.</p>
             </div>
             <div>
               <label class="field-label">Modo de asignación</label>
@@ -171,19 +182,19 @@
                 <button class="mode-card-v2 active" type="button" data-value="fijo_por_puesto">
                   <i class="ti ti-settings-2 mode-icon"></i>
                   <strong class="mode-title">Automático</strong>
-                  <small class="mode-desc">El sistema distribuye equitativamente</small>
-                  <small class="mode-when">Usar cuando hay suficientes jurados</small>
+                  <small class="mode-desc">El sistema distribuye aleatoriamente respetando RN-01 a RN-07</small>
+                  <small class="mode-when">Recomendado para la mayoria de casos</small>
                 </button>
                 <button class="mode-card-v2" type="button" data-value="total_manual">
                   <i class="ti ti-clipboard-list mode-icon"></i>
                   <strong class="mode-title">Manual</strong>
-                  <small class="mode-desc">Asignación mesa por mesa</small>
+                  <small class="mode-desc">Asignación individual mesa por mesa</small>
                   <small class="mode-when">Para ajustes finos o pocas mesas</small>
                 </button>
                 <button class="mode-card-v2" type="button" data-value="porcentaje">
                   <i class="ti ti-circle-half mode-icon"></i>
                   <strong class="mode-title">Mixto</strong>
-                  <small class="mode-desc">Automático con ajustes manuales</small>
+                  <small class="mode-desc">Automático con ajuste manual posterior</small>
                   <small class="mode-when">Cuando necesitas control parcial</small>
                 </button>
               </div>
@@ -191,9 +202,9 @@
           </div>
           <div class="distribution-table">
             <div><small>Total jurados requeridos</small><strong id="totalEstimado">—</strong></div>
-            <div><small>Mesas con 3 jurados</small><strong id="distMesas3">—</strong></div>
-            <div><small>Mesas con 2 jurados</small><strong id="distMesas2">—</strong></div>
-            <div><small>Mesas con 1 jurado</small><strong id="distMesas1">0</strong></div>
+            <div><small>Mesas completas (6/6)</small><strong id="distMesasCompletas">—</strong></div>
+            <div><small>Mesas parciales (>3)</small><strong id="distMesasParciales">—</strong></div>
+            <div><small>Mesas criticas (<3)</small><strong id="distMesasCriticas">0</strong></div>
           </div>
           <input type="hidden" id="porcentajeJurados" value="5">
           <input type="hidden" id="totalManual" value="0">
