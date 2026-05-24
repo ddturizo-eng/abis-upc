@@ -51,6 +51,23 @@ public class VotanteController {
         ctx.json(votantes);
     }
 
+    public static void porEleccion(Context ctx) {
+        try {
+            String idEleccionParam = ctx.queryParam("idEleccion");
+            if (idEleccionParam == null || idEleccionParam.isBlank()) {
+                ctx.status(400).json(Map.of("error", "idEleccion requerido"));
+                return;
+            }
+            Long idEleccion = Long.parseLong(idEleccionParam);
+            List<Votante> votantes = repository.findByEleccion(idEleccion);
+            ctx.json(votantes);
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(Map.of("error", "idEleccion invalido"));
+        } catch (Exception e) {
+            ctx.status(500).json(Map.of("error", "Error consultando votantes por eleccion"));
+        }
+    }
+
     public static void segundaLlave(Context ctx) {
         try {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);

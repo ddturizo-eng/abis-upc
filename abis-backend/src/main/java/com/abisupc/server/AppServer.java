@@ -73,6 +73,7 @@ public class AppServer {
         app.post("/api/votantes/foto", FotoController::subirFoto);
         app.post("/api/votantes/segunda-llave", VotanteController::segundaLlave);
         app.get("/api/votantes/{id}/puede-votar", VotanteController::puedeVotar);
+        app.get("/api/votantes/por-eleccion", VotanteController::porEleccion);
         app.get("/api/votacion/activa", VotacionController::activa);
         app.get("/api/votacion/votante", VotacionController::votante);
         app.get("/api/jornada/estadisticas", VotacionController::jornadaEstadisticas);
