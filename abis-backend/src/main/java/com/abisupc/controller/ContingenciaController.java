@@ -92,7 +92,8 @@ public class ContingenciaController {
             ctx.status(400).json(Map.of("error", e.getMessage()));
         } catch (Exception e) {
             System.err.println("[ContingenciaController] emitirLote: " + e.getMessage());
-            ctx.status(500).json(Map.of("error", "No fue posible emitir QR de contingencia"));
+            e.printStackTrace();
+            ctx.status(500).json(Map.of("error", "No fue posible emitir QR de contingencia: " + e.getMessage()));
         }
     }
 
