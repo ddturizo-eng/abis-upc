@@ -304,6 +304,7 @@
     const popover = document.createElement('div');
     popover.className = 'voter-popover';
     popover.id = 'voter-popover';
+    const disabled = voter.estado_voto === 'INHABILITADO';
     popover.innerHTML = `
       <button data-action="details"><span class="material-symbols-outlined">visibility</span>Ver detalles</button>
       <button data-action="edit"><span class="material-symbols-outlined">edit</span>Editar datos</button>
@@ -311,7 +312,9 @@
       <button data-action="place"><span class="material-symbols-outlined">location_on</span>Cambiar puesto</button>
       <button data-action="bio"><span class="material-symbols-outlined">fingerprint</span>Re-enrolar</button>
       <button data-action="audit"><span class="material-symbols-outlined">history</span>Auditoria</button>
-      <button data-action="disable" class="danger"><span class="material-symbols-outlined">block</span>Inhabilitar</button>
+      ${disabled
+        ? '<button data-action="enable"><span class="material-symbols-outlined">check_circle</span>Habilitar</button>'
+        : '<button data-action="disable" class="danger"><span class="material-symbols-outlined">block</span>Inhabilitar</button>'}
     `;
     document.body.appendChild(popover);
     positionPopover(anchor, popover);
@@ -356,12 +359,48 @@
       openDrawer(voter, action);
       return;
     }
-    const labels = {
-      role: 'Cambio de rol disponible en la siguiente iteracion.',
-      place: 'Cambio de puesto disponible en la siguiente iteracion.',
-      disable: 'Inhabilitacion disponible cuando se conecte auditoria transaccional.'
-    };
-    alert(labels[action] || 'Accion no disponible.');
+    if (action === 'role' || action === 'place') {
+      openDrawer(voter, 'edit');
+      return;
+    }
+    if (action === 'disable') {
+      inhabilitarVotante(voter);
+      return;
+    }
+    if (action === 'enable') {
+      habilitarVotante(voter);
+      return;
+    }
+  }
+
+  async function inhabilitarVotante(voter) {
+    const motivo = prompt(`Motivo para inhabilitar a ${fullName(voter)}:`, 'Inhabilitacion administrativa');
+    if (!motivo) return;
+    try {
+      await API.request(`/api/votantes/${encodeURIComponent(voter.identificacion)}/inhabilitar`, {
+        method: 'PUT',
+        body: { motivo }
+      });
+      closeDrawer();
+      await loadVoters();
+    } catch (error) {
+      alert('Error al inhabilitar: ' + (error.message || 'Error desconocido'));
+    }
+  }
+
+  async function habilitarVotante(voter) {
+    const motivo = prompt(`Motivo para habilitar a ${fullName(voter)}:`, 'Habilitacion administrativa');
+    if (!motivo) return;
+    try {
+      await API.request(`/api/votantes/${encodeURIComponent(voter.identificacion)}/habilitar`, {
+        method: 'PUT',
+        body: { motivo }
+      });
+      closeDrawer();
+      await loadVoters();
+    } catch (error) {
+      alert('Error al habilitar: ' + (error.message || 'Error desconocido'));
+    }
   }
 
   function openDrawer(voter, action) {
@@ -439,6 +478,10 @@
             <div class="drawer-field compact"><div class="drawer-label">Estado</div><div class="drawer-value">${escapeHtml(stateLabel(voter))}</div></div>
             <div class="drawer-field compact"><div class="drawer-label">Biometrico</div><div class="drawer-value">${isBiometric(voter) ? 'Enrolado' : 'No enrolado'}</div></div>
             <div class="drawer-field compact wide"><div class="drawer-label">QR cedula</div><div class="drawer-value">${voter.qr_cedula ? 'Registrado' : 'No registrado'}</div></div>
+            <label>
+              <span class="drawer-label">Fecha de nacimiento</span>
+              <input name="fecha_nacimiento" type="date" value="${escapeAttr(voter.fecha_nacimiento || '')}" ${editable ? '' : 'readonly'}>
+            </label>
           </div>
 
           <div class="voter-modal-error" id="voter-modal-error"></div>
@@ -493,7 +536,8 @@
           segundo_apellido: payload.segundo_apellido.trim(),
           correo: payload.correo.trim(),
           rol_id: Number(payload.rol_id),
-          puesto_id: Number(payload.puesto_id)
+          puesto_id: Number(payload.puesto_id),
+          fecha_nacimiento: payload.fecha_nacimiento || null
         })
       });
       const body = await response.json().catch(() => ({}));
