@@ -139,12 +139,14 @@ public class AdminController {
     }
 
     public static void estadisticasVotantes(Context ctx) {
-        String sql = "SELECT " +
-                "COUNT(*) AS TOTAL, " +
-                "(SELECT COUNT(DISTINCT IDENTIFICACION) FROM Registro_votos) AS VOTARON, " +
-                "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'PENDIENTE' THEN 1 ELSE 0 END) AS PENDIENTES, " +
-                "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'INHABILITADO' THEN 1 ELSE 0 END) AS INHABILITADOS " +
-                "FROM Votantes";
+        String sql = """
+                SELECT
+                    (SELECT COUNT(*) FROM Votantes) AS TOTAL,
+                    (SELECT COUNT(DISTINCT IDENTIFICACION) FROM Registro_votos) AS VOTARON,
+                    (SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'PENDIENTE') AS PENDIENTES,
+                    (SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'INHABILITADO') AS INHABILITADOS
+                FROM DUAL
+                """;
         try (Connection conn = AppConfig.getConnection();
              PreparedStatement ps = conn.prepareStatement(sql);
              ResultSet rs = ps.executeQuery()) {
