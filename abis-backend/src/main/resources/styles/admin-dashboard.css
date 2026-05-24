@@ -1730,11 +1730,66 @@
   margin-top: 6px;
 }
 
-.role-weight-grid {
-  display: grid;
-  gap: 13px;
-  grid-template-columns: 1fr 1fr;
-  margin-top: 16px;
+.role-toggle-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 14px;
+}
+
+.role-toggle-row {
+  align-items: center;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px;
+  transition: border-color 0.15s ease;
+}
+
+.role-toggle-row:hover {
+  border-color: #2ecc8f;
+}
+
+.role-toggle-label {
+  align-items: center;
+  cursor: pointer;
+  display: flex;
+  flex: 1;
+  gap: 10px;
+}
+
+.role-toggle-label input[type="checkbox"] {
+  accent-color: #2ecc8f;
+  cursor: pointer;
+  height: 18px;
+  width: 18px;
+}
+
+.role-toggle-name {
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.peso-field {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  color: #333;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'JetBrains Mono', monospace;
+  padding: 6px 10px;
+  text-align: right;
+  width: 90px;
+}
+
+.peso-field:focus {
+  border-color: #2ecc8f;
+  box-shadow: 0 0 0 3px rgba(46,204,143,0.15);
+  outline: none;
 }
 
 .modal-error {

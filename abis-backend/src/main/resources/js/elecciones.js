@@ -67,10 +67,17 @@
     return Math.max(0, Math.min(100, Math.round((part / total) * 100)));
   }
 
-  function parsePesoVoto(id) {
-    const raw = String(document.getElementById(id)?.value || '').replace(',', '.').trim();
-    const value = Number(raw);
-    return Number.isFinite(value) ? value : null;
+  function buildPesosRoles() {
+    const pesos = {};
+    ROLES_CONFIG.forEach(rol => {
+      const cb = document.getElementById(rol.checkboxId);
+      if (cb && cb.checked) {
+        const raw = String(document.getElementById(rol.pesoId)?.value || '').replace(',', '.').trim();
+        const value = Number(raw);
+        pesos[rol.key] = Number.isFinite(value) && value > 0 ? value : null;
+      }
+    });
+    return pesos;
   }
 
   function errorLegible(error) {
@@ -86,11 +93,44 @@
     }
   }
 
+  const ROLES_CONFIG = [
+    { idRol: 1, nombre: 'Estudiante',    key: 'estudiante',    checkboxId: 'rol-estudiante',    pesoId: 'peso-estudiante',    pesoDefault: 1.00 },
+    { idRol: 2, nombre: 'Docente',       key: 'docente',       checkboxId: 'rol-docente',       pesoId: 'peso-docente',       pesoDefault: 2.00 },
+    { idRol: 3, nombre: 'Egresado',      key: 'egresado',      checkboxId: 'rol-egresado',      pesoId: 'peso-egresado',      pesoDefault: 1.00 },
+    { idRol: 4, nombre: 'Administrativo', key: 'administrativo', checkboxId: 'rol-administrativo', pesoId: 'peso-administrativo', pesoDefault: 1.50 },
+  ];
+
+  function renderRolesGrid() {
+    const grid = document.getElementById('roles-grid');
+    if (!grid) return;
+    grid.innerHTML = ROLES_CONFIG.map(rol => `
+      <div class="role-toggle-row">
+        <label class="role-toggle-label">
+          <input type="checkbox" id="${rol.checkboxId}" data-rol="${rol.key}"
+                 onchange="toggleRolPeso('${rol.checkboxId}', '${rol.pesoId}')" checked>
+          <span class="role-toggle-name">${rol.nombre}</span>
+        </label>
+        <input type="number" id="${rol.pesoId}" class="peso-field" step="0.01" min="0.01"
+               value="${rol.pesoDefault.toFixed(2)}" style="display:inline-flex;">
+      </div>
+    `).join('');
+  }
+
+  window.toggleRolPeso = function (checkboxId, pesoId) {
+    const checkbox = document.getElementById(checkboxId);
+    const peso = document.getElementById(pesoId);
+    if (checkbox && peso) {
+      peso.style.display = checkbox.checked ? 'inline-flex' : 'none';
+    }
+  };
+
   function setPesosDefault() {
-    document.getElementById('peso-estudiante').value = '1.00';
-    document.getElementById('peso-docente').value = '2.00';
-    document.getElementById('peso-egresado').value = '1.00';
-    document.getElementById('peso-administrativo').value = '1.50';
+    ROLES_CONFIG.forEach(rol => {
+      const cb = document.getElementById(rol.checkboxId);
+      const peso = document.getElementById(rol.pesoId);
+      if (cb) { cb.checked = true; }
+      if (peso) { peso.value = rol.pesoDefault.toFixed(2); peso.style.display = 'inline-flex'; }
+    });
   }
 
   async function cargarPesosEleccion(idEleccion) {
@@ -99,15 +139,17 @@
       const payload = await requestJson(`/api/elecciones/${idEleccion}/roles`);
       const roles = normalizarLista(payload);
       const byName = new Map(roles.map((rol) => [String(rol.nombreRol || '').toUpperCase(), rol]));
-      [
-        ['ESTUDIANTE', 'peso-estudiante'],
-        ['DOCENTE', 'peso-docente'],
-        ['EGRESADO', 'peso-egresado'],
-        ['ADMINISTRATIVO', 'peso-administrativo']
-      ].forEach(([nombre, inputId]) => {
-        const value = byName.get(nombre)?.pesoVoto;
+
+      ROLES_CONFIG.forEach(rol => {
+        const value = byName.get(rol.nombre.toUpperCase())?.pesoVoto;
+        const cb = document.getElementById(rol.checkboxId);
+        const peso = document.getElementById(rol.pesoId);
         if (value !== undefined && value !== null) {
-          document.getElementById(inputId).value = Number(value).toFixed(2);
+          if (cb) cb.checked = true;
+          if (peso) { peso.value = Number(value).toFixed(2); peso.style.display = 'inline-flex'; }
+        } else {
+          if (cb) cb.checked = false;
+          if (peso) peso.style.display = 'none';
         }
       });
     } catch (error) {
@@ -372,6 +414,7 @@
 
   window.abrirModalNuevaEleccion = function abrirModalNuevaEleccion() {
     state.editando = null;
+    renderRolesGrid();
     document.querySelector('.modal-title').textContent = 'Nueva Elección';
     document.getElementById('form-eleccion').reset();
     setPesosDefault();
@@ -397,6 +440,7 @@
       return;
     }
     state.editando = election;
+    renderRolesGrid();
     document.querySelector('.modal-title').textContent = 'Editar Elección';
     document.getElementById('eleccion-nombre').value = election.nombre || '';
     document.getElementById('eleccion-inicio').value = String(election.fechaHoraInicio || '').slice(0, 16);
@@ -414,19 +458,13 @@
       nombre: document.getElementById('eleccion-nombre').value.trim(),
       fechaHoraInicio: document.getElementById('eleccion-inicio').value,
       fechaHoraFin: document.getElementById('eleccion-fin').value,
-      pesosRoles: {
-        estudiante: parsePesoVoto('peso-estudiante'),
-        docente: parsePesoVoto('peso-docente'),
-        egresado: parsePesoVoto('peso-egresado'),
-        administrativo: parsePesoVoto('peso-administrativo')
-      }
-    };
+      pesosRoles: buildPesosRoles()
     if (!body.nombre || !body.fechaHoraInicio || !body.fechaHoraFin) {
       mostrarErrorModal('Completa los campos obligatorios.');
       return;
     }
-    if (Object.values(body.pesosRoles).some((peso) => peso === null || peso <= 0)) {
-      mostrarErrorModal('Ingresa pesos de voto mayores que 0. Puedes usar punto o coma decimal.');
+    if (Object.keys(body.pesosRoles).length === 0) {
+      mostrarErrorModal('Debes habilitar al menos un rol para esta elección.');
       return;
     }
     try {
