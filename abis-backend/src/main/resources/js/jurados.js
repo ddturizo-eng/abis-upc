@@ -36,6 +36,11 @@
 
   const $ = (id) => document.getElementById(id);
   const number = (value) => new Intl.NumberFormat('es-CO').format(Number(value) || 0);
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
   const apiData = (payload) => {
     const value = payload?.data ?? payload ?? [];
     if (typeof value === 'string') {
@@ -493,8 +498,69 @@
   }
 
   async function ejecutarAsignacion() {
-    await simularAsignacion();
+    const btn = $('btnEjecutarAsignacion');
+    const btnPaso3 = $('btnGenerarDesdePaso3');
+    if (btn) btn.classList.add('cargando');
+    if (btnPaso3) btnPaso3.disabled = true;
+    try {
+      const result = await API.post('/api/jurados/asignar-aleatorio', requestBody());
+      JuradosState.resultadoFinal = (result?.data ?? result)?.jurados || [];
+      mostrarResultadoAsignacion(JuradosState.resultadoFinal);
+      await cargarMesas();
+      recalcularAsignacion();
+    } catch (error) {
+      mostrarNotificacion(error.message, 'error');
+    } finally {
+      if (btn) btn.classList.remove('cargando');
+      if (btnPaso3) btnPaso3.disabled = false;
+    }
   }
+
+  function mostrarResultadoAsignacion(jurados) {
+    const mesas = JuradosState.mesas || [];
+    const mesaMap = new Map();
+    mesas.forEach(m => mesaMap.set(m.idMesa || m.id_mesa, 0));
+    jurados.forEach(j => {
+      const id = j.idMesa || j.id_mesa_asignada;
+      if (mesaMap.has(id)) mesaMap.set(id, mesaMap.get(id) + 1);
+    });
+    let completas = 0;
+    mesaMap.forEach((count) => { if (count >= 6) completas++; });
+
+    const body = $('resultadoAsignacionBody');
+    if (!body) return;
+    body.innerHTML = `
+      <div style="text-align:center;padding:12px 0">
+        <div style="width:56px;height:56px;background:#d1fae5;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px">
+          <span class="material-symbols-outlined" style="font-size:30px;color:#065f46">check_circle</span>
+        </div>
+        <p style="font-size:1rem;font-weight:700;color:#065f46;margin-bottom:6px">Asignacion generada exitosamente</p>
+      </div>
+      <div class="distribution-table" style="background:#f8f9fa;border-radius:8px;padding:14px">
+        <div><small>Eleccion</small><strong>${escapeHtml(JuradosState.elecciones.find(e => (e.id || e.idEleccion) === JuradosState.idEleccion)?.nombre || '—')}</strong></div>
+        <div><small>Jurados asignados</small><strong>${number(jurados.length)}</strong></div>
+        <div><small>Mesas cubiertas</small><strong>${completas}/${mesas.length}</strong></div>
+      </div>
+    `;
+    abrirModal('modalResultadoAsignacion');
+  }
+
+  window.cerrarModalResultado = function () {
+    cerrarModal('modalResultadoAsignacion');
+  };
+
+  window.verDetalleMesas = function () {
+    cerrarModal('modalResultadoAsignacion');
+    switchTab('mesas');
+  };
+
+  window.exportarActaPDF = function () {
+    try {
+      window.open(`/api/jurados/exportar/pdf?idEleccion=${JuradosState.idEleccion || ''}`, '_blank');
+    } catch (e) {
+      mostrarNotificacion('Exportacion PDF pendiente de configuracion', 'warning');
+    }
+  };
 
   async function confirmarSimulacion() {
     try {

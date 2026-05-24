@@ -376,6 +376,22 @@
   </div>
 
   <div class="toast-stack" id="juradosToasts"></div>
+
+  <!-- MODAL DE RESULTADO POST-GENERACION -->
+  <div class="jurados-modal" id="modalResultadoAsignacion" aria-hidden="true">
+    <div class="jurados-modal-panel" style="max-width:520px">
+      <div class="modal-header">
+        <h2><i class="ti ti-check" style="color:#52b788"></i> Asignación generada</h2>
+        <button class="modal-close" onclick="cerrarModalResultado()" type="button">&times;</button>
+      </div>
+      <div id="resultadoAsignacionBody"></div>
+      <div class="modal-actions" style="margin-top:16px">
+        <button class="btn-soft" onclick="verDetalleMesas()"><i class="ti ti-list-details"></i> Ver detalle por mesa</button>
+        <button class="btn-soft" onclick="exportarActaPDF()"><i class="ti ti-file-export"></i> Exportar acta PDF</button>
+        <button class="btn-primary" onclick="cerrarModalResultado()">Cerrar</button>
+      </div>
+    </div>
+  </div>
 </section>
 
 <script src="../../js/jurados.js"></script>
