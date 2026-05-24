@@ -662,6 +662,26 @@
   font-weight: 800;
 }
 
+.drawer-photo-upload {
+  align-items: center;
+  background: #f0fdf4;
+  border: 1px dashed #52b788;
+  border-radius: 6px;
+  color: #166534;
+  cursor: pointer;
+  display: flex;
+  font-size: 0.75rem;
+  font-weight: 700;
+  gap: 4px;
+  justify-content: center;
+  margin-top: 8px;
+  padding: 6px 10px;
+  transition: background 0.15s ease;
+}
+.drawer-photo-upload:hover {
+  background: #dcfce7;
+}
+
 .drawer-name {
   color: var(--gray-900);
   font-size: 1.28rem;

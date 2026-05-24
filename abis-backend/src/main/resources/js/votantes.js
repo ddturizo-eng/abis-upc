@@ -427,7 +427,14 @@
           <button class="drawer-back" type="button" data-close-voter-modal>
             <span class="material-symbols-outlined">arrow_back</span>
           </button>
-          <div class="drawer-photo">${photo}</div>
+          <div class="drawer-photo" id="drawer-photo">${photo}</div>
+          ${editable ? `
+            <label class="drawer-photo-upload" id="drawer-photo-upload-label">
+              <span class="material-symbols-outlined" style="font-size:16px">add_a_photo</span>
+              Cambiar foto
+              <input type="file" accept="image/*" id="drawer-photo-input" style="display:none" onchange="cambiarFotoVotante(event, '${escapeAttr(voter.identificacion)}')">
+            </label>
+          ` : ''}
           <h3 class="drawer-name">${escapeHtml(name)}</h3>
           <p class="drawer-role">${escapeHtml(roleName(voter))}</p>
           <div class="drawer-status-pill ${stateClass(voter)}">
@@ -678,6 +685,30 @@
     const modal = document.getElementById('re-enroll-modal');
     if (modal) modal.style.display = 'none';
   }
+
+  window.cambiarFotoVotante = async function (event, identificacion) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    const formData = new FormData();
+    formData.append('foto', file);
+    formData.append('identificacion', identificacion);
+    const label = document.getElementById('drawer-photo-upload-label');
+    const photoDiv = document.getElementById('drawer-photo');
+    try {
+      if (label) label.style.opacity = '0.6';
+      const response = await fetch('/api/votantes/foto', { method: 'POST', body: formData });
+      if (!response.ok) throw new Error('HTTP ' + response.status);
+      const data = await response.json().catch(() => ({}));
+      const newUrl = (data?.data?.foto_url || data?.foto_url || data?.url) + '?t=' + Date.now();
+      if (photoDiv) {
+        photoDiv.innerHTML = `<img src="${escapeHtml(newUrl)}" alt="Foto actualizada" loading="lazy">`;
+      }
+    } catch (e) {
+      alert('No fue posible subir la foto: ' + (e.message || 'Error de conexion'));
+    } finally {
+      if (label) label.style.opacity = '1';
+    }
+  };
 
   async function renderAudit(limit = 6) {
     const target = document.getElementById('voters-audit-list');
