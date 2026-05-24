@@ -10,7 +10,7 @@ import java.sql.Types;
 public class VotoOracleRepository {
 
     public void registrarVoto(String identificacion, Long idEleccion, Long idCandidato, Long idPuesto) throws SQLException {
-        String sql = "{ call PKG_ELECTORAL.prc_registrar_voto(?, ?, ?, ?) }";
+        String sql = "{ call prc_registrar_voto(?, ?, ?, ?) }";
         try (Connection conn = AppConfig.getConnection();
              CallableStatement cs = conn.prepareCall(sql)) {
             cs.setString(1, identificacion);
