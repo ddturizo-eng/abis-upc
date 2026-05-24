@@ -67,6 +67,16 @@ async function cargarComponente(id, url) {
       button.setAttribute('aria-expanded', 'false');
     }
 
+    const notifBell = document.getElementById('notif-bell');
+    const notifDropdown = document.getElementById('notif-dropdown');
+    if (notifBell && notifDropdown) {
+      notifBell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        notifDropdown.classList.toggle('open');
+      });
+      document.addEventListener('click', () => notifDropdown.classList.remove('open'));
+    }
+
     function leerUsuarioAdmin() {
       const fallback = { usuario: 'abisadmin', nombre: 'Administrador', rol: 'Administrador', iniciales: 'AD' };
       try {
