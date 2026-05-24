@@ -140,8 +140,8 @@ public class AdminController {
 
     public static void estadisticasVotantes(Context ctx) {
         String sql = "SELECT " +
-                "SUM(CASE WHEN UPPER(ESTADO_VOTO) IN ('PENDIENTE', 'EJERCIDO') THEN 1 ELSE 0 END) AS TOTAL, " +
-                "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'EJERCIDO' THEN 1 ELSE 0 END) AS VOTARON, " +
+                "COUNT(*) AS TOTAL, " +
+                "(SELECT COUNT(DISTINCT IDENTIFICACION) FROM Registro_votos) AS VOTARON, " +
                 "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'PENDIENTE' THEN 1 ELSE 0 END) AS PENDIENTES, " +
                 "SUM(CASE WHEN UPPER(ESTADO_VOTO) = 'INHABILITADO' THEN 1 ELSE 0 END) AS INHABILITADOS " +
                 "FROM Votantes";
@@ -210,7 +210,7 @@ public class AdminController {
         censo.put("conBiometria", conBiometria);
         censo.put("sinBiometria", Math.max(0, total - conBiometria));
         censo.put("pendientes", count(conn, "SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'PENDIENTE'"));
-        censo.put("ejercidos", count(conn, "SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'EJERCIDO'"));
+        censo.put("ejercidos", count(conn, "SELECT COUNT(DISTINCT IDENTIFICACION) FROM Registro_votos"));
         censo.put("inhabilitados", count(conn, "SELECT COUNT(*) FROM Votantes WHERE UPPER(ESTADO_VOTO) = 'INHABILITADO'"));
         return censo;
     }
