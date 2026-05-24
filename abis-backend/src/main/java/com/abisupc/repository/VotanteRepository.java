@@ -232,6 +232,33 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    public List<Votante> findByEleccion(Long idEleccion) {
+        String sql = """
+                SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE,
+                       v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, v.ESTADO_VOTO, v.FOTO_URL,
+                       v.FECHA_CONSENTIMIENTO, v.FECHA_NACIMIENTO, v.ID_ROL, v.ID_PUESTO, v.QR_CEDULA,
+                       CASE WHEN bv.ACTIVO = 'S' THEN 1 ELSE 0 END AS BIOMETRICO
+                FROM Votantes v
+                LEFT JOIN BIOMETRIA_VOTANTES bv ON v.IDENTIFICACION = bv.IDENTIFICACION
+                INNER JOIN Eleccion_roles er ON er.id_rol = v.id_rol
+                WHERE er.id_eleccion = ?
+                ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE
+                """;
+        List<Votante> lista = new ArrayList<>();
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idEleccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
+            }
+            return lista;
+        } catch (SQLException e) {
+            throw new RuntimeException("Error consultando votantes por eleccion " + idEleccion, e);
+        }
+    }
+
     public boolean estaHabilitado(String identificacion) {
         String sql = "SELECT ESTADO_VOTO FROM Votantes WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
