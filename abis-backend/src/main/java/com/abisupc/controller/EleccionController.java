@@ -255,7 +255,9 @@ public class EleccionController {
                     SELECT r.id_rol, r.nombre, er.peso_voto,
                            COUNT(v.identificacion) AS total,
                            COUNT(CASE WHEN UPPER(v.estado_voto) = 'PENDIENTE' THEN 1 END) AS pendientes,
-                           COUNT(CASE WHEN UPPER(v.estado_voto) = 'EJERCIDO' THEN 1 END) AS ejercido
+                           (SELECT COUNT(*) FROM Registro_votos rv
+                            JOIN Votantes vt ON rv.identificacion = vt.identificacion
+                            WHERE rv.id_eleccion = ? AND vt.id_rol = er.id_rol) AS ejercido
                     FROM Eleccion_roles er
                     JOIN Roles r ON er.id_rol = r.id_rol
                     LEFT JOIN Votantes v ON v.id_rol = er.id_rol
@@ -269,6 +271,7 @@ public class EleccionController {
             try (Connection conn = AppConfig.getConnection();
                  PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setLong(1, idEleccion);
+                ps.setLong(2, idEleccion);
                 try (ResultSet rs = ps.executeQuery()) {
                     while (rs.next()) {
                         Map<String, Object> rol = new LinkedHashMap<>();
