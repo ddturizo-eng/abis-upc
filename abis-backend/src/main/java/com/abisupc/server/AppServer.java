@@ -106,6 +106,7 @@ public class AppServer {
         app.get("/api/elecciones/{id}/roles", EleccionController::getRoles);
         app.post("/api/elecciones/{id}/roles", EleccionController::configurarRol);
         app.get("/api/elecciones/{id}/elegibilidad", EleccionController::elegibilidad);
+        app.get("/api/elecciones/{id}/acta/pdf", EleccionController::actaPDF);
         app.get("/api/elecciones/{id}/candidatos", CandidatoController::getByEleccion);
         app.post("/api/elecciones/{id}/candidatos", CandidatoController::agregar);
         app.put("/api/elecciones/{idEleccion}/candidatos/{idCandidato}", CandidatoController::editar);

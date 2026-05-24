@@ -410,4 +410,77 @@ public class EleccionController {
             return true;
         }).orElse(false);
     }
+
+    public static void actaPDF(Context ctx) {
+        try {
+            Long idEleccion = Long.parseLong(ctx.pathParam("id"));
+            String nombre = "";
+            StringBuilder resultados = new StringBuilder();
+            String ganador = "";
+            try (Connection conn = AppConfig.getConnection()) {
+                String sqlNombre = "SELECT NOMBRE FROM ELECCIONES WHERE ID_ELECCION = ?";
+                try (PreparedStatement ps = conn.prepareStatement(sqlNombre)) {
+                    ps.setLong(1, idEleccion);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) nombre = rs.getString("NOMBRE");
+                    }
+                }
+
+                String sqlResultados = """
+                        SELECT c.PRIMER_NOMBRE || ' ' || c.PRIMER_APELLIDO AS candidato,
+                               ce.CARGO, COUNT(v.ID_VOTOS) AS votos
+                        FROM Candidatos_eleccion ce
+                        JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO
+                        LEFT JOIN Votos v ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION
+                        WHERE ce.ID_ELECCION = ?
+                        GROUP BY c.PRIMER_NOMBRE, c.PRIMER_APELLIDO, ce.CARGO
+                        ORDER BY votos DESC
+                        """;
+                try (PreparedStatement ps = conn.prepareStatement(sqlResultados)) {
+                    ps.setLong(1, idEleccion);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        boolean first = true;
+                        while (rs.next()) {
+                            String c = rs.getString("candidato");
+                            String cargo = rs.getString("CARGO");
+                            long v = rs.getLong("votos");
+                            if (first) { ganador = c; first = false; }
+                            resultados.append(String.format("%-30s %-20s %8d%n", c, cargo, v));
+                        }
+                    }
+                }
+            }
+
+            StringBuilder pdf = new StringBuilder("%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj\n");
+            pdf.append("2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj\n");
+            pdf.append("3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]/Contents 4 0 R/Resources<</Font<</F1 5 0 R/F2 6 0 R>>>>>>endobj\n");
+            pdf.append("4 0 obj<</Length ").append(5000).append(">>stream\nBT\n/F1 18 Tf 50 720 Td (ACTA DE GANADORES) Tj\n");
+            pdf.append("/F2 12 Tf 50 695 Td (").append(escapePDF(nombre)).append(") Tj\n");
+            pdf.append("/F2 11 Tf 50 675 Td (Candidato                          Cargo                Votos) Tj\n");
+            pdf.append("/F2 10 Tf 50 660 Td (").append(escapePDF(resultados.toString().replace("\n", "\\n"))).append(") Tj\n");
+            pdf.append("/F1 14 Tf 50 100 Td (Ganador: ").append(escapePDF(ganador)).append(") Tj\n");
+            pdf.append("ET\nendstream\nendobj\n");
+            pdf.append("5 0 obj<</Type/Font/Subtype/Type1/BaseFont/Helvetica-Bold>>endobj\n");
+            pdf.append("6 0 obj<</Type/Font/Subtype/Type1/BaseFont/Courier>>endobj\n");
+            pdf.append("xref\n0 7\n0000000000 65535 f \n");
+            pdf.append("0000000009 00000 n \n0000000058 00000 n \n0000000115 00000 n \n");
+            pdf.append(String.format("%010d 00000 n \n", 300));
+            pdf.append(String.format("%010d 00000 n \n", 400));
+            pdf.append(String.format("%010d 00000 n \n", 500));
+            pdf.append("trailer<</Size 7/Root 1 0 R>>startxref\n").append(600).append("\n%%EOF");
+
+            ctx.header("Content-Disposition", "attachment; filename=\"acta-ganadores-" + idEleccion + ".pdf\"");
+            ctx.contentType("application/pdf");
+            ctx.result(pdf.toString().getBytes());
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(ApiResponse.error("ID de eleccion invalido"));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    private static String escapePDF(String text) {
+        if (text == null) return "";
+        return text.replace("\\", "\\\\").replace("(", "\\(").replace(")", "\\)");
+    }
 }
