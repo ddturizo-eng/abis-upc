@@ -1,0 +1,232 @@
+<section class="elecciones-page">
+  <div class="elecciones-left">
+    <article class="elecciones-hero">
+      <div class="elecciones-hero-content">
+        <span class="elecciones-hero-icon material-symbols-outlined">calendar_month</span>
+        <div>
+          <h1 class="elecciones-hero-title">Gestión Electoral</h1>
+          <p class="elecciones-hero-copy">Administre procesos, cronogramas y activación de jornadas electorales de manera eficiente.</p>
+        </div>
+      </div>
+      <div class="ballot-box-3d" aria-hidden="true"></div>
+      <div class="elecciones-hero-stats">
+        <div class="hero-chip">
+          <span class="hero-chip-icon material-symbols-outlined">groups</span>
+          <div>
+            <p id="hero-electores" class="hero-chip-value">--</p>
+            <p class="hero-chip-label">Electores habilitados</p>
+          </div>
+        </div>
+        <div class="hero-chip">
+          <span class="hero-chip-icon material-symbols-outlined">trending_up</span>
+          <div>
+            <p id="hero-participacion" class="hero-chip-value">67%</p>
+            <p class="hero-chip-label">Participación proyectada</p>
+          </div>
+        </div>
+        <div class="hero-chip">
+          <span class="hero-chip-icon material-symbols-outlined">verified_user</span>
+          <div>
+            <p class="hero-chip-value text-[14px]">Sistema</p>
+            <p class="hero-chip-label">Operativo y seguro</p>
+          </div>
+        </div>
+        <div class="hero-chip">
+          <span class="hero-chip-icon material-symbols-outlined">event</span>
+          <div>
+            <p id="hero-proximas" class="hero-chip-value">--</p>
+            <p class="hero-chip-label">Elección próxima</p>
+          </div>
+        </div>
+      </div>
+    </article>
+
+    <section class="stats-row">
+      <article class="election-stat-card">
+        <div class="election-stat-content">
+          <span class="election-stat-icon material-symbols-outlined">stacks</span>
+          <div>
+            <p class="election-stat-label">Total procesos</p>
+            <p id="total-procesos" class="election-stat-value">--</p>
+            <p class="election-stat-note">Todos los tiempos</p>
+          </div>
+        </div>
+        <svg class="sparkline" viewBox="0 0 92 30"><path d="M1 25 C11 20, 15 26, 25 18 S40 18, 48 13 S63 18, 73 9 S84 15, 91 8"/></svg>
+      </article>
+      <article class="election-stat-card">
+        <div class="election-stat-content">
+          <span class="election-stat-icon material-symbols-outlined">calendar_month</span>
+          <div>
+            <p class="election-stat-label">Programadas</p>
+            <p id="programadas" class="election-stat-value">--</p>
+            <p id="programadas-pct" class="election-stat-note">-- del total</p>
+          </div>
+        </div>
+        <svg class="sparkline" viewBox="0 0 92 30"><path d="M1 26 C10 19, 16 21, 23 23 S34 7, 43 12 S56 22, 65 12 S80 8, 91 4"/></svg>
+      </article>
+      <article class="election-stat-card">
+        <div class="election-stat-content">
+          <span class="election-stat-icon material-symbols-outlined">play_arrow</span>
+          <div>
+            <p class="election-stat-label">En curso</p>
+            <p id="en-curso" class="election-stat-value">--</p>
+            <p id="en-curso-pct" class="election-stat-note">-- del total</p>
+          </div>
+        </div>
+        <svg class="sparkline" viewBox="0 0 92 30"><path d="M1 22 C10 18, 18 13, 28 15 S43 19, 53 13 S70 10, 91 12"/></svg>
+      </article>
+      <article class="election-stat-card">
+        <div class="election-stat-content">
+          <span class="election-stat-icon material-symbols-outlined">task_alt</span>
+          <div>
+            <p class="election-stat-label">Finalizadas</p>
+            <p id="finalizadas" class="election-stat-value">--</p>
+            <p id="finalizadas-pct" class="election-stat-note">-- del total</p>
+          </div>
+        </div>
+        <svg class="sparkline" viewBox="0 0 92 30"><path d="M1 24 C13 20, 21 23, 31 17 S47 20, 57 14 S74 12, 91 9"/></svg>
+      </article>
+    </section>
+
+    <article class="elections-table-card">
+      <div class="elections-table-toolbar">
+        <h2 class="dashboard-title">Procesos Electorales</h2>
+        <div class="table-actions">
+          <label class="election-search">
+            <input id="buscar-eleccion" type="search" placeholder="Buscar elección...">
+            <span class="material-symbols-outlined text-[18px] text-[#8A94A6]">search</span>
+          </label>
+          <button type="button" class="filter-button">
+            <span class="material-symbols-outlined text-[18px]">filter_alt</span>
+            Filtros
+            <span class="material-symbols-outlined text-[16px]">expand_more</span>
+          </button>
+          <button type="button" class="new-election-button" onclick="abrirModalNuevaEleccion()">
+            <span class="material-symbols-outlined text-[18px]">add</span>
+            Nueva Elección
+          </button>
+        </div>
+      </div>
+
+      <div class="elections-table-wrap">
+        <table class="elections-table">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Fecha inicio</th>
+              <th>Fecha fin</th>
+              <th>Duración</th>
+              <th>Estado</th>
+              <th>Participación</th>
+              <th>Candidatos</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="elecciones-tbody"></tbody>
+        </table>
+      </div>
+      <div class="table-pagination">
+        <span id="pagination-summary">Cargando procesos electorales...</span>
+        <div id="pagination-controls" class="pagination-controls"></div>
+      </div>
+    </article>
+  </div>
+
+  <aside class="elecciones-sidebar">
+    <article class="sidebar-card">
+      <h2 class="sidebar-title">Próxima Jornada Electoral</h2>
+      <div class="next-journey-block">
+        <span class="journey-icon material-symbols-outlined">calendar_month</span>
+        <div>
+          <p id="next-election-name" class="journey-name">Sin jornada programada</p>
+          <p id="next-election-date" class="journey-date">Fecha pendiente</p>
+          <span id="next-election-status" class="status-badge status-badge-programada mt-2">
+            <span class="status-badge-dot"></span>
+            Programada
+          </span>
+        </div>
+      </div>
+      <div class="countdown-grid">
+        <div class="countdown-box"><p id="cd-dias" class="countdown-number">00</p><p class="countdown-label">Días</p></div>
+        <div class="countdown-separator">:</div>
+        <div class="countdown-box"><p id="cd-horas" class="countdown-number">00</p><p class="countdown-label">Horas</p></div>
+        <div class="countdown-separator">:</div>
+        <div class="countdown-box"><p id="cd-mins" class="countdown-number">00</p><p class="countdown-label">Minutos</p></div>
+        <div class="countdown-separator">:</div>
+        <div class="countdown-box"><p id="cd-segs" class="countdown-number">00</p><p class="countdown-label">Segundos</p></div>
+      </div>
+
+      <div class="prep-header">
+        <h3 class="election-stat-label">Preparación del proceso</h3>
+        <span id="prep-percent" class="prep-percent">0%</span>
+      </div>
+      <div class="prep-track"><div id="prep-fill" class="prep-fill"></div></div>
+      <div id="prep-list" class="prep-list"></div>
+      <button type="button" class="outline-action" onclick="abrirConfiguracionProximaEleccion()">
+        Ver configuración
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+    </article>
+
+    <article class="sidebar-card">
+      <h2 id="timeline-title" class="sidebar-title">Cronograma Electoral 2026</h2>
+      <div class="timeline">
+        <div id="timeline-steps" class="timeline-steps"></div>
+        <div class="timeline-info">
+          <div>
+            <p class="dashboard-label">Fase actual</p>
+            <p id="timeline-phase" class="timeline-phase">Activación</p>
+            <p id="timeline-copy" class="timeline-copy">La jornada electoral está programada y lista para iniciar.</p>
+          </div>
+          <div class="phase-count"><span id="timeline-count">4/6</span>Fases completadas</div>
+        </div>
+      </div>
+    </article>
+  </aside>
+
+  <div class="bottom-status-bar">
+    <span>INTEGRIDAD: ABIS-2026 • STATUS: LISTO</span>
+    <span>TERMINAL ID: ADMIN-01 • V4.2.0-STABLE</span>
+  </div>
+</section>
+
+<div id="modal-eleccion" class="election-modal">
+  <div class="modal-panel">
+    <div class="modal-header">
+      <h2 class="modal-title">Nueva Elección</h2>
+      <button type="button" class="modal-close" onclick="cerrarModalEleccion()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <form id="form-eleccion" class="election-form">
+      <div id="modal-eleccion-error" class="modal-error"></div>
+      <label>
+        <span class="form-label">Nombre de la elección *</span>
+        <input id="eleccion-nombre" class="election-field" type="text" autocomplete="off">
+      </label>
+      <label>
+        <span class="form-label">Fecha y hora de inicio *</span>
+        <input id="eleccion-inicio" class="election-field" type="datetime-local">
+      </label>
+      <label>
+        <span class="form-label">Fecha y hora de fin *</span>
+        <input id="eleccion-fin" class="election-field" type="datetime-local">
+      </label>
+      <div class="role-weight-box">
+        <p class="dashboard-label">Roles habilitados para esta elección</p>
+        <p class="role-weight-copy">Selecciona los roles que pueden votar y asigna un peso a cada voto.</p>
+        <div class="role-toggle-grid" id="roles-grid">
+          <!-- JS genera las filas dinámicamente -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="button-ghost" onclick="cerrarModalEleccion()">Cancelar</button>
+        <button type="submit" class="button-primary">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div id="dropdown-elecciones" class="dropdown-menu hidden"></div>
+<div id="toast-container" class="toast-container"></div>
+<script src="../../js/elecciones.js"></script>

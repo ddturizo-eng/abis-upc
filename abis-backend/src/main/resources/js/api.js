@@ -1,0 +1,269 @@
+/**
+ * ABIS-UPC | API Connection Module
+ * Maneja todas las comunicaciones con el backend Java
+ */
+
+const API = {
+    baseUrl: '',
+
+    async request(endpoint, options = {}) {
+        const url = this.baseUrl + endpoint;
+        const token = localStorage.getItem('abis_token');
+        const providedHeaders = options.headers || {};
+        const isFormData = this.isFormData(options.body);
+        const config = {
+            ...options,
+            headers: {
+                ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+                ...(token ? { Authorization: 'Bearer ' + token } : {}),
+                ...providedHeaders
+            }
+        };
+
+        if (config.body && typeof config.body === 'object' && !isFormData) {
+            config.body = JSON.stringify(config.body);
+        }
+
+        if (isFormData) {
+            delete config.headers['Content-Type'];
+            delete config.headers['content-type'];
+        }
+
+        try {
+            const response = await fetch(url, config);
+            const text = await response.text();
+            let data = {};
+            try {
+                data = text ? JSON.parse(text) : {};
+            } catch (parseError) {
+                data = { error: text || `HTTP ${response.status}` };
+            }
+            
+            if (!response.ok) {
+                throw new Error(data.error || data.detail || data.message || `HTTP ${response.status}`);
+            }
+            
+            return data;
+        } catch (error) {
+            console.error(`[API] Error en ${endpoint}:`, error);
+            throw error;
+        }
+    },
+
+    async get(endpoint) {
+        return this.request(endpoint, { method: 'GET' });
+    },
+
+    async post(endpoint, body) {
+        return this.request(endpoint, { method: 'POST', body });
+    },
+
+    async postForm(endpoint, formData) {
+        return this.request(endpoint, { 
+            method: 'POST', 
+            body: formData,
+            headers: {}
+        });
+    },
+
+    isFormData(body) {
+        return typeof FormData !== 'undefined' &&
+            (body instanceof FormData || Object.prototype.toString.call(body) === '[object FormData]');
+    }
+};
+
+const ApiHealth = {
+    async check() {
+        try {
+            const data = await API.get('/api/health');
+            return {
+                success: data.biometric === 'ok',
+                java: true,
+                python: data.biometric === 'ok',
+                message: data.message || 'Sistema operativo'
+            };
+        } catch (error) {
+            return {
+                success: false,
+                java: false,
+                python: false,
+                message: error.message
+            };
+        }
+    },
+
+    async status() {
+        try {
+            return await API.get('/api/status');
+        } catch (error) {
+            return { error: error.message };
+        }
+    }
+};
+
+const ApiDocument = {
+    async scan(archivoFront, archivoBack = null, docType = 'auto') {
+        const formData = new FormData();
+        formData.append('front', archivoFront);
+        if (archivoBack) formData.append('back', archivoBack);
+        formData.append('doc_type', docType);
+
+        const response = await fetch('http://localhost:7000/api/document/scan', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json().catch(() => ({}));
+            throw new Error(errorData.error || errorData.message || `HTTP ${response.status}`);
+        }
+
+        return await response.json();
+    }
+};
+
+const ApiEnrollment = {
+    async enroll(identificacion, reEnroll = false) {
+        return await API.post('/api/enroll', {
+            identificacion,
+            re_enroll: reEnroll
+        });
+    },
+
+    async progress() {
+        return await API.get('/api/enroll/progress');
+    }
+};
+
+const ApiVerification = {
+    async verify(identificacion) {
+        return await API.post('/api/verify', {
+            identificacion
+        });
+    },
+
+    async segundaLlave(qrCedula, identificacion) {
+        return await API.post('/api/votantes/segunda-llave', {
+            qr_cedula: ScannerHandler.normalize(qrCedula),
+            identificacion
+        });
+    }
+};
+
+const ApiAuth = {
+    async login(usuario, password) {
+        return await API.post('/api/auth/login', {
+            usuario,
+            password
+        });
+    },
+
+    async logout() {
+        return await API.post('/api/auth/logout', {});
+    }
+};
+
+const ApiPreRegistro = {
+    async crear(data) {
+        const payload = {
+            identificacion: data.identificacion,
+            primer_nombre: data.primerNombre,
+            segundo_nombre: data.segundoNombre || '',
+            primer_apellido: data.primerApellido,
+            segundo_apellido: data.segundoApellido || '',
+            correo: data.correo,
+            id_rol: parseInt(data.idRol),
+            id_puesto: parseInt(data.idPuesto),
+            fecha_nacimiento: data.fechaNacimiento || null
+        };
+        return await API.post('/api/registro/preregistro', payload);
+    }
+};
+
+window.API = API;
+window.ApiHealth = ApiHealth;
+window.ApiDocument = ApiDocument;
+window.ApiEnrollment = ApiEnrollment;
+window.ApiVerification = ApiVerification;
+window.ApiAuth = ApiAuth;
+window.ApiPreRegistro = ApiPreRegistro;
+
+const ApiElecciones = {
+    listar: () => API.get('/api/elecciones'),
+    crear: (data) => API.post('/api/elecciones', data),
+    editar: (id, data) => API.request(`/api/elecciones/${id}`, { method: 'PUT', body: data }),
+    iniciar: (id) => API.post(`/api/elecciones/${id}/iniciar`, {}),
+    cerrar: (id) => API.request(`/api/elecciones/${id}/cerrar`, { method: 'PUT', body: {} }),
+    eliminar: (id) => API.request(`/api/elecciones/${id}`, { method: 'DELETE' }),
+    candidatos: (id) => API.get(`/api/elecciones/${id}/candidatos`),
+    elegibilidad: (id) => API.get(`/api/elecciones/${id}/elegibilidad`),
+    resultados: (id) => API.get(`/api/elecciones/${id}/resultados`),
+    votantesPorEleccion: (idEleccion) => API.get(`/api/votantes/por-eleccion?idEleccion=${idEleccion}`),
+};
+
+const ApiCandidatos = {
+    agregar: (idEleccion, data) =>
+        API.post(`/api/elecciones/${idEleccion}/candidatos`, data),
+    editar: (idEleccion, idCandidato, data) =>
+        API.request(`/api/elecciones/${idEleccion}/candidatos/${idCandidato}`,
+            { method: 'PUT', body: data }),
+    eliminar: (idEleccion, idCandidato) =>
+        API.request(`/api/elecciones/${idEleccion}/candidatos/${idCandidato}`,
+            { method: 'DELETE' }),
+};
+
+const ApiEleccionRoles = {
+    listar: (idEleccion) =>
+        API.get(`/api/elecciones/${idEleccion}/roles`),
+    configurar: (idEleccion, idRol, pesoVoto) =>
+        API.post(`/api/elecciones/${idEleccion}/roles`, {
+            idRol,
+            pesoVoto
+        }),
+};
+
+window.ApiElecciones = ApiElecciones;
+window.ApiCandidatos = ApiCandidatos;
+window.ApiEleccionRoles = ApiEleccionRoles;
+
+const ApiCertificados = {
+    listar: (eleccionId = '', limit = 100) => {
+        const params = new URLSearchParams();
+        if (eleccionId) params.set('eleccionId', eleccionId);
+        if (limit) params.set('limit', limit);
+        const query = params.toString();
+        return API.get(`/api/certificados${query ? `?${query}` : ''}`);
+    },
+    resumen: (eleccionId = '') => {
+        const params = new URLSearchParams();
+        if (eleccionId) params.set('eleccionId', eleccionId);
+        const query = params.toString();
+        return API.get(`/api/certificados/resumen${query ? `?${query}` : ''}`);
+    },
+    elecciones: () => API.get('/api/certificados/elecciones'),
+    reenviar: (idAuditoria) => API.post(`/api/certificados/${idAuditoria}/reenviar`, {}),
+    reenviarVotante: (identificacion, idEleccion) => API.post('/api/certificados/reenviar', { identificacion, idEleccion })
+};
+
+window.ApiCertificados = ApiCertificados;
+
+const ApiContingencia = {
+    resumen: (eleccionId) => API.get(`/api/contingencia/resumen?eleccionId=${encodeURIComponent(eleccionId)}`),
+    tokens: (eleccionId, estadoEnvio = '') => {
+        const params = new URLSearchParams({ eleccionId });
+        if (estadoEnvio) params.set('estadoEnvio', estadoEnvio);
+        return API.get(`/api/contingencia/tokens?${params.toString()}`);
+    },
+    auditoria: (eleccionId = '', limit = 100) => {
+        const params = new URLSearchParams();
+        if (eleccionId) params.set('eleccionId', eleccionId);
+        params.set('limit', limit);
+        return API.get(`/api/contingencia/auditoria?${params.toString()}`);
+    },
+    emitir: (idEleccion) => API.post('/api/contingencia/emisiones', { idEleccion }),
+    reenviar: (idToken) => API.post(`/api/contingencia/tokens/${encodeURIComponent(idToken)}/reenviar`, {}),
+    revocar: (idToken) => API.post(`/api/contingencia/tokens/${encodeURIComponent(idToken)}/revocar`, {}),
+    regenerar: (idToken) => API.post(`/api/contingencia/tokens/${encodeURIComponent(idToken)}/regenerar`, {})
+};
+
+window.ApiContingencia = ApiContingencia;

@@ -1,0 +1,147 @@
+﻿<section class="voters-page">
+  <link rel="stylesheet" href="../../styles/votantes.css">
+
+  <div class="voters-header">
+    <div class="voters-heading voters-heading-accent">
+      <div class="voters-heading-bar" aria-hidden="true"></div>
+      <div>
+        <h1 class="voters-title voters-title-elegant">Censo Electoral</h1>
+        <p class="voters-subtitle voters-subtitle-icon">
+          <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+          Gestión integral de votantes, trazabilidad y autenticación biométrica.
+        </p>
+      </div>
+    </div>
+    <div class="voters-actions">
+      <button class="voters-btn voters-btn-ghost" id="voters-import">
+        <span class="material-symbols-outlined">upload</span>
+        Importar Excel
+      </button>
+      <button class="voters-btn voters-btn-ghost" id="voters-export">
+        <span class="material-symbols-outlined">download</span>
+        Exportar
+      </button>
+      <button class="voters-btn voters-btn-ghost" id="voters-audit-button">
+        <span class="material-symbols-outlined">assignment</span>
+        Ver auditoría
+      </button>
+      <button class="voters-btn voters-btn-primary" id="voters-new">
+        <span class="material-symbols-outlined">add</span>
+        Nuevo votante
+      </button>
+    </div>
+  </div>
+
+  <div class="voters-kpis" id="voters-kpis"></div>
+
+  <div class="voters-main-grid">
+    <div class="voters-left">
+      <div class="voters-toolbar">
+        <label class="search-wrap">
+          <span class="voters-field-label">Búsqueda</span>
+          <span class="voters-search">
+            <input id="voters-search" type="search" placeholder="Identificación, nombre o correo">
+            <span class="material-symbols-outlined">search</span>
+          </span>
+        </label>
+        <label>
+          <span class="voters-field-label">Estado</span>
+          <select class="voters-select" id="voters-filter-state">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">Rol</span>
+          <select class="voters-select" id="voters-filter-role">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">Puesto</span>
+          <select class="voters-select" id="voters-filter-place">
+            <option value="">Todos</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">Biométrico</span>
+          <select class="voters-select" id="voters-filter-bio">
+            <option value="">Todos</option>
+            <option value="enrolado">Enrolado</option>
+            <option value="no_enrolado">No enrolado</option>
+          </select>
+        </label>
+        <label>
+          <span class="voters-field-label">QR cédula</span>
+          <select class="voters-select" id="voters-filter-qr">
+            <option value="">Todos</option>
+            <option value="registrado">Registrado</option>
+            <option value="pendiente">Pendiente</option>
+          </select>
+        </label>
+        <button class="voters-btn voters-btn-ghost voters-filter-btn" id="voters-clear">
+          <span class="material-symbols-outlined">refresh</span>
+          Limpiar
+        </button>
+        <button class="voters-btn voters-btn-primary voters-filter-btn" id="voters-apply">
+          <span class="material-symbols-outlined">filter_alt</span>
+          Aplicar
+        </button>
+      </div>
+
+      <div class="voters-table-card">
+        <div class="voters-table-wrap">
+          <table class="voters-table">
+            <thead>
+              <tr>
+                <th>Votante</th>
+                <th>Identificación</th>
+                <th>Nombre completo</th>
+                <th>Rol</th>
+                <th>Puesto de votación</th>
+                <th>Biométrico</th>
+                <th>Estado</th>
+                <th>Última actividad</th>
+                <th>Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="voters-table-body"></tbody>
+          </table>
+        </div>
+        <div class="voters-pagination">
+          <span id="voters-page-summary">Cargando censo electoral...</span>
+          <div class="voters-page-controls" id="voters-pagination"></div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="voters-audit-card">
+      <div class="audit-header">
+        <div class="audit-title">
+          <span class="material-symbols-outlined">history</span>
+          Auditoría reciente
+        </div>
+        <button class="audit-link" id="voters-audit-link">Ver toda</button>
+      </div>
+      <div class="audit-list" id="voters-audit-list"></div>
+    </aside>
+  </div>
+
+  <div class="voter-drawer" id="voter-drawer" aria-hidden="true">
+    <section class="voter-drawer-panel">
+      <div class="drawer-header">
+        <div>
+          <p class="voters-field-label">Ficha del votante</p>
+          <h2 class="voters-title" style="font-size:22px">Detalle operativo</h2>
+        </div>
+        <button class="drawer-close" id="voter-drawer-close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div id="voter-drawer-content"></div>
+    </section>
+  </div>
+
+  <input id="voters-import-input" type="file" accept=".csv,.xlsx,.xls" class="hidden">
+</section>
+<script src="../../js/votantes.js"></script>
+
