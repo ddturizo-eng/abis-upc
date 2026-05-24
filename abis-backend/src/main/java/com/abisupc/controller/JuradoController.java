@@ -376,14 +376,26 @@ public class JuradoController {
         List<Map<String, Object>> puestos = puestos(conn);
         if (pool.isEmpty() || puestos.isEmpty()) return List.of();
 
-        Collections.shuffle(pool, new Random());
+        List<Map<String, Object>> admins = new ArrayList<>();
+        List<Map<String, Object>> docs = new ArrayList<>();
+        for (Map<String, Object> p : pool) {
+            String rol = String.valueOf(p.getOrDefault("rol", ""));
+            if (rol.toUpperCase().contains("ADMINISTRATIVO")) admins.add(p);
+            else docs.add(p);
+        }
+        Collections.shuffle(admins, new Random());
+        Collections.shuffle(docs, new Random());
+        List<Map<String, Object>> poolOrdenado = new ArrayList<>();
+        poolOrdenado.addAll(admins);
+        poolOrdenado.addAll(docs);
+
         List<Map<String, Object>> slots = construirSlots(config, puestos);
         List<Map<String, Object>> resultado = new ArrayList<>();
         Set<String> usados = new HashSet<>();
         String restriccion = text(map(config.get("distribucionConfig")), "puestoAsignado");
         for (Map<String, Object> slot : slots) {
             Map<String, Object> puesto = mapString(slot.get("puesto"));
-            Map<String, Object> elegido = elegirCercano(pool, usados, puesto, restriccion);
+            Map<String, Object> elegido = elegirCercano(poolOrdenado, usados, puesto, restriccion);
             if (elegido == null) break;
             usados.add((String) elegido.get("identificacion"));
             Map<String, Object> asignacion = new LinkedHashMap<>();

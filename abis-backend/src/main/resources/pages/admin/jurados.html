@@ -113,11 +113,7 @@
                 </button>
               </div>
               <div class="switch-list">
-                <label class="switch-row">
-                  <input id="excluirCandidatos" type="checkbox" checked>
-                  <span class="switch-ui"></span>
-                  <span>Excluir candidatos</span>
-                </label>
+                <div class="info-note" style="margin-bottom:8px"><i class="ti ti-info-circle"></i> Candidatos inscritos en esta eleccion excluidos automaticamente (regla TGE).</div>
                 <label class="switch-row">
                   <input id="requerirBiometrico" type="checkbox">
                   <span class="switch-ui"></span>
@@ -213,7 +209,10 @@
           <div class="wizard-nav">
             <button onclick="juradosWizardPrev(2)">← Anterior</button>
             <span style="color:var(--abis-text-2);font-size:0.78rem;">Paso 2 de 3</span>
-            <button class="btn-primary-wizard" onclick="juradosWizardNext(2)">Siguiente →</button>
+            <span style="display:flex;gap:8px;margin-left:auto">
+              <button onclick="recalcularAsignacion()" title="Actualizar calculo de jurados requeridos" style="font-size:0.82rem"><i class="ti ti-calculator"></i> Calcular</button>
+              <button class="btn-primary-wizard" onclick="juradosWizardNext(2)">Siguiente →</button>
+            </span>
           </div>
         </section>
 

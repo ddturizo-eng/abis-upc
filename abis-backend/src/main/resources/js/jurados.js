@@ -235,8 +235,18 @@
   function onCambioEleccion() {
     const select = $('jurados-eleccion');
     JuradosState.idEleccion = select?.value ? Number(select.value) : null;
-    recalcularAsignacion();
-    mostrarNotificacion('Elección cambiada. Recalculando pool...', 'info');
+    resetMetricas();
+    const steps = document.querySelectorAll('.wizard-step');
+    const allSteps = document.querySelectorAll('#stepperProgreso .step-dot');
+    steps.forEach(s => { s.classList.remove('activo'); s.classList.add('hidden'); });
+    const step1 = document.querySelector('.wizard-step[data-step="1"]');
+    if (step1) { step1.classList.add('activo'); step1.classList.remove('hidden'); }
+    allSteps.forEach(d => d.classList.remove('activo', 'completado'));
+    const dot1 = document.querySelector('#stepperProgreso .step-dot[data-step="1"]');
+    if (dot1) dot1.classList.add('activo');
+    $('confirmRevision').checked = false;
+    cargarMesas().then(() => recalcularAsignacion());
+    mostrarNotificacion('Elección cambiada. Wizard reiniciado al paso 1.', 'info');
   }
 
   async function cargarMesas() {
