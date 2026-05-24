@@ -37,7 +37,7 @@
 
 El sistema cumple con la **Ley 1581 de 2012** (proteccion de datos personales) y los **Acuerdos 032/1994 y 008/2016** del Consejo Superior de la UPC que rigen los procesos electorales universitarios.
 
-**Materia:** Programacion de Computadores III (SS462) -- Ing. Alfredo Bautista  
+**Materias:** Programacion de Computadores III (SS462) -- Ing. Alfredo Bautista | Bases de Datos -- Ing. Amilkar Sierra  
 **Universidad:** Universidad Popular del Cesar -- 2026
 
 ---
