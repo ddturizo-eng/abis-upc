@@ -405,7 +405,7 @@
 
   function openDrawer(voter, action) {
     if (action === 'bio') {
-      window.open(`/pages/registro/index.html?re_enroll=${encodeURIComponent(voter.identificacion)}`, '_blank');
+      abrirModalReEnrolamiento(voter);
       return;
     }
     const drawer = document.getElementById('voter-drawer');
@@ -565,6 +565,118 @@
     const drawer = document.getElementById('voter-drawer');
     drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden', 'true');
+  }
+
+  let reEnrollSocket = null;
+
+  function abrirModalReEnrolamiento(voter) {
+    let modal = document.getElementById('re-enroll-modal');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 're-enroll-modal';
+      modal.className = 'voter-modal-overlay';
+      modal.innerHTML = `
+        <div class="voter-modal-panel" style="max-width:480px">
+          <div class="modal-header">
+            <h2>Re-enrolamiento biometrico</h2>
+            <button class="modal-close" id="btnCloseReEnroll">&times;</button>
+          </div>
+          <p style="color:var(--abis-text-2);font-size:0.84rem;margin-bottom:4px">
+            <strong id="reEnrollName"></strong> (<span id="reEnrollId"></span>)
+          </p>
+          <div style="background:#f8f9fa;border-radius:8px;padding:20px;text-align:center;margin:14px 0">
+            <div style="width:64px;height:64px;margin:0 auto 12px;border:3px solid #52b788;border-radius:50%;display:flex;align-items:center;justify-content:center">
+              <span class="material-symbols-outlined" style="font-size:32px;color:#52b788">fingerprint</span>
+            </div>
+            <div id="reEnrollStatus" style="font-size:0.84rem;color:#333;font-weight:600">Conectando al lector biometrico...</div>
+            <div id="reEnrollProgress" style="font-size:0.76rem;color:var(--abis-text-2);margin-top:4px">Muestras: 0/4</div>
+            <div style="background:#e5e7eb;border-radius:999px;height:8px;margin-top:10px;overflow:hidden">
+              <div id="reEnrollBar" style="background:#52b788;height:100%;width:0%;transition:width 0.3s ease"></div>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="voters-btn voters-btn-ghost" id="btnCancelReEnroll">Cancelar</button>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(modal);
+      modal.querySelector('#btnCloseReEnroll')?.addEventListener('click', cerrarReEnroll);
+      modal.querySelector('#btnCancelReEnroll')?.addEventListener('click', cerrarReEnroll);
+    }
+
+    document.getElementById('reEnrollName').textContent = fullName(voter);
+    document.getElementById('reEnrollId').textContent = voter.identificacion;
+    document.getElementById('reEnrollStatus').textContent = 'Conectando al lector biometrico...';
+    document.getElementById('reEnrollProgress').textContent = 'Muestras: 0/4';
+    document.getElementById('reEnrollBar').style.width = '0%';
+    modal.style.display = 'flex';
+
+    conectarWebSocketReEnroll();
+    iniciarEnrolamientoReEnroll(voter.identificacion);
+  }
+
+  function conectarWebSocketReEnroll() {
+    if (reEnrollSocket && reEnrollSocket.readyState <= WebSocket.OPEN) return;
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    reEnrollSocket = new WebSocket(`${protocol}//${window.location.host}/ws/biometria-ui`);
+    reEnrollSocket.onmessage = (event) => {
+      try {
+        const progress = JSON.parse(event.data);
+        const status = document.getElementById('reEnrollStatus');
+        const progressText = document.getElementById('reEnrollProgress');
+        const bar = document.getElementById('reEnrollBar');
+        if (!status) return;
+        if (progress.estado === 'FINALIZADO_EXITOSO') {
+          status.textContent = progress.mensaje || 'Huella guardada exitosamente';
+          if (bar) bar.style.width = '100%';
+          if (progressText) progressText.textContent = 'Muestras: 4/4';
+        } else if (progress.estado === 'ERROR') {
+          status.textContent = 'Error: ' + (progress.mensaje || progress.error || 'Fallo el lector');
+          status.style.color = '#991b1b';
+        } else {
+          status.textContent = progress.mensaje || 'Capturando huella...';
+          if (bar) bar.style.width = (progress.progreso || 0) + '%';
+          if (progressText) progressText.textContent = 'Muestras: ' + (progress.samples || 0) + '/4';
+        }
+      } catch (e) { /* ignore */ }
+    };
+    reEnrollSocket.onerror = () => {};
+  }
+
+  async function iniciarEnrolamientoReEnroll(identificacion) {
+    try {
+      const result = await fetch('/api/enroll', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...headers },
+        body: JSON.stringify({ identificacion, re_enroll: true })
+      });
+      const data = await result.json().catch(() => ({}));
+      const status = document.getElementById('reEnrollStatus');
+      if (result.ok && (data.success || data.persisted)) {
+        if (status) {
+          status.textContent = 'Huella biometrica actualizada correctamente.';
+          status.style.color = '#065f46';
+        }
+        setTimeout(async () => { cerrarReEnroll(); await loadVoters(); }, 2000);
+      } else {
+        if (status) {
+          status.textContent = 'Error: ' + (data.detail || data.error || data.message || 'No se pudo completar el enrolamiento');
+          status.style.color = '#991b1b';
+        }
+      }
+    } catch (e) {
+      const status = document.getElementById('reEnrollStatus');
+      if (status) {
+        status.textContent = 'Error de conexion: ' + (e.message || 'Sin respuesta del servicio biometrico');
+        status.style.color = '#991b1b';
+      }
+    }
+  }
+
+  function cerrarReEnroll() {
+    if (reEnrollSocket) { reEnrollSocket.close(); reEnrollSocket = null; }
+    const modal = document.getElementById('re-enroll-modal');
+    if (modal) modal.style.display = 'none';
   }
 
   async function renderAudit(limit = 6) {
