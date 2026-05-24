@@ -2071,28 +2071,3 @@
   border-color: #fecaca;
   color: #991b1b;
 }
-
-/* ── RESPONSIVE DESKTOP ── */
-.admin-shell-main {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 24px;
-  width: 100%;
-}
-
-.overflow-x-auto {
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-@media (max-width: 1024px) {
-  .admin-shell-main { padding: 0 16px }
-  .admin-header-nav { gap: 4px }
-  .admin-header-nav-item { font-size: 0.72rem; padding: 6px 8px }
-}
-
-@media (max-width: 768px) {
-  .admin-shell-main { padding: 0 12px }
-  .grid-cols-4 { grid-template-columns: repeat(2,1fr) }
-  .admin-header-nav { overflow-x: auto; -webkit-overflow-scrolling: touch; white-space: nowrap }
-}
