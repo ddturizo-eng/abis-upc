@@ -216,13 +216,13 @@
   function poblarSelectorEleccion() {
     const select = $('jurados-eleccion');
     if (!select) return;
-    const estadoLabel = { PROGRAMADA: '📋', EN_CURSO: '🟢', CERRADA: '🔒', FINALIZADA: '🔒' };
+    const estadoLabel = { PROGRAMADA: '[P]', EN_CURSO: '[A]', CERRADA: '[C]', FINALIZADA: '[F]' };
     select.innerHTML = JuradosState.elecciones.map(e => {
       const id = e.id || e.idEleccion;
       const nombre = e.nombre || 'Sin nombre';
       const estado = e.estado || '';
-      const emoji = estadoLabel[estado] || '';
-      return `<option value="${id}">${emoji} ${nombre} (${estado})</option>`;
+      const tag = estadoLabel[estado] || '';
+      return `<option value="${id}">${tag} ${nombre} (${estado})</option>`;
     }).join('');
 
     if (JuradosState.elecciones.length === 0) {
