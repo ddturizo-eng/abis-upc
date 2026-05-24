@@ -532,7 +532,7 @@ public class JuradoController {
             sql.append("INNER JOIN Eleccion_roles er ON er.id_rol = v.id_rol AND er.id_eleccion = ? ");
             params.add(idEleccion);
         }
-        sql.append("WHERE 1=1 ");
+        sql.append("WHERE 1=1 AND v.FECHA_NACIMIENTO IS NOT NULL ");
         if (!roles.isEmpty()) {
             sql.append("AND v.ID_ROL IN (").append(placeholders(roles.size())).append(") ");
             roles.forEach(role -> params.add(roleId(role)));
