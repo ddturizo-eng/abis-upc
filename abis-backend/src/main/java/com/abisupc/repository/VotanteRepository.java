@@ -209,8 +209,10 @@ public class VotanteRepository implements Repository<Votante> {
         String sql = """
                 SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE,
                        v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, v.ESTADO_VOTO, v.FOTO_URL,
-                       v.FECHA_CONSENTIMIENTO, v.FECHA_NACIMIENTO, v.ID_ROL, v.ID_PUESTO, v.QR_CEDULA
+                       v.FECHA_CONSENTIMIENTO, v.FECHA_NACIMIENTO, v.ID_ROL, v.ID_PUESTO, v.QR_CEDULA,
+                       CASE WHEN bv.ACTIVO = 'S' THEN 1 ELSE 0 END AS BIOMETRICO
                 FROM Votantes v
+                LEFT JOIN BIOMETRIA_VOTANTES bv ON v.IDENTIFICACION = bv.IDENTIFICACION
                 INNER JOIN Eleccion_roles er ON er.id_rol = v.id_rol
                 WHERE er.id_eleccion = ?
                   AND UPPER(v.ESTADO_VOTO) = 'PENDIENTE'
