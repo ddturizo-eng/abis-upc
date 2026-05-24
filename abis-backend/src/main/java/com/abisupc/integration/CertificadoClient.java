@@ -19,7 +19,7 @@ public class CertificadoClient {
     private static final String DEFAULT_BASE_URL = "http://localhost:8010";
     private static final String ENV_BASE_URL = "ABIS_EMAIL_SERVICE_URL";
     private static final String ENV_TOKEN = "ABIS_EMAIL_SERVICE_TOKEN";
-    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(5);
+    private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(30);
 
     private final String baseUrl;
     private final String internalToken;
@@ -32,7 +32,7 @@ public class CertificadoClient {
                 System.getenv(ENV_TOKEN),
                 HttpClient.newBuilder()
                         .version(HttpClient.Version.HTTP_1_1)
-                        .connectTimeout(Duration.ofSeconds(3))
+                        .connectTimeout(Duration.ofSeconds(10))
                         .build(),
                 new ObjectMapper()
         );
