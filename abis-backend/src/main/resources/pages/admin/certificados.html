@@ -1,0 +1,230 @@
+<link rel="stylesheet" href="../../styles/certificados.css">
+<section class="cert-module">
+  <!-- TABS -->
+  <nav class="cert-tabs" id="cert-tabs">
+    <button class="cert-tab active" data-tab="postvoto">
+      <span class="material-symbols-outlined">verified</span> Post-voto
+    </button>
+    <button class="cert-tab" data-tab="actas">
+      <span class="material-symbols-outlined">trophy</span> Actas de ganadores
+    </button>
+    <button class="cert-tab" data-tab="cartas">
+      <span class="material-symbols-outlined">description</span> Cartas de designación
+    </button>
+    <button class="cert-tab" data-tab="plantillas">
+      <span class="material-symbols-outlined">stylus_note</span> Plantillas
+    </button>
+    <button class="cert-tab" data-tab="verificacion">
+      <span class="material-symbols-outlined">qr_code_scanner</span> Verificación pública
+    </button>
+  </nav>
+
+  <!-- TAB: POST-VOTO -->
+  <div class="cert-tab-content active" id="tab-postvoto">
+    <div class="cert-header">
+      <select id="cert-eleccion" class="cert-select">
+        <option value="">Todas las elecciones</option>
+      </select>
+      <button id="cert-refresh" class="cert-btn cert-btn-primary">
+        <span class="material-symbols-outlined">refresh</span> Actualizar
+      </button>
+    </div>
+
+    <div class="cert-grid">
+      <div class="cert-main">
+        <!-- KPIs -->
+        <div class="cert-kpis">
+          <div class="cert-kpi">
+            <span class="cert-kpi-icon" style="background:#edfaf3;color:#158759">
+              <span class="material-symbols-outlined">how_to_vote</span>
+            </span>
+            <div><p>Total</p><strong id="cert-total">--</strong></div>
+          </div>
+          <div class="cert-kpi">
+            <span class="cert-kpi-icon" style="background:#dcfce7;color:#166534">
+              <span class="material-symbols-outlined">check_circle</span>
+            </span>
+            <div><p>Enviados</p><strong id="cert-enviados" style="color:#166534">--</strong></div>
+          </div>
+          <div class="cert-kpi">
+            <span class="cert-kpi-icon" style="background:#fef3c7;color:#92400e">
+              <span class="material-symbols-outlined">schedule</span>
+            </span>
+            <div><p>Pendientes</p><strong id="cert-pendientes" style="color:#92400e">--</strong></div>
+          </div>
+          <div class="cert-kpi">
+            <span class="cert-kpi-icon" style="background:#fee2e2;color:#991b1b">
+              <span class="material-symbols-outlined">error</span>
+            </span>
+            <div><p>Errores</p><strong id="cert-errores" style="color:#991b1b">--</strong></div>
+          </div>
+        </div>
+
+        <!-- Search + Table -->
+        <div class="cert-table-card">
+          <div class="cert-table-header">
+            <div>
+              <h2>Seguimiento de certificados</h2>
+              <p>Cada fila muestra el ultimo intento de envio por votante.</p>
+            </div>
+            <input id="cert-search" type="search" placeholder="Buscar por cedula, nombre o correo" class="cert-search-input">
+          </div>
+          <div class="cert-table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Votante</th>
+                  <th>Eleccion</th>
+                  <th>Estado</th>
+                  <th>Codigo</th>
+                  <th>Fecha envio</th>
+                  <th>Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="cert-table">
+                <tr><td colspan="6" class="cert-empty">Cargando certificados...</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="cert-pagination" id="cert-pagination">
+            <span id="cert-page-info">0 registros</span>
+          </div>
+        </div>
+      </div>
+
+      <aside class="cert-sidebar">
+        <!-- Acciones rapidas -->
+        <div class="cert-sidebar-card">
+          <h3>Acciones rapidas</h3>
+          <div class="cert-sidebar-actions">
+            <button id="cert-enviar-pendientes" class="cert-btn cert-btn-sidebar" disabled>
+              <span class="material-symbols-outlined">outgoing_mail</span> Enviar pendientes
+            </button>
+            <button id="cert-descargar-todos" class="cert-btn cert-btn-sidebar">
+              <span class="material-symbols-outlined">download</span> Descargar seleccionados
+            </button>
+            <button id="cert-generar-qr" class="cert-btn cert-btn-sidebar" onclick="document.querySelector('[data-section=contingencia]')?.click()">
+              <span class="material-symbols-outlined">qr_code_2</span> Generar QR contingencia
+            </button>
+            <button id="cert-reporte" class="cert-btn cert-btn-sidebar">
+              <span class="material-symbols-outlined">summarize</span> Reporte de certificados
+            </button>
+          </div>
+        </div>
+
+        <!-- Actividad reciente -->
+        <div class="cert-sidebar-card">
+          <h3>Actividad reciente</h3>
+          <div id="cert-activity" class="cert-activity">
+            <p class="cert-activity-empty">Cargando actividad...</p>
+          </div>
+        </div>
+
+        <!-- Resumen por eleccion -->
+        <div class="cert-sidebar-card">
+          <h3>Resumen por eleccion</h3>
+          <div class="cert-donut-wrap">
+            <div id="cert-donut-chart"></div>
+            <div id="cert-donut-legend" class="cert-donut-legend"></div>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </div>
+
+  <!-- TAB: ACTAS DE GANADORES -->
+  <div class="cert-tab-content" id="tab-actas">
+    <div class="cert-actas-grid">
+      <div class="cert-actas-card">
+        <span class="cert-actas-icon"><span class="material-symbols-outlined">trophy</span></span>
+        <div>
+          <h3>Generar acta de ganadores</h3>
+          <p>Documento oficial que certifica los resultados finales de una eleccion con los candidatos ganadores.</p>
+        </div>
+      </div>
+      <div class="cert-actas-form">
+        <select id="acta-eleccion" class="cert-select" style="width:100%">
+          <option value="">Seleccionar eleccion finalizada...</option>
+        </select>
+        <button id="acta-generar" class="cert-btn cert-btn-primary" disabled>
+          <span class="material-symbols-outlined">description</span> Generar acta PDF
+        </button>
+      </div>
+      <div id="acta-resultado" class="cert-actas-resultado" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- TAB: CARTAS DE DESIGNACION -->
+  <div class="cert-tab-content" id="tab-cartas">
+    <div class="cert-cartas-card">
+      <span class="cert-actas-icon"><span class="material-symbols-outlined">assignment_ind</span></span>
+      <div>
+        <h3>Cartas de designacion de jurados</h3>
+        <p>Notificacion oficial a docentes y administrativos designados como jurados de votacion.</p>
+      </div>
+    </div>
+    <div class="cert-cartas-form">
+      <select id="cartas-eleccion" class="cert-select" style="width:100%">
+        <option value="">Seleccionar eleccion...</option>
+      </select>
+      <button id="cartas-generar" class="cert-btn cert-btn-sidebar" disabled>
+        <span class="material-symbols-outlined">description</span> Ver jurados designados
+      </button>
+      <button id="cartas-notificar" class="cert-btn cert-btn-primary" disabled>
+        <span class="material-symbols-outlined">mail</span> Notificar todos
+      </button>
+    </div>
+    <div id="cartas-tabla-wrap" class="cert-table-wrap" style="display:none">
+      <table>
+        <thead>
+          <tr><th>Jurado</th><th>Mesa</th><th>Cargo</th><th>Sede</th><th>Correo</th><th>Notificado</th><th>Accion</th></tr>
+        </thead>
+        <tbody id="cartas-tabla"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB: PLANTILLAS -->
+  <div class="cert-tab-content" id="tab-plantillas">
+    <div class="cert-plantillas-grid">
+      <div class="cert-plantilla-card">
+        <h4>Certificado de voto</h4>
+        <p>PDF enviado al correo del votante despues de ejercer el sufragio. Incluye codigo de verificacion y datos de la jornada.</p>
+        <span class="cert-plantilla-badge">En produccion</span>
+      </div>
+      <div class="cert-plantilla-card">
+        <h4>Carta de designacion</h4>
+        <p>Notificacion a jurados con fecha, hora, mesa asignada, cargo y sede. Incluye instrucciones para la jornada.</p>
+        <span class="cert-plantilla-badge" style="background:#fef3c7;color:#92400e">Pendiente</span>
+      </div>
+      <div class="cert-plantilla-card">
+        <h4>QR de contingencia</h4>
+        <p>Envio de codigo QR como metodo alternativo de identificacion cuando falla la verificacion biometrica.</p>
+        <span class="cert-plantilla-badge">En produccion</span>
+      </div>
+      <div class="cert-plantilla-card">
+        <h4>Acta de ganadores</h4>
+        <p>Documento oficial post-electoral con resultados, distribucion de votos y candidatos electos.</p>
+        <span class="cert-plantilla-badge" style="background:#fef3c7;color:#92400e">Pendiente</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- TAB: VERIFICACION PUBLICA -->
+  <div class="cert-tab-content" id="tab-verificacion">
+    <div class="cert-verificacion-card">
+      <span class="cert-verificacion-icon"><span class="material-symbols-outlined">qr_code_scanner</span></span>
+      <h3>Verificacion publica de certificados</h3>
+      <p>Consulte la autenticidad de un certificado electoral ingresando el codigo de verificacion.</p>
+      <div class="cert-verificacion-form">
+        <input type="text" id="verif-codigo" class="cert-search-input" placeholder="Codigo de certificado (ABIS-XXXXXXXXXXXX)" style="max-width:420px">
+        <button id="verif-buscar" class="cert-btn cert-btn-primary">
+          <span class="material-symbols-outlined">search</span> Verificar
+        </button>
+      </div>
+      <div id="verif-resultado" style="display:none;margin-top:16px"></div>
+    </div>
+  </div>
+</section>
+
+<script src="../../js/certificados.js"></script>

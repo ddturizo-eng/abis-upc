@@ -1,0 +1,55 @@
+<div class="grid grid-cols-12 gap-6">
+    <section class="col-span-7 abis-card overflow-hidden">
+        <div class="px-6 py-4 bg-slate-50 border-b flex items-center justify-between">
+            <h2 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Captura de rostro con OpenCV</h2>
+            <span id="face-status" class="text-xs font-bold text-amber-700">Cámara inactiva</span>
+        </div>
+        <div class="p-6">
+            <div id="face-zone" class="relative bg-[#E8EAED] border border-[#C8CBD2] rounded-[10px] overflow-hidden min-h-[420px] flex items-center justify-center">
+                <video id="face-video" class="hidden w-full h-full object-cover" autoplay playsinline></video>
+                <img id="face-preview" class="hidden max-h-[420px] object-contain" alt="Rostro recortado">
+                <div id="face-box" class="face-box hidden"></div>
+                <div id="face-placeholder" class="flex flex-col items-center text-center px-4">
+                    <span class="material-symbols-outlined text-[52px] text-[#6B7280] opacity-60 mb-4">face</span>
+                    <p class="text-sm text-[#6B7280]">Abra la cámara para detectar el rostro</p>
+                </div>
+            </div>
+            <canvas id="face-canvas" class="hidden"></canvas>
+            <div id="face-message" class="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-700">
+                No se detecta rostro, ajuste la posición.
+            </div>
+            <div class="mt-5 flex gap-3">
+                <button id="btn-face-open" class="flex-1 bg-[#1a3a2a] text-white py-3 rounded-lg text-sm font-bold flex items-center justify-center gap-2">
+                    <span class="material-symbols-outlined">photo_camera</span>
+                    Abrir cámara
+                </button>
+                <button id="btn-face-capture" class="flex-1 bg-[#004D33] text-white py-3 rounded-lg text-sm font-bold opacity-50 cursor-not-allowed" disabled>
+                    Capturar rostro
+                </button>
+                <button id="btn-face-repeat" class="hidden flex-1 border border-[#004D33] text-[#004D33] py-3 rounded-lg text-sm font-bold">
+                    Repetir
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <aside class="col-span-5 abis-card p-6 flex flex-col gap-4">
+        <div>
+            <p class="text-[11px] font-bold uppercase tracking-widest text-slate-400">Votante</p>
+            <h3 id="face-voter-name" class="text-xl font-bold text-[#004D33] mt-2">--</h3>
+            <p id="face-voter-id" class="text-sm text-slate-500">ID: --</p>
+        </div>
+        <div class="rounded-lg bg-slate-50 border border-slate-200 p-4 text-sm text-slate-600">
+            El sistema guarda únicamente el recorte del rostro detectado, con margen de encuadre para revisión visual.
+        </div>
+        <div id="face-error" class="hidden rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600"></div>
+        <div class="mt-auto flex flex-col gap-3">
+            <button id="btn-face-continue" class="bg-[#4CAF7D] text-white font-bold py-4 rounded-lg opacity-50 cursor-not-allowed" disabled>
+                Continuar a huella dactilar
+            </button>
+            <button id="btn-face-back" class="border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg">
+                Volver al pre-registro
+            </button>
+        </div>
+    </aside>
+</div>

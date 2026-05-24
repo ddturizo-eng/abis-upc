@@ -1,0 +1,173 @@
+<section class="admin-section">
+  <div class="grid gap-5">
+    <div class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+      <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
+        <div>
+          <p class="dashboard-label">Jornada electoral</p>
+          <h1 class="mt-1 text-2xl font-extrabold text-[#075521]">Monitoreo de votacion</h1>
+          <p class="mt-1 max-w-3xl text-sm text-[#5f6f67]">Resultados agregados sin cruzar candidatos con identidad, puesto o ciudad. La participacion territorial se muestra separada para preservar el secreto del sufragio.</p>
+        </div>
+        <div class="flex flex-col gap-3 lg:flex-row lg:items-end">
+          <label class="grid gap-1">
+            <span class="text-xs font-bold uppercase tracking-wide text-[#6b7280]">Eleccion</span>
+            <span class="relative block">
+              <i class="ti ti-calendar-event pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-lg text-[#075521]"></i>
+              <select id="jornada-eleccion" class="h-11 min-w-[280px] rounded-md border border-[#dbe5df] bg-white pl-10 pr-3 text-sm font-bold text-[#1f2925]"></select>
+            </span>
+          </label>
+          <div id="jornada-status" class="flex h-11 items-center gap-2 rounded-md border border-[#e8ede9] bg-[#f7faf8] px-4 text-sm font-bold text-[#1f2925]">
+            <span id="jornada-status-dot" class="h-2.5 w-2.5 rounded-full bg-[#d1d5db]"></span>
+            <span id="jornada-status-text">Sin estado</span>
+          </div>
+          <button type="button" id="jornada-refresh" class="inline-flex h-11 items-center justify-center gap-2 rounded-md border border-[#dbe5df] bg-white px-4 text-sm font-extrabold text-[#075521]">
+            <i class="ti ti-refresh text-lg"></i>
+            Actualizar
+          </button>
+          <button type="button" id="btn-open-kiosk" class="inline-flex h-11 items-center justify-center gap-2 rounded-md bg-[#075521] px-4 text-sm font-extrabold text-white">
+            <i class="ti ti-lock text-lg"></i>
+            Abrir modo votacion
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div id="jornada-message" class="hidden rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm font-bold text-amber-700"></div>
+
+    <div class="grid gap-4 rounded-xl border border-[#e8ede9] bg-white p-4 shadow-[0_1px_4px_rgba(0,0,0,0.06)] md:grid-cols-5">
+      <label class="grid gap-1">
+        <span class="text-xs font-bold uppercase tracking-wide text-[#6b7280]">Cargo</span>
+        <select id="jornada-filtro-cargo" class="h-10 rounded-md border border-[#dbe5df] bg-white px-3 text-sm font-bold text-[#1f2925]">
+          <option value="">Todos los cargos</option>
+        </select>
+      </label>
+      <label class="grid gap-1">
+        <span class="text-xs font-bold uppercase tracking-wide text-[#6b7280]">Ciudad</span>
+        <select id="jornada-filtro-ciudad" class="h-10 rounded-md border border-[#dbe5df] bg-white px-3 text-sm font-bold text-[#1f2925]">
+          <option value="">Todas las ciudades</option>
+        </select>
+      </label>
+      <label class="grid gap-1">
+        <span class="text-xs font-bold uppercase tracking-wide text-[#6b7280]">Puesto</span>
+        <select id="jornada-filtro-puesto" class="h-10 rounded-md border border-[#dbe5df] bg-white px-3 text-sm font-bold text-[#1f2925]">
+          <option value="">Todos los puestos</option>
+        </select>
+      </label>
+      <label class="grid gap-1">
+        <span class="text-xs font-bold uppercase tracking-wide text-[#6b7280]">Jornada</span>
+        <select id="jornada-filtro-rol" class="h-10 rounded-md border border-[#dbe5df] bg-white px-3 text-sm font-bold text-[#1f2925]">
+          <option value="">Todos</option>
+        </select>
+      </label>
+      <button type="button" id="jornada-clear-filters" class="mt-5 inline-flex h-10 items-center justify-center gap-2 rounded-md border border-[#dbe5df] bg-[#f7faf8] px-4 text-sm font-extrabold text-[#075521] md:mt-auto">
+        <i class="ti ti-filter-cog text-lg"></i>
+        Filtros
+      </button>
+    </div>
+
+    <div class="grid gap-4 md:grid-cols-2 xl:grid-cols-5" id="jornada-kpis"></div>
+
+    <div class="grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.6fr)_minmax(220px,0.4fr)]">
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div class="mb-4 flex items-start justify-between gap-3">
+          <div>
+            <p class="dashboard-label">Resultados generales</p>
+            <h2 class="dashboard-title">Ranking de candidatos</h2>
+          </div>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full min-w-[620px] text-left">
+            <thead>
+              <tr class="border-b border-[#e8ede9] text-xs font-extrabold uppercase tracking-wide text-[#6b7280]">
+                <th class="py-3 pr-3">#</th>
+                <th class="py-3 pr-3">Candidato</th>
+                <th class="py-3 pr-3 text-right">Votos</th>
+                <th class="py-3 pr-3 text-right">%</th>
+                <th class="py-3 text-right">Diferencia vs lider</th>
+              </tr>
+            </thead>
+            <tbody id="jornada-resultados"></tbody>
+          </table>
+        </div>
+        <button type="button" id="jornada-ver-todos" class="mt-4 inline-flex items-center gap-2 text-sm font-extrabold text-[#075521]">
+          Ver todos los candidatos <i class="ti ti-arrow-right text-lg"></i>
+        </button>
+      </article>
+
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <p class="dashboard-label">Distribucion de votos</p>
+        <h2 class="dashboard-title mt-1">Porcentaje por candidato</h2>
+        <div class="mt-4 flex justify-center">
+          <canvas id="chartDistribucion" width="280" height="280"></canvas>
+        </div>
+        <div id="jornada-distribucion-legend" class="mt-4 grid gap-2"></div>
+      </article>
+
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div id="jornada-stability-card" class="rounded-lg border border-[#b7e4c7] bg-[#e8f5e9] p-4 text-sm font-extrabold text-[#075521]">
+          Jornada estable
+          <span class="mt-1 block text-xs font-bold text-[#1f2925]">Sin incidentes relevantes</span>
+        </div>
+        <div id="jornada-estado-list" class="mt-4 grid gap-3 text-sm"></div>
+      </article>
+    </div>
+
+    <div class="grid gap-5 xl:grid-cols-4">
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <div class="flex items-start justify-between gap-3">
+          <div>
+            <p class="dashboard-label">Votos por puesto</p>
+            <h2 class="dashboard-title mt-1">Puestos</h2>
+          </div>
+          <select id="jornada-filtro-cargo-puestos" class="h-9 max-w-[150px] rounded-md border border-[#dbe5df] bg-white px-2 text-xs font-bold text-[#1f2925]">
+            <option value="">Todos</option>
+          </select>
+        </div>
+        <div class="mt-4 h-[260px]">
+          <canvas id="chartPuestos"></canvas>
+        </div>
+        <div id="jornada-puestos" class="mt-4 grid gap-2"></div>
+      </article>
+
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <p class="dashboard-label">Participacion por ciudad</p>
+        <h2 class="dashboard-title mt-1">Ciudades</h2>
+        <div class="mt-4 h-[220px]">
+          <canvas id="chartCiudades"></canvas>
+        </div>
+        <div id="jornada-ciudades" class="mt-4 grid gap-2"></div>
+      </article>
+
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <p class="dashboard-label">Tendencia de votos</p>
+        <h2 class="dashboard-title mt-1">Votos acumulados por minuto</h2>
+        <div class="mt-4 h-[260px]">
+          <canvas id="chartTendencia"></canvas>
+        </div>
+      </article>
+
+      <article class="rounded-xl border border-[#e8ede9] bg-white p-5 shadow-[0_1px_4px_rgba(0,0,0,0.06)]">
+        <p class="dashboard-label">Mapa de participacion</p>
+        <h2 class="dashboard-title mt-1">Indicadores por puesto</h2>
+        <div class="mt-4 overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-[#e8ede9] text-xs font-extrabold uppercase tracking-wide text-[#6b7280]">
+                <th class="py-3 pr-2">Puesto</th>
+                <th class="py-3 pr-2">Participacion</th>
+                <th class="py-3">Indicador</th>
+              </tr>
+            </thead>
+            <tbody id="jornada-mapa-puestos"></tbody>
+          </table>
+        </div>
+      </article>
+    </div>
+
+    <div class="rounded-xl border border-[#e8ede9] bg-white px-4 py-3 text-xs font-semibold text-[#6b7280]">
+      <i class="ti ti-info-circle mr-1 text-[#075521]"></i>
+      La informacion se actualiza en tiempo real. Ultima actualizacion: <span id="jornada-footer-updated">--</span>
+    </div>
+  </div>
+</section>
+
+<script src="../../js/jornada-admin.js"></script>

@@ -1,29 +1,65 @@
+# ABIS-UPC | .gitignore
+# Ningun archivo o carpeta con informacion sensible o de configuracion debe
+# ser versionado o subido al repositorio.
 
-# ABIS-UPC | .gitignore ( ningun archivo o carpeta con información sensible o de configuración debe
- #ser versionado  o subido al repositorio )
 
-
-# SECRETS Y SEGURIDAD — NUNCA AL REPO
+# ─── SECRETS Y SEGURIDAD (NUNCA AL REPO) ───────────────────────────────────
 .env
 *.jks
 *.p12
 *.keystore
 *.pfx
+*.key
+*.pem
+*.cert
 
-# FOTOS BIOMÉTRICAS — DATO SENSIBLE (Ley 1581/2012)
+# ─── IMAGENES Y RECURSOS PERSONALES (IGNORAR TOTALMENTE) ─────────────────────
+# Bloqueo total de imágenes para evitar subir recursos personales sensibles
+**/*.png
+**/*.jpg
+**/*.jpeg
+**/*.gif
+**/*.bmp
+**/*.tiff
+**/*.webp
+abis-backend/src/main/resources/assets/
+abis-backend/src/main/resources/images/
+abis-ocr/images/
+
+# ─── FOTOS BIOMETRICAS (DATO SENSIBLE - Ley 1581/2012) ─────────────────────
 static/fotos/
 abis-biometric/static/fotos/
 abis-backend/src/main/resources/static/fotos/
+abis-backend/src/main/resources/assets/fotos/
 
-# ENTORNOS PYTHON
+
+# ─── NATIVE SERVICE C# (.NET Framework 4.8) ────────────────────────────────
+abis-native/**/bin/
+abis-native/**/obj/
+abis-native/**/*.exe
+abis-native/**/*.pdb
+abis-native/**/*.config
+
+
+# ─── OCR SERVICE (imagenes de datos sensibles) ──────────────────────────────
+abis-ocr/images/DOCUMENT-ABIS/
+
+
+# ─── ENTORNOS PYTHON ────────────────────────────────────────────────────────
 venv/
 env/
 .venv/
+abis-biometric/venv/
 __pycache__/
 *.pyc
 *.pyo
+.ruff_cache/
+.mypy_cache/
+.pytest_cache/
+.coverage
 
-# COMPILADOS JAVA (MAVEN)
+
+# ─── COMPILADOS JAVA (MAVEN) ────────────────────────────────────────────────
 target/
 *.class
 *.jar
@@ -31,27 +67,50 @@ pom.xml.tag
 pom.xml.releaseBackup
 pom.xml.versionsBackup
 release.properties
+abis-backend/.mvn/
+abis-biometric/.mvn/
 
-# LOGS
+
+# ─── LOGS ────────────────────────────────────────────────────────────────────
 *.log
 logs/
+abis-email-service/logs/
+abis-email-service/temp/
+abis-email-service/node_modules/
+abis-email-service/.env
 
-# IDEs
+
+# ─── IDEs ────────────────────────────────────────────────────────────────────
 .idea/
+.vs/
 *.iml
 .vscode/
 .settings/
 .classpath
 .project
 *.swp
+*~
 
-# HERRAMIENTAS PYTHON
-.ruff_cache/
-.mypy_cache/
-.pytest_cache/
-.coverage
 
-# SISTEMA OPERATIVO
+# ─── SISTEMA OPERATIVO ──────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
 desktop.ini
+
+
+# ─── BASE DE DATOS (contiene datos sensibles de conexión y credenciales) ───────
+abis-database/
+*.db
+*.sqlite
+*.sql
+
+# ─── DOCUMENTOS (solo ignorar temporales, no los .md) ──────────────────────
+docs/**/*.aux
+docs/**/*.log
+docs/**/*.out
+docs/**/*.toc
+docs/**/*.synctex.gz
+
+
+# ─── DOCUMENTACION PRIVADA ───────────────────────────────────────────────
+AGENTS.md

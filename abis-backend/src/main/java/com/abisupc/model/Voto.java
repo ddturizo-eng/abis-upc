@@ -3,19 +3,10 @@ package com.abisupc.model;
 import java.sql.Timestamp;
 
 public class Voto extends Entity {
-    private Long idRol;
     private Long idEleccion;
     private Long idCandidato;
     private Timestamp fechaHora;
     private double pesoVotoAplicado;
-
-    public Long getIdRol() {
-        return idRol;
-    }
-
-    public void setIdRol(Long idRol) {
-        this.idRol = idRol;
-    }
 
     public Long getIdEleccion() {
         return idEleccion;

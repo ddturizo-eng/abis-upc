@@ -1,22 +1,55 @@
 package com.abisupc.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.sql.Date;
 import java.sql.Timestamp;
 
 public class Votante extends Entity {
 
+    @JsonProperty("identificacion")
     private String identificacion;
-    private String plantillaBiometrica;
+
+    @JsonProperty("correo")
     private String correo;
+
+    @JsonProperty("primer_nombre")
     private String primerNombre;
+
+    @JsonProperty("segundo_nombre")
     private String segundoNombre;
+
+    @JsonProperty("primer_apellido")
     private String primerApellido;
+
+    @JsonProperty("segundo_apellido")
     private String segundoApellido;
+
+    @JsonProperty("estado_voto")
     private String estadoVoto;
+
+    @JsonProperty("foto_url")
     private String fotoUrl;
+
+    @JsonProperty("fecha_consentimiento")
     private Timestamp fechaConsentimiento;
-    private String hashIntegridadBiometrica;
+
+    @JsonProperty("rol_id")
     private Long idRol;
+
+    @JsonProperty("puesto_id")
     private Long idPuesto;
+
+    @JsonProperty("fecha_nacimiento")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
+    private Date fechaNacimiento;
+
+    @JsonProperty("qr_cedula")
+    private String qrCedula;
+
+    @JsonProperty("biometrico")
+    private boolean biometrico;
 
     public String getIdentificacion() {
         return identificacion;
@@ -24,14 +57,6 @@ public class Votante extends Entity {
 
     public void setIdentificacion(String identificacion) {
         this.identificacion = identificacion;
-    }
-
-    public String getPlantillaBiometrica() {
-        return plantillaBiometrica;
-    }
-
-    public void setPlantillaBiometrica(String plantillaBiometrica) {
-        this.plantillaBiometrica = plantillaBiometrica;
     }
 
     public String getCorreo() {
@@ -98,14 +123,6 @@ public class Votante extends Entity {
         this.fechaConsentimiento = fechaConsentimiento;
     }
 
-    public String getHashIntegridadBiometrica() {
-        return hashIntegridadBiometrica;
-    }
-
-    public void setHashIntegridadBiometrica(String hashIntegridadBiometrica) {
-        this.hashIntegridadBiometrica = hashIntegridadBiometrica;
-    }
-
     public Long getIdRol() {
         return idRol;
     }
@@ -120,5 +137,29 @@ public class Votante extends Entity {
 
     public void setIdPuesto(Long idPuesto) {
         this.idPuesto = idPuesto;
+    }
+
+    public Date getFechaNacimiento() {
+        return fechaNacimiento;
+    }
+
+    public void setFechaNacimiento(Date fechaNacimiento) {
+        this.fechaNacimiento = fechaNacimiento;
+    }
+
+    public String getQrCedula() {
+        return qrCedula;
+    }
+
+    public void setQrCedula(String qrCedula) {
+        this.qrCedula = qrCedula;
+    }
+
+    public boolean isBiometrico() {
+        return biometrico;
+    }
+
+    public void setBiometrico(boolean biometrico) {
+        this.biometrico = biometrico;
     }
 }
