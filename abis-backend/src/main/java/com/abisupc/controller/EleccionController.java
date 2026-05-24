@@ -248,6 +248,56 @@ public class EleccionController {
         }
     }
 
+    public static void elegibilidad(Context ctx) {
+        try {
+            Long idEleccion = Long.parseLong(ctx.pathParam("id"));
+            String sql = """
+                    SELECT r.id_rol, r.nombre, er.peso_voto,
+                           COUNT(v.identificacion) AS total,
+                           COUNT(CASE WHEN UPPER(v.estado_voto) = 'PENDIENTE' THEN 1 END) AS pendientes,
+                           COUNT(CASE WHEN UPPER(v.estado_voto) = 'EJERCIDO' THEN 1 END) AS ejercido
+                    FROM Eleccion_roles er
+                    JOIN Roles r ON er.id_rol = r.id_rol
+                    LEFT JOIN Votantes v ON v.id_rol = er.id_rol
+                    WHERE er.id_eleccion = ?
+                    GROUP BY r.id_rol, r.nombre, er.peso_voto
+                    ORDER BY r.id_rol
+                    """;
+            List<Map<String, Object>> roles = new ArrayList<>();
+            long totalPendientes = 0;
+            long totalEjercido = 0;
+            try (Connection conn = AppConfig.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, idEleccion);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, Object> rol = new LinkedHashMap<>();
+                        rol.put("idRol", rs.getLong("id_rol"));
+                        rol.put("nombre", rs.getString("nombre"));
+                        rol.put("pesoVoto", rs.getDouble("peso_voto"));
+                        rol.put("total", rs.getLong("total"));
+                        rol.put("pendientes", rs.getLong("pendientes"));
+                        rol.put("ejercido", rs.getLong("ejercido"));
+                        roles.add(rol);
+                        totalPendientes += rs.getLong("pendientes");
+                        totalEjercido += rs.getLong("ejercido");
+                    }
+                }
+            }
+            Map<String, Object> response = new LinkedHashMap<>();
+            response.put("idEleccion", idEleccion);
+            response.put("roles", roles);
+            response.put("totalElegibles", roles.stream().mapToLong(r -> (Long) r.get("total")).sum());
+            response.put("totalPendientes", totalPendientes);
+            response.put("totalEjercido", totalEjercido);
+            ctx.json(ApiResponse.success(response));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(ApiResponse.error("ID de eleccion invalido"));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     private static Eleccion parseEleccion(JsonNode body) {
         String nombre = text(body, "nombre");
         String fechaHoraInicio = text(body, "fechaHoraInicio");
