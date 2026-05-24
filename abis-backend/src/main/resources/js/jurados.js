@@ -5,7 +5,7 @@
       roles: ['DOCENTE', 'ADMINISTRATIVO'],
       estados: ['PENDIENTE'],
       excluirCandidatos: true,
-      requerirBiometrico: true,
+      requerirBiometrico: false,
       soloNoVotaron: false
     },
     distribucionConfig: {
