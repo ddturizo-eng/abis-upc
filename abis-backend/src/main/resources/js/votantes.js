@@ -408,7 +408,7 @@
       closeDrawer();
       await loadVoters();
     } catch (error) {
-      alert('Error al inhabilitar: ' + (error.message || 'Error desconocido'));
+      showToast('Error al inhabilitar: ' + (error.message || 'Error desconocido'), 'error');
     }
   }
 
@@ -423,7 +423,7 @@
       closeDrawer();
       await loadVoters();
     } catch (error) {
-      alert('Error al habilitar: ' + (error.message || 'Error desconocido'));
+      showToast('Error al habilitar: ' + (error.message || 'Error desconocido'), 'error');
     }
   }
 
@@ -728,7 +728,7 @@
         photoDiv.innerHTML = `<img src="${escapeHtml(newUrl)}" alt="Foto actualizada" loading="lazy">`;
       }
     } catch (e) {
-      alert('No fue posible subir la foto: ' + (e.message || 'Error de conexion'));
+      showToast('No fue posible subir la foto: ' + (e.message || 'Error de conexion'), 'error');
     } finally {
       if (label) label.style.opacity = '1';
     }
@@ -846,7 +846,7 @@
   });
   document.getElementById('voters-export').addEventListener('click', exportCsv);
   document.getElementById('voters-import').addEventListener('click', () => document.getElementById('voters-import-input').click());
-  document.getElementById('voters-import-input').addEventListener('change', () => alert('Importacion masiva pendiente de endpoint backend.'));
+  document.getElementById('voters-import-input').addEventListener('change', () => showToast('Importacion masiva pendiente de endpoint backend.', 'warning'));
   document.getElementById('voters-new').addEventListener('click', () => { window.location.href = '/pages/registro/index.html'; });
   document.getElementById('voters-audit-button').addEventListener('click', async () => {
     await renderAudit(50);

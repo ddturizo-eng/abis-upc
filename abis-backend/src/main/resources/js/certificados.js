@@ -403,8 +403,7 @@
   }
 
   function notificar(mensaje, tipo) {
-    if (typeof mostrarNotificacion === 'function') { mostrarNotificacion(mensaje, tipo); return; }
-    console[tipo === 'error' ? 'error' : 'log'](mensaje);
+    window.showToast(mensaje, tipo);
   }
 
   function headers() {

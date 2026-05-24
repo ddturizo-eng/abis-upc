@@ -342,7 +342,7 @@
       showScreen('success');
       window.setTimeout(volverInicio, 4000);
     } catch (error) {
-      alert('Error al registrar el voto: ' + (error.message || 'Error desconocido'));
+      showToast('Error al registrar el voto: ' + (error.message || 'Error desconocido'), 'error');
       $('btn-vote-submit').disabled = false;
       $('btn-vote-submit').innerHTML = 'Confirmar voto';
     }

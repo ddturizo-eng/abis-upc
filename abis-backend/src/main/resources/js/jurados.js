@@ -867,11 +867,7 @@
   }
 
   function mostrarNotificacion(mensaje, tipo = 'success') {
-    const toast = document.createElement('div');
-    toast.className = `jurados-toast ${tipo}`;
-    toast.textContent = mensaje;
-    $('juradosToasts').appendChild(toast);
-    setTimeout(() => toast.remove(), 3000);
+    window.showToast(mensaje, tipo);
   }
 
   function resetMetricas() {
