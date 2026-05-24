@@ -1,5 +1,6 @@
 package com.abisupc.model;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.sql.Date;
@@ -41,6 +42,7 @@ public class Votante extends Entity {
     private Long idPuesto;
 
     @JsonProperty("fecha_nacimiento")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private Date fechaNacimiento;
 
     @JsonProperty("qr_cedula")
