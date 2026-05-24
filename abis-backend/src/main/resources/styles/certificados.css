@@ -1,0 +1,120 @@
+/* CERTIFICADOS - Modulo completo */
+.cert-module { display:flex; flex-direction:column; gap:0; min-height:70vh }
+.cert-module * { box-sizing:border-box }
+
+/* TABS */
+.cert-tabs { display:flex; gap:0; border-bottom:2px solid #e5e7eb; margin-bottom:0; overflow-x:auto }
+.cert-tab { align-items:center; background:none; border:none; border-bottom:2px solid transparent; color:#6b7280; cursor:pointer; display:flex; font-family:inherit; font-size:0.82rem; font-weight:600; gap:6px; margin-bottom:-2px; padding:12px 18px; transition:all .15s ease; white-space:nowrap }
+.cert-tab:hover { color:#1a3a2a; background:#f8faf9 }
+.cert-tab.active { color:#158759; border-bottom-color:#158759 }
+.cert-tab .material-symbols-outlined { font-size:18px }
+
+.cert-tab-content { display:none }
+.cert-tab-content.active { display:block }
+
+/* HEADER */
+.cert-header { align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; gap:10px; margin-bottom:16px; padding:14px 16px }
+.cert-select { background:#fff; border:1px solid #d1d5db; border-radius:8px; color:#1a3a2a; font-family:inherit; font-size:0.84rem; font-weight:600; min-height:40px; min-width:260px; outline:none; padding:0 12px }
+.cert-select:focus { border-color:#158759; box-shadow:0 0 0 3px rgba(21,135,89,0.12) }
+.cert-search-input { background:#fff; border:1px solid #d1d5db; border-radius:8px; color:#1a3a2a; font-family:inherit; font-size:0.82rem; min-height:40px; outline:none; padding:0 12px; width:100% }
+.cert-search-input:focus { border-color:#158759 }
+
+/* BUTTONS */
+.cert-btn { align-items:center; border:none; border-radius:8px; cursor:pointer; display:inline-flex; font-family:inherit; font-size:0.82rem; font-weight:600; gap:6px; min-height:40px; padding:0 16px; transition:all .15s ease; white-space:nowrap }
+.cert-btn:disabled { opacity:0.45; cursor:not-allowed }
+.cert-btn-primary { background:#158759; color:#fff }
+.cert-btn-primary:hover:not(:disabled) { background:#0f6644 }
+.cert-btn-sidebar { background:#f8faf9; border:1px solid #e5e7eb; color:#1a3a2a; justify-content:flex-start; width:100% }
+.cert-btn-sidebar:hover:not(:disabled) { background:#edfaf3; border-color:#158759 }
+.cert-btn-ghost { background:transparent; border:1px solid #e5e7eb; color:#6b7280 }
+.cert-btn-ghost:hover { border-color:#158759; color:#158759 }
+
+/* KPIs */
+.cert-kpis { display:grid; gap:12px; grid-template-columns:repeat(4,1fr); margin-bottom:16px }
+.cert-kpi { align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; gap:12px; padding:14px }
+.cert-kpi-icon { align-items:center; border-radius:10px; display:flex; height:40px; justify-content:center; width:40px }
+.cert-kpi-icon .material-symbols-outlined { font-size:20px }
+.cert-kpi p { color:#6b7280; font-size:0.68rem; font-weight:700; letter-spacing:0.05em; text-transform:uppercase }
+.cert-kpi strong { color:#1a3a2a; font-size:1.35rem; font-weight:800 }
+
+/* GRID layout */
+.cert-grid { display:grid; gap:16px; grid-template-columns:1fr 340px }
+.cert-main { display:flex; flex-direction:column; gap:16px; min-width:0 }
+
+/* TABLE */
+.cert-table-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden }
+.cert-table-header { align-items:center; border-bottom:1px solid #e5e7eb; display:flex; gap:12px; justify-content:space-between; padding:14px 16px }
+.cert-table-header h2 { color:#1a3a2a; font-size:0.95rem; font-weight:700 }
+.cert-table-header p { color:#9ca3af; font-size:0.72rem; margin-top:2px }
+.cert-table-wrap { max-height:60vh; overflow:auto }
+.cert-table-wrap table { border-collapse:collapse; font-size:0.8rem; width:100% }
+.cert-table-wrap th { background:#f8faf9; border-bottom:2px solid #e5e7eb; color:#6b7280; font-size:0.68rem; font-weight:700; letter-spacing:0.04em; padding:9px 12px; position:sticky; text-align:left; text-transform:uppercase; top:0; white-space:nowrap }
+.cert-table-wrap td { border-bottom:1px solid #f3f4f6; color:#374151; padding:10px 12px; vertical-align:top }
+.cert-table-wrap tr:hover td { background:#f8faf9 }
+.cert-empty { color:#9ca3af; padding:32px 12px !important; text-align:center }
+
+.cert-pagination { align-items:center; border-top:1px solid #e5e7eb; color:#6b7280; display:flex; font-size:0.76rem; justify-content:space-between; padding:10px 16px }
+
+/* SIDEBAR */
+.cert-sidebar { display:flex; flex-direction:column; gap:14px; min-width:0 }
+.cert-sidebar-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:14px 16px }
+.cert-sidebar-card h3 { color:#1a3a2a; font-size:0.8rem; font-weight:700; margin-bottom:10px }
+.cert-sidebar-actions { display:flex; flex-direction:column; gap:6px }
+
+/* ACTIVITY */
+.cert-activity { display:flex; flex-direction:column; gap:8px; max-height:200px; overflow-y:auto }
+.cert-activity-item { align-items:flex-start; display:flex; gap:8px; font-size:0.76rem }
+.cert-activity-dot { background:#158759; border-radius:999px; flex-shrink:0; height:8px; margin-top:4px; width:8px }
+.cert-activity-dot.error { background:#dc2626 }
+.cert-activity-dot.warn { background:#f59e0b }
+.cert-activity-text { color:#374151; line-height:1.4 }
+.cert-activity-time { color:#9ca3af; font-size:0.68rem }
+.cert-activity-empty { color:#9ca3af; font-size:0.76rem; text-align:center }
+
+/* DONUT */
+.cert-donut-wrap { display:flex; flex-direction:column; gap:10px }
+.cert-donut-legend { display:flex; flex-direction:column; gap:4px }
+.cert-donut-legend-item { align-items:center; display:flex; font-size:0.74rem; gap:6px }
+.cert-donut-dot { border-radius:4px; flex-shrink:0; height:10px; width:10px }
+.cert-donut-label { color:#374151; flex:1 }
+.cert-donut-count { color:#1a3a2a; font-weight:700 }
+
+/* ESTADO BADGE */
+.cert-badge { border:1px solid; border-radius:999px; display:inline-block; font-size:0.68rem; font-weight:700; padding:2px 9px }
+
+/* ACTAS TAB */
+.cert-actas-grid { display:flex; flex-direction:column; gap:14px }
+.cert-actas-card { align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; gap:14px; padding:16px }
+.cert-actas-icon { align-items:center; background:#edfaf3; border-radius:10px; color:#158759; display:flex; font-size:22px; height:44px; justify-content:center; width:44px }
+.cert-actas-card h3 { color:#1a3a2a; font-size:0.9rem; font-weight:700 }
+.cert-actas-card p { color:#6b7280; font-size:0.76rem; margin-top:2px }
+.cert-actas-form { align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; gap:10px; padding:14px 16px }
+.cert-actas-resultado { background:#fff; border:1px solid #e5e7eb; border-radius:10px; padding:16px }
+
+/* CARTAS TAB */
+.cert-cartas-card { align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; gap:14px; padding:16px }
+.cert-cartas-form { align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; gap:10px; padding:14px 16px; margin-top:14px }
+
+/* PLANTILLAS TAB */
+.cert-plantillas-grid { display:grid; gap:12px; grid-template-columns:repeat(2,1fr) }
+.cert-plantilla-card { background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; flex-direction:column; gap:8px; padding:16px }
+.cert-plantilla-card h4 { color:#1a3a2a; font-size:0.88rem; font-weight:700 }
+.cert-plantilla-card p { color:#6b7280; font-size:0.78rem; line-height:1.4 }
+.cert-plantilla-badge { align-self:flex-start; background:#dcfce7; border-radius:999px; color:#166534; font-size:0.68rem; font-weight:700; padding:2px 10px }
+
+/* VERIFICACION TAB */
+.cert-verificacion-card { align-items:center; background:#fff; border:1px solid #e5e7eb; border-radius:10px; display:flex; flex-direction:column; gap:6px; padding:32px 20px; text-align:center }
+.cert-verificacion-icon { align-items:center; background:#edfaf3; border-radius:16px; color:#158759; display:flex; font-size:30px; height:60px; justify-content:center; margin-bottom:6px; width:60px }
+.cert-verificacion-card h3 { color:#1a3a2a; font-size:1rem; font-weight:700 }
+.cert-verificacion-card p { color:#6b7280; font-size:0.82rem; max-width:420px }
+.cert-verificacion-form { align-items:center; display:flex; gap:8px; margin-top:8px }
+
+/* RESPONSIVE */
+@media (max-width:900px) {
+  .cert-grid { grid-template-columns:1fr }
+  .cert-sidebar { display:none }
+  .cert-kpis { grid-template-columns:repeat(2,1fr) }
+  .cert-plantillas-grid { grid-template-columns:1fr }
+  .cert-tabs { flex-wrap:wrap }
+  .cert-tab { font-size:0.74rem; padding:10px 12px }
+}
