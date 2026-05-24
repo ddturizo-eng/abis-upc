@@ -21,11 +21,22 @@
     4: 'Administrativo'
   };
 
-  const placeNames = {
-    1: 'Puesto 1',
-    2: 'Puesto 2',
-    3: 'Puesto 3'
-  };
+  const placeNames = {};
+
+  async function loadPuestos() {
+    try {
+      const response = await fetch('/api/puestos', { headers });
+      if (response.ok) {
+        const data = await response.json();
+        const puestos = Array.isArray(data) ? data : (data.data || []);
+        puestos.forEach(p => {
+          placeNames[p.id || p.id_puesto] = p.nombre_puesto || p.nombrePuesto || p.nombre || ('Puesto ' + (p.id || p.id_puesto));
+        });
+      }
+    } catch (e) {
+      console.warn('No se pudieron cargar los puestos de votacion:', e);
+    }
+  }
 
   const token = localStorage.getItem('abis_token');
   const headers = token ? { Authorization: 'Bearer ' + token } : {};
@@ -637,6 +648,6 @@
     }
   });
 
-  loadVoters();
+  loadPuestos().then(() => loadVoters());
 })();
 

@@ -1813,5 +1813,70 @@
   position: fixed;
   right: 32px;
   text-transform: uppercase;
-  z-index: 40;
+   z-index: 40;
+}
+
+.elegibilidad-panel {
+  background: #fff;
+  border-radius: 8px;
+  overflow: auto;
+}
+
+.elegibilidad-panel h3 {
+  color: #333;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 12px;
+}
+
+.elegibilidad-panel table {
+  border-collapse: collapse;
+  font-size: 13px;
+  width: 100%;
+}
+
+.elegibilidad-panel th {
+  background: #f8f9fa;
+  border-bottom: 2px solid #dee2e6;
+  color: #495057;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 10px 12px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.elegibilidad-panel td {
+  border-bottom: 1px solid #eee;
+  color: #333;
+  padding: 10px 12px;
+}
+
+.badge-rol {
+  background: #e8f5e9;
+  border-radius: 4px;
+  color: #2e7d32;
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  text-transform: uppercase;
+}
+
+.elegibilidad-totales {
+  background: #f8f9fa;
+  border-radius: 6px;
+  color: #495057;
+  font-size: 13px;
+  margin-top: 14px;
+  padding: 12px 16px;
+}
+
+.elegibilidad-totales strong {
+  color: #1a1a2e;
+  font-weight: 700;
+}
+
+#modal-elegibilidad.hidden {
+  display: none;
 }
