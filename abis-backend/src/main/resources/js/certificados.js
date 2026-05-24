@@ -283,7 +283,7 @@
     const id = els.actaEleccion?.value;
     if (!id) return;
     try {
-      const response = await fetch(`/api/elecciones/${id}/resultados`, { headers: headers() });
+      const response = await fetch(`/api/elecciones/${id}/resultados-directos`, { headers: headers() });
       if (!response.ok) throw new Error('Eleccion sin resultados');
       const data = await response.json();
       const res = data?.data || data;

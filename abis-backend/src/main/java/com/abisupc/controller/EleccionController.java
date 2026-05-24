@@ -198,6 +198,39 @@ public class EleccionController {
         }
     }
 
+    public static void resultadosDirectos(Context ctx) {
+        try {
+            Long idEleccion = Long.parseLong(ctx.pathParam("id"));
+            String sql = "SELECT c.PRIMER_NOMBRE || ' ' || c.PRIMER_APELLIDO AS candidato, " +
+                    "ce.CARGO, COUNT(v.ID_VOTOS) AS votos " +
+                    "FROM Candidatos_eleccion ce " +
+                    "JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
+                    "LEFT JOIN Votos v ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION " +
+                    "WHERE ce.ID_ELECCION = ? " +
+                    "GROUP BY c.PRIMER_NOMBRE, c.PRIMER_APELLIDO, ce.CARGO " +
+                    "ORDER BY votos DESC";
+            List<Map<String, Object>> candidatos = new ArrayList<>();
+            try (Connection conn = AppConfig.getConnection();
+                 PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, idEleccion);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Map<String, Object> c = new LinkedHashMap<>();
+                        c.put("candidato", rs.getString("candidato"));
+                        c.put("cargo", rs.getString("CARGO"));
+                        c.put("votos", rs.getLong("votos"));
+                        candidatos.add(c);
+                    }
+                }
+            }
+            ctx.json(ApiResponse.success(Map.of("candidatos", candidatos)));
+        } catch (NumberFormatException e) {
+            ctx.status(400).json(ApiResponse.error("ID de eleccion invalido"));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     public static void eliminar(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
