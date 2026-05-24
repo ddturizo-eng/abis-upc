@@ -410,9 +410,9 @@ docs/
 
 | Parte | Responsable | Rama |
 |---|---|---|
-| **Parte 1** — Backend Java + BD + PL/SQL | Daniel Florez | `feature/documentacion` |
-| **Parte 2** — Frontend + flujos de usuario + CSS | Mateo Calderon | `feature/documentacion` |
-| **Parte 3** — Microservicios + despliegue + scripts | Jorge Herrera | `feature/documentacion` |
+| **Parte 1** — Backend Java + BD + PL/SQL | Jorge Herrera | `feature/documentacion` |
+| **Parte 2** — Frontend + flujos de usuario + CSS | Daniel Florez | `feature/documentacion` |
+| **Parte 3** — Microservicios + despliegue + scripts | Mateo Calderon | `feature/documentacion` |
 
 ### Parte 1 — Backend Java + Base de Datos
 
