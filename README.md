@@ -85,7 +85,7 @@ El sistema sigue un modelo **hibrido** que combina **Modelo C4** (Contexto, Cont
 | abis-backend | 7000 | Java 21 + Javalin 6 | Backend principal, logica de negocio, REST API, sirve el frontend estatico |
 | abis-biometric | 8001 | Python 3.11 + FastAPI | Enrolamiento y verificacion de huella dactilar |
 | abis-ocr | 8002 | Python 3.11 + FastAPI | OCR de documentos de identidad colombianos |
-| abis-native | 8765 | C# + .NET 4.8 | Interfaz WebSocket con el lector DigitalPersona / AS608 |
+| abis-native | 8765 | C# + .NET 4.8 | Interfaz WebSocket con el lector DigitalPersona |
 | abis-email-service | 8010 | Node.js + Express | Generacion de PDFs (Puppeteer) y envio de correos (Resend) |
 | Oracle XE | 1521 | Oracle Database XE 21c | Base de datos principal |
 
