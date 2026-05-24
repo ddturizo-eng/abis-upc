@@ -22,9 +22,18 @@
   </nav>
 
   <div class="flex shrink-0 items-center gap-3">
-      <button type="button" class="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0d3d2b] shadow-[0_8px_24px_rgba(13,61,43,0.08)] ring-1 ring-[#0d3d2b]/10 transition hover:bg-[#edfaf3]" aria-label="Notificaciones">
+      <button type="button" id="notif-bell" class="relative flex h-10 w-10 items-center justify-center rounded-full bg-white text-[#0d3d2b] shadow-[0_8px_24px_rgba(13,61,43,0.08)] ring-1 ring-[#0d3d2b]/10 transition hover:bg-[#edfaf3]" aria-label="Notificaciones">
         <span class="material-symbols-outlined text-[21px]">notifications</span>
       </button>
+      <div id="notif-dropdown" class="admin-profile-dropdown pointer-events-none absolute right-[60px] top-[calc(100%+12px)] z-[3000] min-w-[260px] -translate-y-2 rounded-2xl bg-white p-2.5 opacity-0 shadow-[var(--shadow-float)] ring-1 ring-[#0d3d2b]/10 transition" role="menu">
+        <div class="flex items-center gap-3 rounded-xl bg-[#f8faf9] p-3">
+          <span class="flex h-[34px] w-[34px] items-center justify-center rounded-full bg-[#edfaf3] text-sm text-[#158759]"><span class="material-symbols-outlined">notifications_off</span></span>
+          <div>
+            <p class="text-sm font-bold text-[#0d3d2b]">Sin notificaciones</p>
+            <p class="mt-0.5 text-xs text-[#0d3d2b]/55">No hay alertas pendientes</p>
+          </div>
+        </div>
+      </div>
 
     <div class="admin-profile-menu relative">
       <button type="button" id="admin-profile-button" class="admin-profile flex h-10 items-center gap-2 rounded-full bg-white pl-1 pr-2 text-[#0d3d2b] shadow-[0_8px_24px_rgba(13,61,43,0.08)] ring-1 ring-[#0d3d2b]/10 transition hover:bg-[#edfaf3]" aria-label="Menu de administrador" aria-expanded="false" aria-controls="admin-profile-dropdown">
