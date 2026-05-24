@@ -1,5 +1,6 @@
 package com.abisupc.controller;
 
+import com.abisupc.config.AppConfig;
 import com.abisupc.model.EstadoVotante;
 import com.abisupc.model.Votante;
 import com.abisupc.repository.EleccionRepository;
@@ -12,9 +13,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.javalin.http.Context;
 
+import java.sql.Connection;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -136,6 +141,14 @@ public class VotanteController {
             String identificacion = ctx.pathParam("id");
             Votante existente = repository.findByIdentificacion(identificacion)
                     .orElseThrow(() -> new IllegalArgumentException("Votante no encontrado"));
+            String oldCorreo = existente.getCorreo();
+            String oldPNombre = existente.getPrimerNombre();
+            String oldSNombre = existente.getSegundoNombre();
+            String oldPApellido = existente.getPrimerApellido();
+            String oldSApellido = existente.getSegundoApellido();
+            Long oldIdRol = existente.getIdRol();
+            Long oldIdPuesto = existente.getIdPuesto();
+            java.sql.Date oldFechaNac = existente.getFechaNacimiento();
             JsonNode body = mapper.readTree(ctx.body());
 
             String primerNombre = text(body, "primer_nombre", "primerNombre");
@@ -154,14 +167,28 @@ public class VotanteController {
             existente.setSegundoApellido(blankToNull(text(body, "segundo_apellido", "segundoApellido")));
             Long idRol = longValue(text(body, "rol_id", "idRol"));
             Long idPuesto = longValue(text(body, "puesto_id", "idPuesto"));
-            if (idRol != null) {
-                existente.setIdRol(idRol);
-            }
-            if (idPuesto != null) {
-                existente.setIdPuesto(idPuesto);
+            String fechaNac = text(body, "fecha_nacimiento", "fechaNacimiento");
+            if (idRol != null) existente.setIdRol(idRol);
+            if (idPuesto != null) existente.setIdPuesto(idPuesto);
+            if (fechaNac != null && !fechaNac.isBlank()) {
+                try { existente.setFechaNacimiento(java.sql.Date.valueOf(fechaNac.trim())); }
+                catch (IllegalArgumentException ignored) { }
             }
 
             repository.update(existente);
+            Long idAdmin = ctx.attribute("idAdmin");
+            registrarCambio(identificacion, idAdmin, "CORREO", oldCorreo, existente.getCorreo());
+            registrarCambio(identificacion, idAdmin, "PRIMER_NOMBRE", oldPNombre, existente.getPrimerNombre());
+            registrarCambio(identificacion, idAdmin, "SEGUNDO_NOMBRE", oldSNombre, existente.getSegundoNombre());
+            registrarCambio(identificacion, idAdmin, "PRIMER_APELLIDO", oldPApellido, existente.getPrimerApellido());
+            registrarCambio(identificacion, idAdmin, "SEGUNDO_APELLIDO", oldSApellido, existente.getSegundoApellido());
+            registrarCambio(identificacion, idAdmin, "ID_ROL", oldIdRol != null ? oldIdRol.toString() : null,
+                    existente.getIdRol() != null ? existente.getIdRol().toString() : null);
+            registrarCambio(identificacion, idAdmin, "ID_PUESTO", oldIdPuesto != null ? oldIdPuesto.toString() : null,
+                    existente.getIdPuesto() != null ? existente.getIdPuesto().toString() : null);
+            registrarCambio(identificacion, idAdmin, "FECHA_NACIMIENTO",
+                    oldFechaNac != null ? oldFechaNac.toString() : null,
+                    existente.getFechaNacimiento() != null ? existente.getFechaNacimiento().toString() : null);
             ctx.json(Map.of("success", true, "votante", existente));
         } catch (IllegalArgumentException e) {
             ctx.status(400).json(Map.of("error", e.getMessage()));
@@ -272,5 +299,28 @@ public class VotanteController {
             ctx.status(error.statusCode()).json(Map.of("error", error.message(), "oraCode", error.oraCode()));
             return true;
         }).orElse(false);
+    }
+
+    private static void registrarCambio(String identificacion, Long idAdmin, String campo, String valorAnt, String valorNuevo) {
+        if (idAdmin == null || campo == null) return;
+        if (Objects.equals(valorAnt, valorNuevo)) return;
+        if (valorAnt == null && valorNuevo == null) return;
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(
+                 "INSERT INTO Auditoria_votantes (ID_AUDITORIA, IDENTIFICACION, ID_ADMIN, CAMPO_MODIFICADO, VALOR_ANTERIOR, VALOR_NUEVO, ACCION, FECHA_HORA) " +
+                 "VALUES (seq_auditoria_votantes.NEXTVAL, ?, ?, ?, ?, ?, 'EDICION_DATOS', SYSDATE)")) {
+            ps.setString(1, identificacion);
+            ps.setLong(2, idAdmin);
+            ps.setString(3, campo);
+            ps.setString(4, truncate(valorAnt, 500));
+            ps.setString(5, truncate(valorNuevo, 500));
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("[VotanteController] Error registrando auditoria: " + e.getMessage());
+        }
+    }
+
+    private static String truncate(String value, int max) {
+        return value == null ? null : value.substring(0, Math.min(value.length(), max));
     }
 }

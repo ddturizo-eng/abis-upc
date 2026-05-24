@@ -898,3 +898,57 @@
     padding: 16px 20px;
   }
 }
+
+/* RE-ENROLAMIENTO MODAL */
+.voter-modal-overlay {
+  align-items: center;
+  background: rgba(0,0,0,0.55);
+  display: none;
+  inset: 0;
+  justify-content: center;
+  padding: 24px;
+  position: fixed;
+  z-index: 3000;
+}
+.voter-modal-panel {
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.35);
+  max-width: 560px;
+  padding: 20px;
+  width: 100%;
+}
+.modal-header {
+  align-items: center;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+}
+.modal-header h2 {
+  color: #333;
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+.modal-close {
+  background: #f1f3f5;
+  border: 1px solid #d1d5db;
+  border-radius: 999px;
+  color: #374151;
+  cursor: pointer;
+  font-size: 18px;
+  height: 32px;
+  width: 32px;
+}
+.re-enroll-video-wrap {
+  border: 2px solid #52b788;
+  border-radius: 8px;
+  box-shadow: 0 0 0 4px rgba(82,183,136,0.15);
+  overflow: hidden;
+}
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
