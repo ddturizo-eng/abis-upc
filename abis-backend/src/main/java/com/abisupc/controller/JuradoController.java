@@ -526,7 +526,7 @@ public class JuradoController {
                 "v.ESTADO_VOTO, v.ID_ROL, v.ID_PUESTO, p.NOMBRE_PUESTO, p.CIUDAD, p.SEDE, " +
                 "CASE WHEN bv.ID_BIOMETRIA IS NULL THEN 0 ELSE 1 END AS TIENE_BIOMETRICO " +
                 "FROM Votantes v JOIN Puestos_votacion p ON p." + puestoId + " = v.ID_PUESTO " +
-                "LEFT JOIN Biometria_votantes bv ON bv.IDENTIFICACION = v.IDENTIFICACION AND bv.ACTIVO = 'S' ";
+                "LEFT JOIN Biometria_votantes bv ON bv.IDENTIFICACION = v.IDENTIFICACION AND bv.ACTIVO = 'S' ");
         List<Object> params = new ArrayList<>();
         if (idEleccion != null && idEleccion > 0) {
             sql.append("INNER JOIN Eleccion_roles er ON er.id_rol = v.id_rol AND er.id_eleccion = ? ");
