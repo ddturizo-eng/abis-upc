@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="abis-backend/src/main/resources/assets/PRESENTACION GIT-HUB.png" alt="ABIS-UPC" width="800">
+  <img src="abis-backend/src/main/resources/assets/PRESENTACION-GIT-HUB.png" alt="ABIS-UPC" width="800">
 </p>
 
 <p align="center">

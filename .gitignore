@@ -26,6 +26,12 @@ abis-backend/src/main/resources/assets/
 abis-backend/src/main/resources/images/
 abis-ocr/images/
 
+# ─── EXCEPCIONES: IMAGENES DEL PROYECTO PERMITIDAS ────────────────────────
+!abis-backend/src/main/resources/assets/PRESENTACION-GIT-HUB.png
+!abis-backend/src/main/resources/assets/img/
+!abis-backend/src/main/resources/assets/mockup-*
+!abis-backend/src/main/resources/public/
+
 # ─── FOTOS BIOMETRICAS (DATO SENSIBLE - Ley 1581/2012) ─────────────────────
 static/fotos/
 abis-biometric/static/fotos/
