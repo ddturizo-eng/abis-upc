@@ -255,14 +255,19 @@ public class EleccionController {
                     SELECT r.id_rol, r.nombre, er.peso_voto,
                            COUNT(v.identificacion) AS total,
                            COUNT(CASE WHEN UPPER(v.estado_voto) = 'PENDIENTE' THEN 1 END) AS pendientes,
-                           (SELECT COUNT(*) FROM Registro_votos rv
-                            JOIN Votantes vt ON rv.identificacion = vt.identificacion
-                            WHERE rv.id_eleccion = ? AND vt.id_rol = er.id_rol) AS ejercido
+                           NVL(ej.ejercido, 0) AS ejercido
                     FROM Eleccion_roles er
                     JOIN Roles r ON er.id_rol = r.id_rol
                     LEFT JOIN Votantes v ON v.id_rol = er.id_rol
+                    LEFT JOIN (
+                        SELECT vt.id_rol, COUNT(*) AS ejercido
+                        FROM Registro_votos rv
+                        JOIN Votantes vt ON rv.identificacion = vt.identificacion
+                        WHERE rv.id_eleccion = ?
+                        GROUP BY vt.id_rol
+                    ) ej ON ej.id_rol = er.id_rol
                     WHERE er.id_eleccion = ?
-                    GROUP BY r.id_rol, r.nombre, er.peso_voto
+                    GROUP BY r.id_rol, r.nombre, er.peso_voto, ej.ejercido
                     ORDER BY r.id_rol
                     """;
             List<Map<String, Object>> roles = new ArrayList<>();
