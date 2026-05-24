@@ -319,15 +319,20 @@
 
   async function registrarVoto() {
     if (!state.votante || !state.eleccion || !state.seleccionRealizada) {
+      setMessage('identity-error', 'Debe seleccionar un candidato antes de votar.');
       return;
     }
 
-    if (!confirm('El voto se registrará de forma irreversible. ¿Continuar?')) {
+    const candidatoElegido = document.querySelector('input[name="candidato"]:checked');
+    const nombreCandidato = candidatoElegido?.closest('.tarjeton-candidato')?.querySelector('.candidato-nombre')?.textContent || 'el candidato seleccionado';
+
+    if (!confirm(`Confirme su voto por ${nombreCandidato.trim()}.\n\nEsta accion es irreversible.`)) {
       return;
     }
 
     try {
       $('btn-vote-submit').disabled = true;
+      $('btn-vote-submit').innerHTML = '<i class="ti ti-loader-2 animate-spin"></i> Registrando...';
       await API.post('/api/votos/registrar', {
         identificacion: state.votante.identificacion,
         idEleccion: state.eleccion.id,
@@ -337,8 +342,9 @@
       showScreen('success');
       window.setTimeout(volverInicio, 4000);
     } catch (error) {
-      setMessage('identity-error', error.message || 'No fue posible registrar el voto.');
-      showScreen('identity');
+      alert('Error al registrar el voto: ' + (error.message || 'Error desconocido'));
+      $('btn-vote-submit').disabled = false;
+      $('btn-vote-submit').innerHTML = 'Confirmar voto';
     }
   }
 
