@@ -120,7 +120,7 @@ public class ContingenciaTokenService {
     public Map<String, Object> emitirLote(Long idEleccion) {
         Eleccion eleccion = eleccionRepository.findById(idEleccion)
                 .orElseThrow(() -> new IllegalArgumentException("Eleccion no encontrada"));
-        List<Votante> votantes = votanteRepository.findHabilitadosParaContingencia();
+        List<Votante> votantes = votanteRepository.findHabilitadosParaContingencia(idEleccion);
 
         int generados = 0;
         int enviados = 0;
