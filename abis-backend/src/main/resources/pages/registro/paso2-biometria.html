@@ -1,0 +1,172 @@
+﻿<div class="flex flex-col gap-6">
+    <!-- Header con datos del votante -->
+    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-4 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+            <div class="w-12 h-12 rounded-full bg-[#004D33] text-white flex items-center justify-center text-xl font-bold">
+                <span class="material-symbols-outlined">person</span>
+            </div>
+            <div>
+                <p class="font-bold text-[#111827]" id="bio-voter-name">Cargando...</p>
+                <p class="text-sm text-slate-500" id="bio-voter-id">ID: ---</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <span class="badge badge-success" id="bio-voter-role">ROL PENDIENTE</span>
+        </div>
+    </div>
+
+    <!-- Panel de Estados en Tiempo Real -->
+    <div id="panel-estados" class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-4">
+        <h3 class="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-3">Estado del Registro</h3>
+        <div class="grid grid-cols-4 gap-3">
+            <div id="estado-documento" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-slate-50">
+                <span class="w-6 h-6 rounded-full bg-slate-300 text-white flex items-center justify-center text-xs">○</span>
+                <span class="text-xs text-slate-600">Documento validado</span>
+            </div>
+            <div id="estado-foto-capturada" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-slate-50">
+                <span class="w-6 h-6 rounded-full bg-slate-300 text-white flex items-center justify-center text-xs">○</span>
+                <span class="text-xs text-slate-600">Foto capturada</span>
+            </div>
+            <div id="estado-foto-guardada" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-slate-50">
+                <span class="w-6 h-6 rounded-full bg-slate-300 text-white flex items-center justify-center text-xs">○</span>
+                <span class="text-xs text-slate-600">Foto almacenada</span>
+            </div>
+            <div id="estado-huella" class="flex items-center gap-2 p-2 rounded-lg border border-slate-200 bg-slate-50">
+                <span class="w-6 h-6 rounded-full bg-slate-300 text-white flex items-center justify-center text-xs">○</span>
+                <span class="text-xs text-slate-600">Huella enrolada</span>
+            </div>
+        </div>
+        <div id="estado-guardando" class="mt-3 hidden">
+            <div class="flex items-center gap-2 text-sm text-amber-600">
+                <span class="animate-spin material-symbols-outlined text-[18px]">sync</span>
+                <span>Guardando en base de datos...</span>
+            </div>
+        </div>
+        <div id="estado-completo" class="mt-3 hidden">
+            <div class="flex items-center gap-2 text-sm text-[#4CAF7D]">
+                <span class="material-symbols-outlined text-[18px]">check_circle</span>
+                <span class="font-bold">Registro biométrico completado</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-12 gap-6">
+        <!-- Panel Foto Rostro (col-span-5) -->
+        <div class="col-span-5 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b flex justify-between items-center">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Foto del Votante</h3>
+                <span class="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-0.5 rounded">REQUERIDO</span>
+            </div>
+            <div class="p-4 flex flex-col gap-4">
+                <div class="bg-[#E8EAED] border border-[#C8CBD2] rounded-[10px] overflow-hidden relative flex flex-col items-center justify-center" style="min-height: 240px;" id="foto-preview-zone">
+                    <video id="foto-video" class="hidden w-full h-full object-cover" autoplay playsinline></video>
+                    <img id="foto-preview" class="hidden w-full h-full object-cover rounded-[10px]" alt="Foto del votante">
+                    <div id="foto-placeholder" class="flex flex-col items-center text-center px-4">
+                        <span class="material-symbols-outlined text-[40px] text-[#6B7280] opacity-60 mb-4">photo_camera</span>
+                        <p class="text-[13px] text-[#6B7280]">Captura la foto del rostro</p>
+                        <p class="text-[11px] italic text-[#9CA3AF] mt-1">Requerido para el registro</p>
+                    </div>
+                    <!-- Guía de encuadre overlay -->
+                    <svg id="foto-guide" class="absolute inset-0 w-full h-full pointer-events-none hidden" viewBox="0 0 640 480">
+                        <ellipse cx="320" cy="220" rx="140" ry="180" fill="none" stroke="#4CAF7D" stroke-width="3" stroke-dasharray="10,5" opacity="0.8"/>
+                        <text x="320" y="420" text-anchor="middle" fill="#6B7280" font-size="12">Coloca el rostro dentro del óvalo</text>
+                    </svg>
+                </div>
+                <canvas id="foto-canvas" class="hidden"></canvas>
+                
+                <!-- Revisión de foto (solo visual) -->
+                <div id="foto-review" class="hidden flex gap-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <span class="material-symbols-outlined text-amber-600">info</span>
+                    <div class="flex-1">
+                        <p class="text-xs text-amber-800 font-medium">¿La foto es correcta?</p>
+                        <p class="text-[10px] text-amber-600 mt-1">Verifica que el rostro sea visible y claro</p>
+                    </div>
+                </div>
+
+                <div class="flex gap-[10px]">
+                    <button id="btn-abrir-camara" class="flex-1 bg-[#1B3A2D] text-white py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90">
+                        <span class="material-symbols-outlined text-[18px]">photo_camera</span>
+                        Abrir cámara
+                    </button>
+                    <button id="btn-capturar-foto" class="hidden flex-1 bg-[#004D33] text-white py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:opacity-90">
+                        <span class="material-symbols-outlined text-[18px]">capture</span>
+                        Capturar foto
+                    </button>
+                    <button id="btn-repetir-foto" class="hidden flex-1 border border-[#004D33] text-[#004D33] py-3 rounded-lg text-[13px] font-bold flex items-center justify-center gap-2 hover:bg-emerald-50">
+                        <span class="material-symbols-outlined text-[18px]">refresh</span>
+                        Repetir
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Panel Huella + Acción (col-span-7) -->
+        <div class="col-span-7 flex flex-col gap-6">
+            <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+                <div class="px-6 py-4 bg-slate-50 border-b flex justify-between items-center">
+                    <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Enrolamiento Biométrico</h3>
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span id="bio-status-dot" class="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
+                        <span id="bio-status">Esperando inicio</span>
+                    </div>
+                </div>
+                <div class="p-6 flex flex-col gap-4">
+                    <div class="flex items-start gap-4 p-4 bg-slate-50 rounded-lg" id="bio-step-capture">
+                        <div data-progress-badge class="w-8 h-8 rounded-full bg-[#004D33] text-white flex items-center justify-center text-[11px] font-bold">1</div>
+                        <div>
+                            <p data-progress-label class="text-sm font-bold text-[#004D33]">Captura de huellas</p>
+                            <p class="text-xs text-slate-500 mt-1">El sistema inicia la captura biométrica del votante.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 p-4 bg-slate-50 rounded-lg" id="bio-step-process">
+                        <div data-progress-badge class="w-8 h-8 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold">2</div>
+                        <div>
+                            <p data-progress-label class="text-sm font-medium text-slate-600">Procesamiento</p>
+                            <p class="text-xs text-slate-500 mt-1">Se generan las plantillas y se validan en el backend.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4 p-4 bg-slate-50 rounded-lg" id="bio-step-confirm">
+                        <div data-progress-badge class="w-8 h-8 rounded-full border border-slate-200 bg-[#F2F3F5] text-slate-400 flex items-center justify-center text-[11px] font-bold">3</div>
+                        <div>
+                            <p data-progress-label class="text-sm font-medium text-slate-600">Confirmación</p>
+                            <p class="text-xs text-slate-500 mt-1">Se confirma el enrolamiento y se habilita la verificación final.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+                <div class="px-6 py-4 bg-slate-50 border-b">
+                    <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Acción</h3>
+                </div>
+                <div class="p-6 flex flex-col gap-4">
+                    <div id="foto-required-warning" class="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm text-amber-700 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-[18px]">warning</span>
+                        Captura la foto del rostro primero
+                    </div>
+                    <div class="rounded-xl bg-[#E8EAED] border border-[#C8CBD2] p-6 text-center">
+                        <span class="material-symbols-outlined text-[52px] text-[#004D33]">fingerprint</span>
+                        <p class="text-sm text-slate-600 mt-3" id="bio-progress-copy">Listo para iniciar enrolamiento</p>
+                        <p class="text-xs text-slate-400 mt-2">El backend ejecutará la captura con la identificación confirmada.</p>
+                    </div>
+                    <div id="bio-error" class="hidden bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-600"></div>
+                    <button id="btn-enroll" class="bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20 opacity-50 cursor-not-allowed" disabled>
+                        <span class="material-symbols-outlined">play_arrow</span>
+                        Iniciar captura biométrica
+                    </button>
+                    
+                    <!-- Botón de Revisar y Confirmar (reemplaza navegación automática) -->
+                    <button id="btn-revisar-confirmar" class="hidden bg-[#4CAF7D] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:bg-[#3d9d65]">
+                        <span class="material-symbols-outlined">fact_check</span>
+                        Revisar y confirmar
+                    </button>
+                    
+                    <button id="btn-back-step1" class="border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-50">
+                        <span class="material-symbols-outlined">arrow_back</span>
+                        Volver al pre-registro
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

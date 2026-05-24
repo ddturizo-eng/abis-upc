@@ -1,0 +1,68 @@
+﻿<div class="flex flex-col gap-6">
+    <!-- Resultado exitoso -->
+    <div class="bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] p-8 flex items-center justify-between">
+        <div class="flex items-center gap-6">
+            <div class="w-16 h-16 rounded-full bg-[#4CAF7D] flex items-center justify-center">
+                <span class="material-symbols-outlined text-[40px] text-white">check</span>
+            </div>
+            <div>
+                <p class="text-[11px] font-bold uppercase tracking-widest text-[#4CAF7D]">Resultado</p>
+                <h2 class="text-2xl font-bold text-[#004D33] mt-1">Registro completado exitosamente</h2>
+                <p class="text-sm text-slate-500 mt-1">El votante quedo registrado. El QR de contingencia se enviara por correo desde el modulo administrativo cuando se emita la jornada.</p>
+            </div>
+        </div>
+        <div class="flex flex-col items-end gap-2">
+            <span class="bg-[#D1FAE5] text-[#065F46] text-[10px] font-bold px-3 py-1 rounded-full tracking-widest">REGISTRADO</span>
+            <span class="bg-[#DBEAFE] text-[#1E40AF] text-[10px] font-bold px-3 py-1 rounded-full tracking-widest">BIOMETRÍA ENROLADA</span>
+            <span class="bg-[#FEF3C7] text-[#92400E] text-[10px] font-bold px-3 py-1 rounded-full tracking-widest">QR PENDIENTE DE EMISION</span>
+        </div>
+    </div>
+
+    <!-- Resumen del votante -->
+    <div class="grid grid-cols-12 gap-6">
+        <div class="col-span-7 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Resumen del Votante</h3>
+            </div>
+            <div class="p-6 grid grid-cols-2 gap-4 text-sm">
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Nombre completo</p>
+                    <p class="mt-1 font-bold text-slate-700" id="completado-fullname">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Identificación</p>
+                    <p class="mt-1 font-bold text-slate-700" id="completado-identificacion">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Correo</p>
+                    <p class="mt-1 font-bold text-slate-700" id="completado-correo">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Rol</p>
+                    <p class="mt-1 font-bold text-slate-700" id="completado-rol">--</p>
+                </div>
+                <div>
+                    <p class="text-slate-400 uppercase tracking-widest text-[11px] font-bold">Puesto</p>
+                    <p class="mt-1 font-bold text-slate-700" id="completado-puesto">--</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Acciones siguientes -->
+        <div class="col-span-5 bg-white rounded-xl shadow-[0px_10px_30px_rgba(0,77,51,0.08)] overflow-hidden">
+            <div class="px-6 py-4 bg-slate-50 border-b">
+                <h3 class="text-[11px] font-bold uppercase tracking-widest text-[#004D33]">Siguiente acción</h3>
+            </div>
+            <div class="p-6 flex flex-col gap-4">
+                <button id="btn-otro-votante" class="bg-gradient-to-r from-[#003421] to-[#004D33] text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 shadow-lg hover:shadow-emerald-900/20">
+                    <span class="material-symbols-outlined">person_add</span>
+                    Registrar otro votante
+                </button>
+                <button id="btn-ir-admin" onclick="event.stopImmediatePropagation(); window.location.href = '/pages/admin/index.html';" class="border-2 border-[#004D33] text-[#004D33] font-bold py-4 rounded-lg flex items-center justify-center gap-2 hover:bg-emerald-50">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    Ir al panel de administración
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

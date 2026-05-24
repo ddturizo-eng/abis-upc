@@ -1,0 +1,905 @@
+<!-- Vista 2 + Vista 3 — Verificación dactilar e Identidad del votante -->
+<!-- Fragmentos visuales reutilizables, sin lógica JS -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+  /* ─── VARIABLES ─────────────────────────────────────── */
+  :root {
+    --g-dark:   #1a6b3c;
+    --g-mid:    #2d8653;
+    --g-soft:   #14733b;
+    --g-pale:   #e8f5ed;
+    --g-lighter:#f0f8f4;
+    --ink:      #1f2d26;
+    --muted:    #6b7a71;
+    --border:   #e2e8e4;
+    --page:     #f8f9fa;
+    --white:    #ffffff;
+  }
+
+  /* ─── RESET ─────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  .hidden { display: none !important; }
+
+  /* ─── ANIMACIONES ───────────────────────────────────── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes sonar-ring {
+    0%   { transform: scale(1);   opacity: 0.6; }
+    100% { transform: scale(2.8); opacity: 0; }
+  }
+  @keyframes subtle-pulse {
+    0%, 100% { transform: translate(-50%,-50%) scale(1); }
+    50%       { transform: translate(-50%,-50%) scale(1.03); }
+  }
+  @keyframes pulseRing {
+    0%   { transform: scale(1);   opacity: 0.6; }
+    100% { transform: scale(2.2); opacity: 0; }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: .5; transform: scale(1); }
+    50%       { opacity: 1; transform: scale(1.1); }
+  }
+  @keyframes waveform {
+    0%,100% { transform: scaleY(1);   }
+    50%      { transform: scaleY(1.8); }
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(32px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ─── SHELL ─────────────────────────────────────────── */
+  .kiosk-screen {
+    position: relative; z-index: 2; min-height: 100vh;
+    font-family: 'DM Sans', sans-serif; color: var(--ink);
+  }
+
+  /* ════════════════════════════════════════════════════════
+     VISTA 2 — VERIFICACIÓN DACTILAR  (screen-verify)
+  ════════════════════════════════════════════════════════ */
+  #screen-verify {
+    background: var(--page);
+    display: flex; flex-direction: column;
+    padding: 0; place-items: unset;
+  }
+
+  /* Header decorativo verificación */
+  .verify-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+    position: relative; z-index: 5;
+  }
+  .verify-header-left { display: flex; align-items: center; gap: 12px; }
+  .verify-header-title { font-size: 16px; font-weight: 700; color: var(--ink); }
+  .verify-header-sub   { font-size: 12px; color: var(--muted); margin-top: 1px; }
+  .verify-active-badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    border: 1.5px solid var(--g-mid); border-radius: 9999px;
+    padding: 5px 14px;
+    color: var(--g-dark); font-size: 11px; font-weight: 700;
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+  .verify-active-badge span { animation: pulse 2s infinite; color: var(--g-mid); }
+
+  /* Decoración fondo verificación */
+  .verify-bg-deco {
+    position: fixed; top: 0; right: 0;
+    width: 320px; height: 320px;
+    pointer-events: none; z-index: 0; opacity: .06;
+  }
+
+  /* Layout principal 2 cols */
+  .verify-panel {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 24px;
+    padding: 32px;
+    max-width: 1200px;
+    width: 100%;
+    margin: 0 auto;
+    flex: 1;
+    position: relative; z-index: 2;
+  }
+
+  /* Panel izquierdo stepper */
+  .verify-steps {
+    background: var(--white);
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid var(--border);
+    display: flex; flex-direction: column;
+    height: fit-content;
+    position: sticky; top: 90px;
+  }
+
+  /* Steps */
+  .verify-step {
+    display: flex; align-items: flex-start; gap: 14px;
+    position: relative;
+  }
+  .verify-step:not(:last-child) {
+    padding-bottom: 0;
+    margin-bottom: 0;
+  }
+  .verify-step-connector {
+    width: 2px; height: 40px;
+    background: var(--border);
+    margin-left: 23px;
+  }
+  .verify-step-icon {
+    width: 48px; height: 48px; flex-shrink: 0;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    background: #f0f2f1;
+    color: var(--muted);
+    font-size: 22px;
+    transition: all 300ms;
+  }
+  .verify-step.active .verify-step-icon,
+  .verify-step.is-active .verify-step-icon,
+  .verify-step.is-done .verify-step-icon {
+    background: var(--g-dark); color: white;
+  }
+  .verify-step-text strong {
+    display: block; font-size: 14px; font-weight: 600;
+    color: var(--ink); margin-top: 12px;
+  }
+  .verify-step.active .verify-step-text strong,
+  .verify-step.is-active .verify-step-text strong { color: var(--ink); }
+  .verify-step:not(.active):not(.is-active):not(.is-done) .verify-step-text strong { color: var(--muted); }
+  .verify-step-text small { display: block; font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .verify-step:not(.active):not(.is-active):not(.is-done) .verify-step-text small { color: #9ca3af; }
+
+  /* Aviso inferior stepper */
+  .verify-steps-notice {
+    background: var(--g-pale); border-radius: 8px; padding: 12px;
+    display: flex; align-items: flex-start; gap: 8px;
+    margin-top: 20px;
+  }
+  .verify-steps-notice span { font-size: 12px; color: #34483d; line-height: 1.5; }
+  .verify-steps-notice strong { color: var(--g-dark); }
+
+  /* Panel derecho */
+  .verify-scan {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 24px; padding: 40px 20px 32px;
+    text-align: center;
+  }
+
+  /* Eyebrow */
+  .kiosk-eyebrow {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 11px; font-weight: 700; letter-spacing: .12em;
+    text-transform: uppercase; color: var(--g-mid);
+    margin: 0;
+  }
+  .kiosk-eyebrow::before, .kiosk-eyebrow::after {
+    content: ''; display: block;
+    width: 20px; height: 1px;
+    background: rgba(45,134,83,.4);
+  }
+
+  /* Título verificación */
+  .verify-scan h2 {
+    font-size: 36px; font-weight: 700; color: var(--ink);
+    line-height: 1.15; max-width: 520px;
+  }
+  .verify-scan h2 span { color: var(--g-dark); }
+
+  /* Copy */
+  .verify-copy {
+    font-size: 15px; color: var(--muted);
+    max-width: 480px; line-height: 1.6;
+  }
+
+  /* Círculo huella */
+  .fingerprint-stage {
+    position: relative;
+    width: 200px; height: 200px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .pulse-ring {
+    position: absolute; inset: 0;
+    border: 1.5px solid var(--g-mid); border-radius: 50%;
+    animation: pulseRing 2s ease-out infinite;
+  }
+  .pulse-ring:nth-child(2) { animation-delay: 600ms; }
+  .pulse-ring:nth-child(3) { animation-delay: 1200ms; }
+  .fingerprint-base {
+    width: 160px; height: 160px;
+    background: var(--white); border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: visible;
+  }
+  .scanner-corner {
+    position: absolute; width: 18px; height: 18px;
+    border-color: var(--g-dark); border-style: solid;
+  }
+  .scanner-corner.tl { top: 8px; left: 8px; border-width: 2px 0 0 2px; border-radius: 3px 0 0 0; }
+  .scanner-corner.tr { top: 8px; right: 8px; border-width: 2px 2px 0 0; border-radius: 0 3px 0 0; }
+  .scanner-corner.bl { bottom: 8px; left: 8px; border-width: 0 0 2px 2px; border-radius: 0 0 0 3px; }
+  .scanner-corner.br { bottom: 8px; right: 8px; border-width: 0 2px 2px 0; border-radius: 0 0 3px 0; }
+
+  .fingerprint-core {
+    position: absolute;
+    top: 50%; left: 50%;
+    display: flex; align-items: center; justify-content: center;
+    width: 142px; height: 142px;
+    color: var(--g-dark); font-size: 68px;
+    background: rgba(26,107,60,.08);
+    border: 1px solid rgba(45,134,83,.22);
+    border-radius: 999px;
+    transform: translate(-50%,-50%);
+    animation: subtle-pulse 2s ease-in-out infinite;
+  }
+
+  /* Sonar rings — mantenidos para compatibilidad JS */
+  .sonar-ring {
+    position: absolute; inset: 20px;
+    border: 2px solid var(--g-dark); border-radius: 999px;
+    opacity: 0; animation: sonar-ring 2s ease-out infinite;
+  }
+  .sonar-ring-delay { animation-delay: 1s; }
+
+  /* SVG progress — mantenido para JS */
+  .fingerprint-progress {
+    position: absolute; inset: -20px;
+    width: 240px; height: 240px;
+    transform: rotate(-90deg);
+  }
+  .fingerprint-progress circle { fill: none; stroke-linecap: round; stroke-width: 8; }
+  .fingerprint-progress circle:first-child { stroke: rgba(0,0,0,.06); }
+  .fingerprint-progress circle:last-child {
+    stroke: var(--g-mid);
+    stroke-dasharray: 666; stroke-dashoffset: 166;
+    transition: stroke-dashoffset 700ms ease-out;
+  }
+
+  /* Status line — id verify-status conservado */
+  .verify-status-row {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  #verify-status {
+    display: flex; align-items: center; gap: 8px;
+    color: var(--g-dark); font-size: 14px; font-weight: 600;
+    margin: 0;
+  }
+  .waveform-icon {
+    display: flex; align-items: center; gap: 2px; height: 16px;
+  }
+  .waveform-bar {
+    width: 2px; border-radius: 2px; background: var(--g-dark);
+    animation: waveform .8s ease-in-out infinite alternate;
+  }
+  .waveform-bar:nth-child(1) { height: 6px;  animation-delay: 0ms; }
+  .waveform-bar:nth-child(2) { height: 12px; animation-delay: 100ms; }
+  .waveform-bar:nth-child(3) { height: 8px;  animation-delay: 200ms; }
+  .waveform-bar:nth-child(4) { height: 14px; animation-delay: 300ms; }
+  .waveform-bar:nth-child(5) { height: 6px;  animation-delay: 400ms; }
+
+  .verify-substatus {
+    display: block; font-size: 12px; color: var(--muted);
+  }
+
+  /* Tips row */
+  .verify-tips {
+    display: flex; align-items: stretch;
+    width: 100%; max-width: 520px;
+    background: var(--white); border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  .verify-tips article {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 6px; padding: 10px 16px; flex: 1;
+    font-size: 12px; font-weight: 500; color: #34483d;
+  }
+  .verify-tips article i { color: var(--g-dark); font-size: 16px; }
+  .verify-tips-divider { width: 1px; background: var(--border); margin: 8px 0; }
+
+  /* Actions — ids conservados */
+  .verify-actions {
+    display: flex; align-items: center; justify-content: center;
+    gap: 12px; flex-wrap: wrap;
+  }
+  #btn-start-verify {
+    display: inline-flex; align-items: center; gap: 10px;
+    padding: 16px 28px; border: 0; border-radius: 9999px;
+    background: var(--g-dark); color: white;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif; min-width: 220px; justify-content: center;
+    box-shadow: 0 4px 20px rgba(26,107,60,.3);
+    transition: all 200ms;
+  }
+  #btn-start-verify:hover { background: #145332; transform: translateY(-2px); }
+
+  #btn-cancel-verify, #btn-contingency-qr {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 14px 20px; border-radius: 12px;
+    border: 1px solid var(--border);
+    background: var(--white); color: #34483d;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 200ms;
+  }
+  #btn-cancel-verify:hover, #btn-contingency-qr:hover {
+    background: var(--page);
+  }
+
+  /* Contingency status — id conservado */
+  #contingency-status { font-size: 12px; color: var(--muted); }
+
+  /* Error verify — id conservado */
+  #verify-error {
+    padding: 14px 16px; border-radius: 12px;
+    font-size: 14px; font-weight: 700; line-height: 1.45;
+  }
+  .kiosk-message-error {
+    color: #991b1b;
+    background: rgba(254,202,202,.5);
+    border: 1px solid rgba(248,113,113,.45);
+  }
+
+  /* Footer verificación */
+  .verify-foot {
+    border-top: 1px solid var(--border);
+    padding: 14px 32px;
+    text-align: center;
+    background: var(--white);
+    font-size: 11px; color: var(--muted);
+    letter-spacing: .08em; text-transform: uppercase;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    margin-top: auto;
+  }
+
+  /* ════════════════════════════════════════════════════════
+     VISTA 3 — IDENTITY / MATCHING  (screen-identity)
+  ════════════════════════════════════════════════════════ */
+  #screen-identity {
+    background: var(--page);
+    display: flex; flex-direction: column;
+    padding: 0; place-items: unset;
+  }
+
+  /* Header reutilizado */
+  .identity-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 32px;
+    border-bottom: 1px solid var(--border);
+    background: var(--white);
+  }
+  .identity-header-left { display: flex; align-items: center; gap: 12px; }
+
+  /* Blob fondo */
+  .identity-blob {
+    position: fixed; bottom: -80px; left: -70px;
+    width: 460px; pointer-events: none; z-index: 0; opacity: .10;
+  }
+
+  /* Layout principal */
+  .identity-layout {
+    display: grid;
+    grid-template-columns: 55fr 45fr;
+    gap: 28px;
+    padding: 32px 40px;
+    max-width: 1200px; width: 100%;
+    margin: 0 auto;
+    align-items: start;
+    flex: 1;
+    position: relative; z-index: 2;
+  }
+
+  /* Tarjetas */
+  .identity-card, .jury-confirm-card {
+    background: var(--white);
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    padding: 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.06);
+    animation: slideUp .6s cubic-bezier(.16,1,.3,1) both;
+  }
+  .jury-confirm-card { animation-delay: 100ms; }
+
+  /* Header tarjeta */
+  .card-header {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 11px; font-weight: 600; color: var(--g-mid);
+    letter-spacing: .1em; text-transform: uppercase;
+  }
+
+  /* Foto + datos layout */
+  .identity-inner {
+    display: grid; grid-template-columns: 160px 1fr;
+    gap: 24px; align-items: start; margin-top: 16px;
+  }
+
+  /* Foto — id identity-photo / identity-photo-empty conservados */
+  .identity-photo-wrap {
+    position: relative; width: 160px; height: 200px;
+  }
+  #identity-photo {
+    width: 100%; height: 100%;
+    object-fit: cover; border-radius: 12px;
+    border: 3px solid var(--g-pale);
+  }
+  #identity-photo-empty {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--g-pale); border-radius: 12px;
+    color: var(--g-dark); font-size: 4rem;
+  }
+  .identity-photo-badge {
+    position: absolute; bottom: 8px; left: 50%;
+    transform: translateX(-50%);
+    background: var(--g-dark); color: white;
+    font-size: 11px; padding: 4px 10px; border-radius: 9999px;
+    white-space: nowrap;
+  }
+
+  /* Datos — ids conservados */
+  .identity-data { display: flex; flex-direction: column; gap: 12px; }
+
+  #identity-name {
+    font-size: 24px; font-weight: 700; color: var(--ink); line-height: 1.2;
+  }
+
+  .identity-field {
+    background: var(--page); border-radius: 8px;
+    padding: 10px 14px;
+    border-left: 3px solid var(--g-mid);
+  }
+  .identity-field dt {
+    font-size: 10px; font-weight: 700; color: var(--g-mid);
+    letter-spacing: .1em; text-transform: uppercase; margin-bottom: 4px;
+  }
+  .identity-field dd {
+    font-size: 16px; font-weight: 600; color: var(--ink);
+    margin: 0;
+  }
+
+  /* Estado badge */
+  .status-badge {
+    display: inline-flex; align-items: center;
+    background: var(--g-pale); color: var(--g-dark);
+    border: 1px solid var(--g-mid);
+    border-radius: 9999px; padding: 4px 12px;
+    font-size: 13px; font-weight: 700; text-transform: uppercase;
+  }
+
+  /* Aviso inferior */
+  .identity-notice {
+    background: var(--g-lighter); border-radius: 8px;
+    padding: 14px 16px; margin-top: 16px;
+    border-left: 3px solid var(--g-mid);
+    display: flex; align-items: flex-start; gap: 10px;
+  }
+  .identity-notice-text strong { display: block; font-size: 13px; font-weight: 700; color: var(--ink); }
+  .identity-notice-text span   { font-size: 12px; color: var(--muted); line-height: 1.5; }
+
+  /* Tarjeta jurado */
+  .jury-question {
+    font-size: 22px; font-weight: 700; color: var(--ink);
+    margin: 16px 0;
+  }
+
+  /* Checkbox — id jury-confirm-identity conservado */
+  .kiosk-confirm {
+    display: flex; align-items: center; gap: 12px;
+    background: var(--page); border-radius: 12px; padding: 16px;
+    border: 1px solid var(--border); cursor: pointer;
+    transition: all 200ms;
+  }
+  .kiosk-confirm:has(input:checked) {
+    background: var(--g-pale); border-color: var(--g-mid);
+  }
+  .kiosk-confirm input {
+    width: 24px; height: 24px; flex-shrink: 0;
+    accent-color: var(--g-dark); border-radius: 6px; cursor: pointer;
+  }
+  .kiosk-confirm span {
+    font-size: 14px; font-weight: 500; color: #34483d;
+  }
+
+  /* Btn ir a tarjetón — id btn-go-ballot conservado */
+  #btn-go-ballot {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    width: 100%; margin-top: 16px;
+    padding: 16px; border: 0; border-radius: 12px;
+    background: var(--g-dark); color: white;
+    font-size: 16px; font-weight: 600; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 200ms;
+  }
+  #btn-go-ballot:hover:not(:disabled) { background: #145332; }
+  #btn-go-ballot:disabled { opacity: .5; cursor: not-allowed; }
+
+  /* Btn retry — id btn-retry-identity conservado */
+  #btn-retry-identity {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%; margin-top: 10px;
+    padding: 14px; border: 1px solid var(--border); border-radius: 12px;
+    background: var(--white); color: #34483d;
+    font-size: 15px; font-weight: 500; cursor: pointer;
+    font-family: 'DM Sans', sans-serif;
+    transition: all 200ms;
+  }
+  #btn-retry-identity:hover { background: var(--page); }
+
+  /* Error identity — id conservado */
+  #identity-error {
+    margin-top: 12px; padding: 14px 16px; border-radius: 12px;
+    font-size: 14px; font-weight: 700; line-height: 1.45;
+  }
+
+  /* Botón volver centrado */
+  .identity-back-wrap {
+    display: flex; justify-content: center;
+    padding: 0 40px 32px; position: relative; z-index: 2;
+  }
+
+  /* ─── RESPONSIVE ────────────────────────────────────── */
+  @media (max-width: 1024px) {
+    .verify-panel { grid-template-columns: 1fr; }
+    .identity-layout { grid-template-columns: 1fr; }
+    .identity-inner { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .verify-scan { padding: 28px 20px; }
+    .verify-actions { align-items: stretch; flex-direction: column; }
+    #btn-start-verify { width: 100%; }
+  }
+</style>
+
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 2 — VERIFICACIÓN DACTILAR
+══════════════════════════════════════════════════════ -->
+<section id="screen-verify" class="kiosk-screen hidden">
+
+  <!-- Decoración fondo ondulado top-right -->
+  <svg class="verify-bg-deco" viewBox="0 0 320 320" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M0,160 Q40,80 80,160 T160,160 T240,160 T320,160" fill="none" stroke="#1a6b3c" stroke-width="1.5"/>
+    <path d="M0,200 Q40,120 80,200 T160,200 T240,200 T320,200" fill="none" stroke="#1a6b3c" stroke-width="1.5"/>
+    <path d="M0,240 Q40,160 80,240 T160,240 T240,240 T320,240" fill="none" stroke="#1a6b3c" stroke-width="1.5"/>
+    <path d="M0,280 Q40,200 80,280 T160,280 T240,280 T320,280" fill="none" stroke="#1a6b3c" stroke-width="1.5"/>
+  </svg>
+
+  <!-- Header decorativo -->
+  <header class="verify-header">
+    <div class="verify-header-left">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+        <polyline points="9,12 11,14 15,10"/>
+      </svg>
+      <div>
+        <div class="verify-header-title">Verificación dactilar</div>
+        <div class="verify-header-sub">Proceso de votación</div>
+      </div>
+    </div>
+    <div class="verify-active-badge">
+      <span>&#9679;</span> SISTEMA ACTIVO
+    </div>
+  </header>
+
+  <!-- Layout 2 cols -->
+  <div class="verify-panel">
+
+    <!-- Panel izquierdo — Stepper -->
+    <!-- Los divs .verify-step mantienen class "active" gestionada por JS -->
+    <aside class="verify-steps" aria-label="Pasos de verificacion">
+
+      <div class="verify-step active">
+        <div class="verify-step-icon"><i class="ti ti-fingerprint"></i></div>
+        <div class="verify-step-text">
+          <strong>Colocar dedo</strong>
+          <small>Pon tu dedo en el lector</small>
+        </div>
+      </div>
+      <div class="verify-step-connector"></div>
+
+      <div class="verify-step">
+        <div class="verify-step-icon"><i class="ti ti-search"></i></div>
+        <div class="verify-step-text">
+          <strong>Verificando</strong>
+          <small>Buscando coincidencia</small>
+        </div>
+      </div>
+      <div class="verify-step-connector"></div>
+
+      <div class="verify-step">
+        <div class="verify-step-icon"><i class="ti ti-circle-check"></i></div>
+        <div class="verify-step-text">
+          <strong>Confirmando</strong>
+          <small>Validando identidad</small>
+        </div>
+      </div>
+      <div class="verify-step-connector"></div>
+
+      <div class="verify-step">
+        <div class="verify-step-icon"><i class="ti ti-lock"></i></div>
+        <div class="verify-step-text">
+          <strong>Completado</strong>
+          <small>Acceso al tarjetón</small>
+        </div>
+      </div>
+
+      <!-- Aviso inferior -->
+      <div class="verify-steps-notice">
+        <i class="ti ti-lock" style="color:#1a6b3c;font-size:16px;flex-shrink:0;margin-top:2px;"></i>
+        <span>Tu información está protegida con <strong>encriptación de nivel electoral.</strong></span>
+      </div>
+
+    </aside>
+
+    <!-- Panel derecho — Contenido -->
+    <section class="verify-scan">
+
+      <p class="kiosk-eyebrow">Verificación Dactilar</p>
+
+      <h2>Por favor, coloca tu <span>dedo</span> en el lector</h2>
+
+      <p class="verify-copy">
+        Asegúrate de colocar el dedo plano y mantenerlo quieto durante la lectura.
+      </p>
+
+      <!-- Círculo animado — estructura interna rediseñada, ids conservados -->
+      <div class="fingerprint-stage" aria-hidden="true">
+        <!-- Anillos pulsantes nuevos -->
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <div class="pulse-ring"></div>
+        <!-- Círculo base con scanner corners -->
+        <div class="fingerprint-base">
+          <div class="scanner-corner tl"></div>
+          <div class="scanner-corner tr"></div>
+          <div class="scanner-corner bl"></div>
+          <div class="scanner-corner br"></div>
+        </div>
+        <!-- Sonar rings originales conservados por si JS los manipula -->
+        <span class="sonar-ring" style="display:none;"></span>
+        <span class="sonar-ring sonar-ring-delay" style="display:none;"></span>
+        <!-- SVG progress conservado por si JS lo manipula -->
+        <svg class="fingerprint-progress" viewBox="0 0 240 240" style="display:none;">
+          <circle cx="120" cy="120" r="106"></circle>
+          <circle cx="120" cy="120" r="106"></circle>
+        </svg>
+        <!-- Ícono huella -->
+        <div class="fingerprint-core"><i class="ti ti-fingerprint"></i></div>
+      </div>
+
+      <!-- Status — id verify-status conservado -->
+      <div class="verify-status-row">
+        <p id="verify-status">
+          <span class="waveform-icon" aria-hidden="true">
+            <span class="waveform-bar"></span><span class="waveform-bar"></span>
+            <span class="waveform-bar"></span><span class="waveform-bar"></span>
+            <span class="waveform-bar"></span>
+          </span>
+          Cuando estés listo, inicia la verificación.
+        </p>
+        <span class="verify-substatus">No muevas tu dedo durante la lectura</span>
+      </div>
+
+      <!-- Tips -->
+      <div class="verify-tips">
+        <article>
+          <i class="ti ti-hand-finger"></i>
+          <span>Coloca tu dedo plano</span>
+        </article>
+        <div class="verify-tips-divider"></div>
+        <article>
+          <i class="ti ti-player-pause"></i>
+          <span>No lo muevas</span>
+        </article>
+        <div class="verify-tips-divider"></div>
+        <article>
+          <i class="ti ti-sparkles"></i>
+          <span>Mantén limpio el lector</span>
+        </article>
+      </div>
+
+      <!-- Acciones — ids conservados -->
+      <div class="verify-actions">
+        <button id="btn-start-verify" type="button">
+          <i class="ti ti-fingerprint" aria-hidden="true"></i>
+          Iniciar verificación
+          <i class="ti ti-arrow-right" aria-hidden="true"></i>
+        </button>
+        <button id="btn-cancel-verify" type="button">
+          <i class="ti ti-arrow-left"></i> Volver
+        </button>
+        <button id="btn-contingency-qr" type="button">
+          <i class="ti ti-qr-code"></i> Usar QR de contingencia
+        </button>
+      </div>
+
+      <!-- Contingency status — id conservado -->
+      <p id="contingency-status" class="verify-substatus">Contingencia en espera del escáner serial.</p>
+
+      <!-- Error — id conservado -->
+      <div id="verify-error" class="kiosk-message kiosk-message-error hidden"></div>
+
+    </section>
+  </div><!-- /verify-panel -->
+
+  <!-- Footer verificación -->
+  <footer class="verify-foot">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+      stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+      <polyline points="9,12 11,14 15,10"/>
+    </svg>
+    ABIS-UPC · Transparencia y Confianza · Elecciones Universitarias
+  </footer>
+
+</section><!-- /#screen-verify -->
+
+
+<!-- ══════════════════════════════════════════════════════
+     SCREEN 3 — IDENTITY / DATOS DEL VOTANTE
+══════════════════════════════════════════════════════ -->
+<section id="screen-identity" class="kiosk-screen hidden">
+
+  <!-- Blob decorativo -->
+  <svg class="identity-blob" viewBox="0 0 460 400" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <path d="M70,310 C0,285 -25,195 25,128 C75,62 165,28 230,62 C295,96 340,175 318,242 C296,310 208,355 140,348 Z" fill="#1a6b3c"/>
+    <path d="M110,338 C42,318 8,232 44,168 C80,104 168,76 234,108 C300,140 346,220 322,286 C298,352 210,378 146,360 Z" fill="#2d8653" opacity=".55"/>
+  </svg>
+
+  <!-- Header decorativo -->
+  <header class="identity-header">
+    <div class="identity-header-left">
+      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+        stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="3" y="4" width="18" height="18" rx="3"/>
+        <circle cx="9" cy="10" r="2"/>
+        <path d="M15 8h2M15 12h2M7 16h10"/>
+      </svg>
+      <div>
+        <div class="verify-header-title">Sistema Activo</div>
+        <div class="verify-header-sub">Elecciones Universitarias</div>
+      </div>
+    </div>
+    <div class="verify-active-badge">
+      <span>&#9679;</span> SISTEMA ACTIVO
+    </div>
+  </header>
+
+  <!-- Layout principal -->
+  <div class="identity-layout">
+
+    <!-- Tarjeta izquierda — DATOS PERSONALES -->
+    <article class="identity-card">
+
+      <div class="card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="8" r="4"/>
+          <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        DATOS PERSONALES
+      </div>
+
+      <!-- Foto + datos -->
+      <div class="identity-inner">
+
+        <!-- Foto — ids conservados -->
+        <div class="identity-photo-wrap">
+          <img id="identity-photo" class="hidden" alt="Foto del votante">
+          <i id="identity-photo-empty" class="ti ti-user"
+            style="display:flex;align-items:center;justify-content:center;
+              width:100%;height:100%;background:var(--g-pale);border-radius:12px;
+              color:var(--g-dark);font-size:4rem;"></i>
+          <span class="identity-photo-badge">✓ Verificado</span>
+        </div>
+
+        <!-- Datos — ids conservados -->
+        <div class="identity-data">
+          <h2 id="identity-name">--</h2>
+
+          <div class="identity-field">
+            <dt>Documento de Identidad</dt>
+            <dd id="identity-id">--</dd>
+          </div>
+
+          <div class="identity-field">
+            <dt>Estado para Votar</dt>
+            <dd id="identity-status">--</dd>
+          </div>
+
+          <div class="identity-field">
+            <dt>Mesa Asignada</dt>
+            <dd id="identity-place">--</dd>
+          </div>
+        </div>
+      </div><!-- /identity-inner -->
+
+      <!-- Aviso -->
+      <div class="identity-notice">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+          style="flex-shrink:0;margin-top:2px;" aria-hidden="true">
+          <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+        </svg>
+        <div class="identity-notice-text">
+          <strong>Información importante</strong>
+          <span>Verifica que tus datos sean correctos antes de continuar con el proceso de votación.</span>
+        </div>
+      </div>
+
+    </article>
+
+    <!-- Tarjeta derecha — CONFIRMACIÓN DEL JURADO -->
+    <article class="jury-confirm-card">
+
+      <div class="card-header">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1a6b3c"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 2L4 6v6c0 5.25 3.5 10.15 8 11.35C16.5 22.15 20 17.25 20 12V6Z"/>
+          <polyline points="9,12 11,14 15,10"/>
+        </svg>
+        CONFIRMACIÓN DEL JURADO
+      </div>
+
+      <h2 class="jury-question">¿La persona coincide con los datos mostrados?</h2>
+
+      <!-- Checkbox — id conservado -->
+      <label class="kiosk-confirm">
+        <input id="jury-confirm-identity" type="checkbox">
+        <span>Confirmo que la identidad visual corresponde al votante.</span>
+      </label>
+
+      <!-- Btn ir a tarjetón — id conservado -->
+      <button id="btn-go-ballot" type="button" disabled>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white"
+          stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="3" width="18" height="18" rx="3"/>
+          <path d="M9 9h6M9 12h6M9 15h4"/>
+        </svg>
+        Ir a tarjetón
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white"
+          stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </button>
+
+      <!-- Btn retry — id conservado -->
+      <button id="btn-retry-identity" type="button">
+        <i class="ti ti-fingerprint" style="color:var(--g-dark);font-size:18px;"></i>
+        Verificar otra huella
+      </button>
+
+      <!-- Error — id conservado -->
+      <div id="identity-error" class="kiosk-message kiosk-message-error hidden"></div>
+
+    </article>
+  </div><!-- /identity-layout -->
+
+  <!-- Botón volver centrado -->
+  <div class="identity-back-wrap">
+    <button type="button"
+      style="display:inline-flex;align-items:center;gap:8px;
+        padding:12px 32px; border:1px solid var(--border); border-radius:12px;
+        background:var(--white); color:#34483d;
+        font-size:14px; font-weight:600; cursor:pointer; font-family:'DM Sans',sans-serif;
+        transition:all 200ms;"
+      onclick="document.getElementById('screen-identity').classList.add('hidden');
+               document.getElementById('screen-welcome').classList.remove('hidden');">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+        stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M19 12H5M12 19l-7-7 7-7"/>
+      </svg>
+      Volver
+    </button>
+  </div>
+
+</section><!-- /#screen-identity -->
