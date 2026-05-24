@@ -459,6 +459,7 @@
       fechaHoraInicio: document.getElementById('eleccion-inicio').value,
       fechaHoraFin: document.getElementById('eleccion-fin').value,
       pesosRoles: buildPesosRoles()
+    };
     if (!body.nombre || !body.fechaHoraInicio || !body.fechaHoraFin) {
       mostrarErrorModal('Completa los campos obligatorios.');
       return;
