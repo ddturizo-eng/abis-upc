@@ -59,6 +59,7 @@ public final class OracleErrorHandler {
                 inRange(oraCode, 20050, 20051) ||
                 inRange(oraCode, 20060, 20062) ||
                 inRange(oraCode, 20064, 20064) ||
+                inRange(oraCode, 20080, 20080) ||
                 inRange(oraCode, 20200, 20201)) {
             return 409;
         }
@@ -107,6 +108,7 @@ public final class OracleErrorHandler {
             case 20062 -> "Solo DOCENTES y ADMINISTRATIVOS pueden ser jurados.";
             case 20063 -> "El votante no tiene fecha de nacimiento registrada.";
             case 20064 -> "El votante debe tener al menos 30 anos para ser jurado.";
+            case 20080 -> "El votante ya es jurado en otra mesa de esta misma eleccion.";
             case 20070 -> "El votante no puede votar.";
             case 20090, 20091 -> "El voto es inmutable segun Art. 258.";
             case 20092, 20093 -> "El registro de participacion es inmutable.";

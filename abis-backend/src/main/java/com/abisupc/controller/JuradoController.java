@@ -154,13 +154,14 @@ public class JuradoController {
             Long id = Long.parseLong(ctx.pathParam("id"));
             Map<String, Object> mesa = parseMesa(ctx.bodyAsClass(Map.class));
             String sql = "UPDATE Mesa_jurados SET HORA_INGRESO = ?, HORA_SALIDA = ?, CARGO = ?, " +
-                    mesaPuestoColumn(conn) + " = ? WHERE ID_MESA = ?";
+                    mesaPuestoColumn(conn) + " = ?, ID_ELECCION = ? WHERE ID_MESA = ?";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setTimestamp(1, (Timestamp) mesa.get("horaIngreso"));
                 ps.setTimestamp(2, (Timestamp) mesa.get("horaSalida"));
                 ps.setString(3, (String) mesa.get("cargo"));
                 ps.setLong(4, (Long) mesa.get("idPuesto"));
-                ps.setLong(5, id);
+                setLongOrNull(ps, 5, (Number) mesa.get("idEleccion"));
+                ps.setLong(6, id);
                 if (ps.executeUpdate() == 0) {
                     ctx.status(404).json(ApiResponse.error("Mesa no encontrada"));
                     return;
@@ -240,7 +241,7 @@ public class JuradoController {
             Long idEleccion = optionalLong(body.get("idEleccion"));
             List<Map<String, Object>> resultado = calcularAsignacion(conn, configuracion, idEleccion);
             if (!dryRun) {
-                persistirAsignacion(conn, resultado);
+                persistirAsignacion(conn, resultado, idEleccion);
             }
             Map<String, Object> response = new HashMap<>();
             response.put("dryRun", dryRun);
@@ -485,7 +486,7 @@ public class JuradoController {
         return slot;
     }
 
-    private static void persistirAsignacion(Connection conn, List<Map<String, Object>> resultado) throws SQLException {
+    private static void persistirAsignacion(Connection conn, List<Map<String, Object>> resultado, Long idEleccion) throws SQLException {
         conn.setAutoCommit(false);
         try {
             Map<String, Long> mesas = new HashMap<>();
@@ -498,6 +499,7 @@ public class JuradoController {
                     mesa.put("cargo", "JURADOS");
                     mesa.put("horaIngreso", Timestamp.valueOf(LocalDateTime.of(LocalDate.now(), LocalTime.parse((String) asignacion.get("horaIngreso")))));
                     mesa.put("horaSalida", Timestamp.valueOf(LocalDateTime.of(LocalDate.now(), LocalTime.parse((String) asignacion.get("horaSalida")))));
+                    mesa.put("idEleccion", idEleccion);
                     idMesa = insertarMesa(conn, mesa);
                     mesas.put(key, idMesa);
                 }
@@ -646,13 +648,14 @@ public class JuradoController {
             rs.next();
             id = rs.getLong(1);
         }
-        String sql = "INSERT INTO Mesa_jurados (ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, " + mesaPuestoColumn(conn) + ") VALUES (?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Mesa_jurados (ID_MESA, HORA_INGRESO, HORA_SALIDA, CARGO, " + mesaPuestoColumn(conn) + ", ID_ELECCION) VALUES (?, ?, ?, ?, ?, ?)";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, id);
             ps.setTimestamp(2, (Timestamp) mesa.get("horaIngreso"));
             ps.setTimestamp(3, (Timestamp) mesa.get("horaSalida"));
             ps.setString(4, (String) mesa.get("cargo"));
             ps.setLong(5, (Long) mesa.get("idPuesto"));
+            setLongOrNull(ps, 6, (Number) mesa.get("idEleccion"));
             ps.executeUpdate();
         }
         return id;
@@ -702,6 +705,7 @@ public class JuradoController {
         mesa.put("cargo", cargo);
         mesa.put("horaIngreso", ingreso);
         mesa.put("horaSalida", salida);
+        mesa.put("idEleccion", body.getOrDefault("idEleccion", null));
         return mesa;
     }
 
@@ -713,6 +717,14 @@ public class JuradoController {
 
     private static LocalDate parseLocalDate(String value) {
         return value == null || value.isBlank() ? LocalDate.now() : LocalDate.parse(value);
+    }
+
+    private static void setLongOrNull(PreparedStatement ps, int idx, Number value) throws SQLException {
+        if (value != null) {
+            ps.setLong(idx, value.longValue());
+        } else {
+            ps.setNull(idx, java.sql.Types.BIGINT);
+        }
     }
 
     private static String ts(ResultSet rs, String field) throws SQLException {
