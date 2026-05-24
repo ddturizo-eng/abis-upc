@@ -82,25 +82,25 @@
       button.addEventListener('click', () => switchTab(button.dataset.tab));
     });
 
-    document.querySelectorAll('.role-chip').forEach((chip) => {
+    document.querySelectorAll('.role-chip-v2').forEach((chip) => {
       chip.addEventListener('click', () => {
-        const input = chip.querySelector('input');
-        input.checked = !input.checked;
-        chip.classList.toggle('active', input.checked);
+        chip.classList.toggle('active');
+        programarRecalculo();
+      });
+    });
+
+    document.querySelectorAll('.mode-card-v2').forEach((card) => {
+      card.addEventListener('click', () => {
+        document.querySelectorAll('.mode-card-v2').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
         programarRecalculo();
       });
     });
 
     document.querySelectorAll('.state-card').forEach((card) => {
       card.addEventListener('click', () => {
-        selectExclusiveCard('.state-card', card, 'input[name="estadoPool"]');
-        programarRecalculo();
-      });
-    });
-
-    document.querySelectorAll('.mode-card').forEach((card) => {
-      card.addEventListener('click', () => {
-        selectExclusiveCard('.mode-card', card, 'input[name="modoAsignacion"]');
+        document.querySelectorAll('.state-card').forEach(c => c.classList.remove('active'));
+        card.classList.add('active');
         programarRecalculo();
       });
     });
@@ -225,11 +225,28 @@
   }
 
   function leerPoolConfig() {
-    JuradosState.poolConfig.roles = [...document.querySelectorAll('#rolesPool input:checked')].map((input) => input.value);
-    JuradosState.poolConfig.estados = [...document.querySelectorAll('#estadosPool input:checked')].map((input) => input.value);
-    JuradosState.poolConfig.excluirCandidatos = Boolean($('excluirCandidatos')?.checked);
-    JuradosState.poolConfig.requerirBiometrico = Boolean($('requerirBiometrico')?.checked);
-    JuradosState.poolConfig.soloNoVotaron = Boolean($('soloNoVotaron')?.checked);
+    const roles = [];
+    document.querySelectorAll('.role-chip-v2.active').forEach((chip) => {
+      roles.push(chip.dataset.value);
+    });
+    JuradosState.poolConfig.roles = roles;
+    JuradosState.poolConfig.estados = [];
+    document.querySelectorAll('.state-card.active').forEach((card) => {
+      JuradosState.poolConfig.estados.push(card.dataset.value);
+    });
+    JuradosState.poolConfig.excluirCandidatos = $('excluirCandidatos')?.checked ?? true;
+    JuradosState.poolConfig.requerirBiometrico = $('requerirBiometrico')?.checked ?? true;
+    JuradosState.poolConfig.soloNoVotaron = $('soloNoVotaron')?.checked ?? false;
+  }
+
+  function leerDistribucionConfig() {
+    const modoEl = document.querySelector('.mode-card-v2.active');
+    JuradosState.distribucionConfig.modo = modoEl?.dataset?.value || 'fijo_por_puesto';
+    JuradosState.distribucionConfig.valorFijo = Number($('juradosPorPuesto')?.value || 3);
+    JuradosState.distribucionConfig.porcentaje = Number($('porcentajeJurados')?.value || 5);
+    JuradosState.distribucionConfig.totalManual = Number($('totalManual')?.value || 0);
+    JuradosState.distribucionConfig.distribucion = $('distribucionPuestos')?.value || 'equitativa';
+    JuradosState.distribucionConfig.puestoAsignado = document.querySelector('input[name="puestoAsignado"]:checked')?.value || 'distinto';
   }
 
   function leerDistribucionConfig() {
@@ -246,6 +263,7 @@
     if (!JuradosState.votantes.length) {
       JuradosState.poolElegibles = [];
       actualizarMetricas(0);
+      actualizarContadoresRoles();
       return JuradosState.poolElegibles;
     }
 
@@ -260,6 +278,7 @@
       return true;
     });
     actualizarMetricas(JuradosState.poolElegibles.length);
+    actualizarContadoresRoles();
     return JuradosState.poolElegibles;
   }
 
@@ -285,54 +304,37 @@
     const mesas = mesasCount();
     const total = Number($('juradosPorPuesto')?.value || 3) * mesas;
     setText('metricPool', number(pool));
-    setText('footerPool', number(pool));
     setText('metricMesas', number(mesas));
-    setText('footerMesas', number(mesas));
     setText('metricJurados', number(total));
     setText('footerAsignar', number(total));
-    setText('metricPoolHint', 'Disponibles');
-    setText('metricJuradosHint', 'Total necesario');
-    setText('metricMesasHint', 'En el proceso');
   }
 
   function actualizarResumen(total = calcularTotalEstimado()) {
     const pool = poolCount();
     const mesas = mesasCount();
-    const assignable = Math.min(total, Math.max(0, pool - 10));
+    const assignable = Math.min(total, Math.max(0, pool));
     const coverage = total ? Math.min(100, Math.round((assignable / total) * 100)) : 0;
     const completas = Math.max(0, Math.floor(mesas * Math.min(coverage, 100) / 100));
     const incompletas = Math.max(0, mesas - completas);
-    const criticas = coverage < 65 ? Math.ceil(mesas * 0.1) : 0;
 
     setText('metricCobertura', coverage);
     setText('metricCoberturaUnit', '%');
-    setText('metricCoberturaHint', 'Proyección actual');
-    setText('summaryCoverage', coverage);
-    setText('summaryCoverageUnit', '%');
-    setText('summaryAssignable', number(assignable));
-    setText('summaryRequired', number(total));
-    setText('summaryComplete', `${number(completas)} (${mesas ? Math.round((completas / mesas) * 100) : 0}%)`);
-    setText('summaryIncomplete', `${number(incompletas)} (${mesas ? Math.round((incompletas / mesas) * 100) : 0}%)`);
-    setText('summaryCritical', `${number(criticas)} (${mesas ? Math.round((criticas / mesas) * 100) : 0}%)`);
-    setText('summaryTotalJurados', number(total));
-    setText('metricJurados', number(total));
+    setText('metricJurados', number(assignable));
+    setText('metricMesas', number(mesas));
+    setText('metricPool', number(pool));
     setText('footerAsignar', number(total));
     setText('distMesas3', number(completas));
     setText('distMesas2', number(incompletas));
-    setText('distMesas1', number(criticas));
-    setText('availabilityBadge', pool < total ? `Solo hay ${number(pool)} jurados elegibles disponibles para asignación` : 'Pool suficiente para la asignación');
-    setText('alertIncomplete', number(incompletas));
-    setText('alertConflicts', number(Math.ceil(incompletas * 3)));
-    setText('legendEstudiantes', `${total ? 60 : 0}% (${number(Math.round(total * 0.6))})`);
-    setText('legendDocentes', `${total ? 25 : 0}% (${number(Math.round(total * 0.25))})`);
-    setText('legendAdministrativos', `${total ? 15 : 0}% (${number(Math.round(total * 0.15))})`);
+    setText('distMesas1', number(Math.max(0, mesas - completas - incompletas)));
 
-    const bar = $('coverageBar');
-    if (bar) {
-      bar.style.setProperty('--target', `${coverage}%`);
-      bar.classList.remove('animate');
-      requestAnimationFrame(() => bar.classList.add('animate'));
+    if (pool < total * 0.5) {
+      mostrarAlertaCritica('Solo hay ' + number(pool) + ' jurados elegibles disponibles para ' + number(total) + ' requeridos');
+    } else if (pool < total) {
+      mostrarAlertaCritica('Pool insuficiente: ' + number(pool) + ' disponibles de ' + number(total) + ' necesarios');
+    } else {
+      ocultarAlertaCritica();
     }
+  }
     const btn = $('btnEjecutarAsignacion');
     if (btn) btn.disabled = pool === 0;
     animateCounter('metricPool', pool);
@@ -353,54 +355,29 @@
     const completas = Number(resumen.completas || 0);
     const incompletas = Number(resumen.incompletas || 0);
     const criticas = Number(resumen.criticas || 0);
-    const roles = resumen.roles || {};
 
     setText('metricPool', number(pool));
-    setText('footerPool', number(pool));
     setText('metricMesas', number(mesas));
-    setText('footerMesas', number(mesas));
-    setText('metricJurados', number(total));
+    setText('metricJurados', number(assignable));
     setText('footerAsignar', number(total));
     setText('totalEstimado', number(total));
-    setText('metricPoolHint', 'Desde base de datos');
-    setText('metricJuradosHint', 'Calculado con mesas reales');
-    setText('metricMesasHint', 'Registradas en BD');
     setText('metricCobertura', coverage);
     setText('metricCoberturaUnit', '%');
-    setText('metricCoberturaHint', 'Según elegibles reales');
-    setText('summaryCoverage', coverage);
-    setText('summaryCoverageUnit', '%');
-    setText('summaryAssignable', number(assignable));
-    setText('summaryRequired', number(total));
-    setText('summaryComplete', `${number(completas)} (${mesas ? Math.round((completas / mesas) * 100) : 0}%)`);
-    setText('summaryIncomplete', `${number(incompletas)} (${mesas ? Math.round((incompletas / mesas) * 100) : 0}%)`);
-    setText('summaryCritical', `${number(criticas)} (${mesas ? Math.round((criticas / mesas) * 100) : 0}%)`);
-    setText('summaryTotalJurados', number(total));
     setText('distMesas3', number(completas));
     setText('distMesas2', number(incompletas));
     setText('distMesas1', number(criticas));
-    setText('availabilityBadge', pool < total ? `Solo hay ${number(pool)} jurados elegibles disponibles para asignación` : 'Pool suficiente para la asignación');
-    setText('alertIncomplete', number(incompletas));
-    setText('alertConflicts', number(resumen.conflictos || 0));
-    setRoleLegend('legendEstudiantes', roles.ESTUDIANTE || 0, pool);
-    setRoleLegend('legendDocentes', roles.DOCENTE || 0, pool);
-    setRoleLegend('legendAdministrativos', roles.ADMINISTRATIVO || 0, pool);
 
-    const bar = $('coverageBar');
-    if (bar) {
-      bar.style.setProperty('--target', `${coverage}%`);
-      bar.classList.remove('animate');
-      requestAnimationFrame(() => bar.classList.add('animate'));
+    if (pool < total) {
+      mostrarAlertaCritica('Solo hay ' + number(pool) + ' jurados elegibles para ' + number(total) + ' requeridos');
+    } else {
+      ocultarAlertaCritica();
     }
     const btn = $('btnEjecutarAsignacion');
     if (btn) btn.disabled = pool === 0 || total === 0;
     animateCounter('metricPool', pool);
-    animateCounter('metricJurados', total);
+    animateCounter('metricJurados', assignable);
     animateCounter('metricMesas', mesas);
     animateCounter('metricCobertura', coverage);
-    animateCounter('summaryCoverage', coverage);
-    animateCounter('summaryAssignable', assignable);
-    animateDonutFromRoles(roles, pool);
   }
 
   function renderTurnos() {
@@ -466,6 +443,8 @@
   }
 
   async function simularAsignacion() {
+    const btn = $('btnEjecutarAsignacion');
+    if (btn) btn.classList.add('cargando');
     try {
       const result = await API.post('/api/jurados/asignar-aleatorio?dry_run=true', requestBody());
       JuradosState.simulacionResultado = (result?.data ?? result)?.jurados || [];
@@ -473,6 +452,8 @@
       abrirModal('modalResultado');
     } catch (error) {
       mostrarNotificacion(error.message, 'error');
+    } finally {
+      if (btn) btn.classList.remove('cargando');
     }
   }
 
@@ -830,25 +811,11 @@
   function resetMetricas() {
     [
       'metricPool', 'metricJurados', 'metricMesas', 'metricCobertura',
-      'summaryCoverage', 'summaryAssignable', 'summaryRequired',
-      'summaryComplete', 'summaryIncomplete', 'summaryTotalJurados',
-      'totalEstimado', 'distMesas3', 'distMesas2', 'footerPool', 'footerAsignar',
-      'footerMesas', 'alertIncomplete', 'alertConflicts', 'legendEstudiantes',
-      'legendDocentes', 'legendAdministrativos'
+      'totalEstimado', 'distMesas3', 'distMesas2', 'footerAsignar'
     ].forEach((id) => setText(id, '—'));
-    setText('summaryCritical', '0 (0%)');
     setText('distMesas1', '0');
     setText('metricCoberturaUnit', '');
-    setText('summaryCoverageUnit', '');
-    setText('availabilityBadge', 'Sin datos aún');
-    const bar = $('coverageBar');
-    if (bar) {
-      bar.style.setProperty('--target', '0%');
-      bar.classList.remove('animate');
-    }
-    document.querySelectorAll('.donut-segment').forEach((circle) => {
-      circle.style.strokeDasharray = '0 264';
-    });
+    ocultarAlertaCritica();
     if ($('btnEjecutarAsignacion')) $('btnEjecutarAsignacion').disabled = true;
   }
 
@@ -972,6 +939,88 @@
   window.seleccionarPuesto = seleccionarPuesto;
   window.abrirModalAsignarJurado = abrirModalAsignarJurado;
   window.cerrarModal = cerrarModal;
+
+  window.juradosWizardNext = function (fromStep) {
+    const steps = document.querySelectorAll('.wizard-step');
+    const allSteps = document.querySelectorAll('#stepperProgreso .step-dot');
+    let allComplete = true;
+    for (let i = 1; i <= 3; i++) {
+      if (i <= fromStep) continue;
+      const nextStep = document.querySelector(`.wizard-step[data-step="${i}"]`);
+      if (nextStep) {
+        steps.forEach(s => { s.classList.remove('activo'); s.classList.add('hidden'); });
+        nextStep.classList.add('activo');
+        nextStep.classList.remove('hidden');
+        allSteps.forEach(d => { d.classList.remove('activo', 'completado'); });
+        allSteps.forEach(d => {
+          const ds = parseInt(d.dataset.step);
+          if (ds < i) d.classList.add('completado');
+          if (ds === i) d.classList.add('activo');
+        });
+        if (i === 3) allComplete = true;
+        break;
+      }
+    }
+    actualizarEstadoBotonGenerar(allComplete && fromStep >= 2);
+  };
+
+  window.juradosWizardPrev = function (fromStep) {
+    const steps = document.querySelectorAll('.wizard-step');
+    const allSteps = document.querySelectorAll('#stepperProgreso .step-dot');
+    const prev = fromStep - 1;
+    if (prev >= 1) {
+      const prevStep = document.querySelector(`.wizard-step[data-step="${prev}"]`);
+      if (prevStep) {
+        steps.forEach(s => { s.classList.remove('activo'); s.classList.add('hidden'); });
+        prevStep.classList.add('activo');
+        prevStep.classList.remove('hidden');
+        allSteps.forEach(d => { d.classList.remove('activo', 'completado'); });
+        allSteps.forEach(d => {
+          const ds = parseInt(d.dataset.step);
+          if (ds < prev) d.classList.add('completado');
+          if (ds === prev) d.classList.add('activo');
+        });
+      }
+    }
+    actualizarEstadoBotonGenerar(false);
+  };
+
+  function actualizarEstadoBotonGenerar(todosCompletos) {
+    const btn = $('btnEjecutarAsignacion');
+    if (!btn) return;
+    btn.disabled = !todosCompletos;
+    if (!todosCompletos) {
+      btn.setAttribute('title', 'Completa todos los pasos del wizard antes de generar');
+    } else {
+      btn.removeAttribute('title');
+    }
+  }
+
+  function actualizarContadoresRoles() {
+    const pool = JuradosState.votantes || [];
+    document.querySelectorAll('.role-chip-v2').forEach(chip => {
+      const rol = chip.dataset.value;
+      const count = pool.filter(v => rolNombre(v) === rol).length;
+      const counter = chip.querySelector('.chip-counter');
+      const tooltip = chip.querySelector('.chip-counter-tooltip');
+      if (counter) counter.textContent = count;
+      if (tooltip) tooltip.textContent = count + ' en el pool';
+    });
+  }
+
+  function mostrarAlertaCritica(msg) {
+    const alerta = $('alertCritica');
+    const msgEl = $('alertCriticaMsg');
+    if (alerta && msgEl) {
+      msgEl.textContent = msg;
+      alerta.classList.remove('hidden');
+    }
+  }
+
+  function ocultarAlertaCritica() {
+    const alerta = $('alertCritica');
+    if (alerta) alerta.classList.add('hidden');
+  }
 
   initJurados();
 })();
