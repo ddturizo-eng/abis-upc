@@ -18,8 +18,13 @@
           </div>
         </div>
         <div class="engine-actions">
+          <div class="eleccion-selector-wrap">
+            <label class="eleccion-selector-label" for="jurados-eleccion">Elección</label>
+            <select id="jurados-eleccion" class="eleccion-selector">
+              <option value="">Cargando...</option>
+            </select>
+          </div>
           <button class="btn-soft" id="btnVerPool" type="button"><i class="ti ti-list"></i> Ver pool</button>
-          <button class="btn-soft" type="button"><i class="ti ti-clipboard-list"></i> Mesas</button>
         </div>
       </header>
 
@@ -86,7 +91,7 @@
             <div>
               <label class="field-label">Roles incluidos</label>
               <div class="role-chip-grid" id="rolesPool">
-                <button class="role-chip-v2 active" type="button" data-value="ESTUDIANTE">
+                <button class="role-chip-v2" type="button" data-value="ESTUDIANTE">
                   <i class="ti ti-school"></i><span>Estudiante</span>
                   <span class="chip-counter">0</span>
                   <span class="chip-counter-tooltip">0 en el pool</span>

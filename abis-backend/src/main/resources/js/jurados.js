@@ -2,7 +2,7 @@
   const JuradosState = {
     tabActivo: 'asignacion',
     poolConfig: {
-      roles: ['ESTUDIANTE', 'DOCENTE', 'ADMINISTRATIVO'],
+      roles: ['DOCENTE', 'ADMINISTRATIVO'],
       estados: ['PENDIENTE'],
       excluirCandidatos: true,
       requerirBiometrico: true,
@@ -81,6 +81,8 @@
     document.querySelectorAll('.jurados-tab').forEach((button) => {
       button.addEventListener('click', () => switchTab(button.dataset.tab));
     });
+
+    $('jurados-eleccion')?.addEventListener('change', onCambioEleccion);
 
     document.querySelectorAll('.role-chip-v2').forEach((chip) => {
       chip.addEventListener('click', () => {
@@ -205,11 +207,42 @@
   async function cargarElecciones() {
     try {
       JuradosState.elecciones = apiData(await API.get('/api/elecciones'));
-      const activa = JuradosState.elecciones.find((e) => e.estado === 'EN_CURSO') || JuradosState.elecciones[0];
-      JuradosState.idEleccion = activa?.id || activa?.idEleccion || null;
     } catch (error) {
       JuradosState.elecciones = [];
     }
+    poblarSelectorEleccion();
+  }
+
+  function poblarSelectorEleccion() {
+    const select = $('jurados-eleccion');
+    if (!select) return;
+    const estadoLabel = { PROGRAMADA: '📋', EN_CURSO: '🟢', CERRADA: '🔒', FINALIZADA: '🔒' };
+    select.innerHTML = JuradosState.elecciones.map(e => {
+      const id = e.id || e.idEleccion;
+      const nombre = e.nombre || 'Sin nombre';
+      const estado = e.estado || '';
+      const emoji = estadoLabel[estado] || '';
+      return `<option value="${id}">${emoji} ${nombre} (${estado})</option>`;
+    }).join('');
+
+    if (JuradosState.elecciones.length === 0) {
+      select.innerHTML = '<option value="">Sin elecciones</option>';
+      JuradosState.idEleccion = null;
+      return;
+    }
+
+    const activa = JuradosState.elecciones.find(e => e.estado === 'EN_CURSO')
+                || JuradosState.elecciones.find(e => e.estado === 'PROGRAMADA')
+                || JuradosState.elecciones[0];
+    select.value = activa?.id || activa?.idEleccion || '';
+    JuradosState.idEleccion = activa?.id || activa?.idEleccion || null;
+  }
+
+  function onCambioEleccion() {
+    const select = $('jurados-eleccion');
+    JuradosState.idEleccion = select?.value ? Number(select.value) : null;
+    recalcularAsignacion();
+    mostrarNotificacion('Elección cambiada. Recalculando pool...', 'info');
   }
 
   async function cargarMesas() {
