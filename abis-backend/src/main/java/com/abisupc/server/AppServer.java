@@ -160,7 +160,7 @@ public class AppServer {
         app.get("/api/admin/dashboard", AdminController::dashboard);
         app.get("/api/auditoria/reciente", AdminController::auditoriaReciente);
         app.get("/api/votantes", VotanteController::getAll);
-        app.get("/api/votantes/estadisticas", AdminController::estadisticasVotantes);
+        app.get("/api/admin/estadisticas-votantes", AdminController::estadisticasVotantes);
         app.put("/api/votantes/{id}", VotanteController::editar);
         app.put("/api/votantes/{id}/inhabilitar", VotanteController::inhabilitar);
         app.put("/api/votantes/{id}/habilitar", VotanteController::habilitar);

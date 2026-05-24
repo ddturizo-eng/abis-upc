@@ -37,10 +37,6 @@
   const $ = (id) => document.getElementById(id);
   const number = (value) => new Intl.NumberFormat('es-CO').format(Number(value) || 0);
 
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
   const apiData = (payload) => {
     const value = payload?.data ?? payload ?? [];
     if (typeof value === 'string') {
