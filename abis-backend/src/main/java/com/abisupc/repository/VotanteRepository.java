@@ -198,15 +198,26 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
-    public List<Votante> findHabilitadosParaContingencia() {
-        String sql = SELECT_BASE + " WHERE UPPER(ESTADO_VOTO) = 'PENDIENTE' AND CORREO IS NOT NULL " +
-                "ORDER BY PRIMER_APELLIDO, PRIMER_NOMBRE";
+    public List<Votante> findHabilitadosParaContingencia(Long idEleccion) {
+        String sql = """
+                SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE,
+                       v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, v.ESTADO_VOTO, v.FOTO_URL,
+                       v.FECHA_CONSENTIMIENTO, v.FECHA_NACIMIENTO, v.ID_ROL, v.ID_PUESTO, v.QR_CEDULA
+                FROM Votantes v
+                INNER JOIN Eleccion_roles er ON er.id_rol = v.id_rol
+                WHERE er.id_eleccion = ?
+                  AND UPPER(v.ESTADO_VOTO) = 'PENDIENTE'
+                  AND v.CORREO IS NOT NULL
+                ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE
+                """;
         List<Votante> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql);
-             ResultSet rs = ps.executeQuery()) {
-            while (rs.next()) {
-                lista.add(mapRow(rs));
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setLong(1, idEleccion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) {
+                    lista.add(mapRow(rs));
+                }
             }
             return lista;
         } catch (SQLException e) {

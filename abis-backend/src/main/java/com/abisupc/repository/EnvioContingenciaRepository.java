@@ -42,7 +42,12 @@ public class EnvioContingenciaRepository {
 
     public Map<String, Object> resumen(Long idEleccion) {
         try (Connection conn = AppConfig.getConnection()) {
-            long elegibles = count(conn, "SELECT COUNT(*) FROM votantes WHERE UPPER(estado_voto) = 'PENDIENTE'");
+            long elegibles = count(conn, """
+                    SELECT COUNT(*) FROM votantes v
+                    INNER JOIN Eleccion_roles er ON er.id_rol = v.id_rol
+                    WHERE er.id_eleccion = ?
+                      AND UPPER(v.estado_voto) = 'PENDIENTE'
+                    """, idEleccion);
             long tokens = count(conn, "SELECT COUNT(*) FROM tokens_contingencia WHERE id_eleccion = ?", idEleccion);
             long enviados = countUltimoEstado(conn, idEleccion, "ENVIADO");
             long fallidos = countUltimoEstado(conn, idEleccion, "FALLIDO");
