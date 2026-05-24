@@ -52,7 +52,7 @@
 
   async function loadStats() {
     try {
-      const response = await fetch('/api/votantes/estadisticas', { headers: authHeaders() });
+      const response = await fetch('/api/admin/estadisticas-votantes', { headers: authHeaders() });
       if (!response.ok) throw new Error('Error al cargar estadísticas');
       const data = await response.json();
       const total = Number(data.total || 0);
