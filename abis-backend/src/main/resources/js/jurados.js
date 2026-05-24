@@ -637,7 +637,8 @@
       idPuesto: Number($('mesaPuesto').value),
       horaIngreso: $('mesaHoraIngreso').value,
       horaSalida: $('mesaHoraSalida').value,
-      cargo: $('mesaCargo').value
+      cargo: $('mesaCargo').value,
+      idEleccion: JuradosState.idEleccion
     };
     try {
       if (id) await API.request(`/api/jurados/mesas/${id}`, { method: 'PUT', body });
