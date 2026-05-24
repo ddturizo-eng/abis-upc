@@ -1,54 +1,61 @@
 package com.abisupc.controller;
 
+import com.abisupc.config.AppConfig;
 import com.abisupc.integration.BiometricClient;
+import com.abisupc.integration.CertificadoClient;
 import io.javalin.Javalin;
-import io.javalin.http.UploadedFile;
+
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.sql.Connection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * ABIS-UPC | Capa de Controladores
- * Recibe peticiones HTTP del frontend y delega a la capa de integración.
- * Respeta el patrón: Controller → Business → Integration.
+ * Health check y status de todos los servicios del sistema.
  */
 public class TestController {
 
     public static void register(Javalin app) {
 
-        // ── GET /api/health ────────────────────────────────────────────────
-        // Verifica el estado de todas las capas del sistema
         app.get("/api/health", ctx -> {
             boolean pythonAlive = BiometricClient.isAlive();
-            String status = pythonAlive
-                ? "{\"backend\":\"ok\",\"biometric\":\"ok\",\"mensaje\":\"Todos los sistemas operativos\"}"
-                : "{\"backend\":\"ok\",\"biometric\":\"offline\",\"mensaje\":\"Microservicio Python no responde en puerto 8000\"}";
+            boolean ocrAlive = BiometricClient.isOcrAlive();
+            boolean databaseAlive = isDatabaseAlive();
+            boolean nativeAlive = isPortOpen("localhost", 8765);
+            boolean emailAlive = new CertificadoClient().isAlive();
 
-            ctx.contentType("application/json").result(status);
+            Map<String, Object> status = new LinkedHashMap<>();
+            status.put("java", "ok");
+            status.put("backend", "ok");
+            status.put("biometric", pythonAlive ? "ok" : "offline");
+            status.put("ocr", ocrAlive ? "ok" : "offline");
+            status.put("native", nativeAlive ? "ok" : "offline");
+            status.put("database", databaseAlive ? "ok" : "offline");
+            status.put("email", emailAlive ? "ok" : "offline");
+            status.put("mensaje", (pythonAlive && ocrAlive && nativeAlive && databaseAlive && emailAlive)
+                    ? "Todos los sistemas operativos"
+                    : "Verificar servicios externos y Oracle XE");
+
+            ctx.json(status);
         });
+    }
 
-        // ── POST /api/ocr/scan ─────────────────────────────────────────────
-        // Recibe la imagen del frontend, la reenvía a Python y retorna el OCR
-        app.post("/api/ocr/scan", ctx -> {
-            UploadedFile uploadedFile = ctx.uploadedFile("file");
+    private static boolean isDatabaseAlive() {
+        try (Connection ignored = AppConfig.getConnection()) {
+            return true;
+        } catch (Throwable e) {
+            return false;
+        }
+    }
 
-            if (uploadedFile == null) {
-                ctx.status(400)
-                   .contentType("application/json")
-                   .result("{\"error\":\"No se recibió ningún archivo. Campo esperado: 'file'\",\"fuente\":\"error\"}");
-                return;
-            }
-
-            System.out.println("[TestController] Imagen recibida: "
-                + uploadedFile.filename()
-                + " (" + uploadedFile.size() + " bytes)"
-                + " → reenviando a Python...");
-
-            String resultado = BiometricClient.scanDocument(
-                uploadedFile.content(),
-                uploadedFile.filename()
-            );
-
-            System.out.println("[TestController] Respuesta Python: " + resultado);
-
-            ctx.contentType("application/json").result(resultado);
-        });
+    private static boolean isPortOpen(String host, int port) {
+        try (Socket socket = new Socket()) {
+            socket.connect(new InetSocketAddress(host, port), 800);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }

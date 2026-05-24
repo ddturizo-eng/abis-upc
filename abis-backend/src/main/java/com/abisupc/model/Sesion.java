@@ -12,6 +12,7 @@ public class Sesion extends Entity {
     public String getToken() {
         return token;
     }
+
     public void setToken(String token) {
         this.token = token;
     }
@@ -19,6 +20,7 @@ public class Sesion extends Entity {
     public LocalDateTime getFechaInicio() {
         return fechaInicio;
     }
+
     public void setFechaInicio(LocalDateTime fechaInicio) {
         this.fechaInicio = fechaInicio;
     }
@@ -26,6 +28,7 @@ public class Sesion extends Entity {
     public Long getIdAdministrador() {
         return idAdministrador;
     }
+
     public void setIdAdministrador(Long idAdministrador) {
         this.idAdministrador = idAdministrador;
     }
@@ -33,6 +36,7 @@ public class Sesion extends Entity {
     public LocalDateTime getFechaFin() {
         return fechaFin;
     }
+
     public void setFechaFin(LocalDateTime fechaFin) {
         this.fechaFin = fechaFin;
     }

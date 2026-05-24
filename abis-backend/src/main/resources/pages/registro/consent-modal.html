@@ -1,0 +1,107 @@
+<div class="min-h-[calc(100vh-180px)] flex items-center justify-center">
+    <section class="consent-shell">
+        <header class="consent-hero">
+            <div>
+                <h1>Autorización de tratamiento de datos personales</h1>
+                <p>Sistema ABIS-UPC v1.0.0-STABLE • Entorno de pruebas</p>
+            </div>
+            <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+        </header>
+
+        <div class="consent-body">
+            <section class="consent-summary" aria-labelledby="consent-summary-title">
+                <div class="consent-section-heading">
+                    <h2 id="consent-summary-title">Resumen del tratamiento de datos</h2>
+                    <p>Antes de continuar, es importante que conozcas cómo se usarán tus datos.</p>
+                </div>
+
+                <div class="consent-facts">
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">person</span>
+                        <div>
+                            <h3>¿Quién es el responsable?</h3>
+                            <p>Universidad Popular del Cesar<br>NIT: 890.300.445-6</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">database</span>
+                        <div>
+                            <h3>¿Qué datos se recolectan?</h3>
+                            <p>Nombre, cédula, correo, fotografía facial, plantilla de huella dactilar y código QR del documento.</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">my_location</span>
+                        <div>
+                            <h3>¿Para qué se usan?</h3>
+                            <p>Verificación de identidad en el proceso electoral universitario y validación del sistema biométrico.</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">schedule</span>
+                        <div>
+                            <h3>¿Por cuánto tiempo se conservan?</h3>
+                            <p>Únicamente durante la fase de validación y se eliminan al finalizar el proceso.</p>
+                        </div>
+                    </article>
+
+                    <article class="consent-fact">
+                        <span class="material-symbols-outlined" aria-hidden="true">shield</span>
+                        <div>
+                            <h3>¿Cómo se protegen?</h3>
+                            <p>Los datos se cifran con AES-256 y se almacenan en servidores seguros con acceso restringido.</p>
+                        </div>
+                    </article>
+                </div>
+
+                <aside class="consent-protected">
+                    <span class="material-symbols-outlined" aria-hidden="true">verified_user</span>
+                    <div>
+                        <strong>Tu información está protegida</strong>
+                        <p>No compartimos tus datos con terceros. Este proceso es auditado y cumple con la Ley 1581 de 2012.</p>
+                    </div>
+                </aside>
+            </section>
+
+            <section class="consent-document" aria-labelledby="consent-document-title">
+                <div class="consent-section-heading">
+                    <h2 id="consent-document-title">Documento completo</h2>
+                    <p>Lee detenidamente el documento antes de aceptar.</p>
+                </div>
+
+                <div id="consent-scroll" class="consent-scroll">
+                    <h3>AUTORIZACIÓN DE TRATAMIENTO DE DATOS PERSONALES</h3>
+                    <p>De conformidad con la Ley 1581 de 2012 y su Decreto Reglamentario 1377 de 2013, autorizo de manera libre, previa, expresa e informada a la Universidad Popular del Cesar para recolectar, almacenar, usar y tratar mis datos personales, incluyendo datos biométricos, para los fines relacionados con la verificación de identidad en el proceso electoral universitario y la validación del sistema biométrico.</p>
+                    <p>Declaro que he sido informado(a) sobre mi derecho a conocer, actualizar, rectificar y solicitar la eliminación de mis datos personales, así como sobre las finalidades del tratamiento y los mecanismos para ejercer dichos derechos.</p>
+                    <p>La captura de datos biométricos, como fotografía facial y huella dactilar, es voluntaria, pero necesaria para garantizar la seguridad, autenticidad y transparencia del proceso electoral.</p>
+                    <p>Los datos capturados serán eliminados al finalizar el período de validación del sistema y no serán compartidos con terceros bajo ninguna circunstancia.</p>
+                    <p>El sistema ABIS-UPC implementa medidas técnicas y administrativas para proteger la información recolectada, incluyendo cifrado AES-256, separación de datos sensibles y acceso restringido al personal autorizado.</p>
+                    <p>Al aceptar, confirmo que comprendo el alcance de esta autorización y autorizo el tratamiento de mis datos personales y biométricos conforme a la normativa colombiana vigente.</p>
+                    <p>También entiendo que puedo revocar esta autorización o solicitar información sobre el tratamiento de mis datos mediante los canales institucionales definidos por el responsable del sistema.</p>
+                </div>
+            </section>
+        </div>
+
+        <footer class="consent-actions">
+            <label class="consent-check">
+                <input id="consent-checkbox" type="checkbox" disabled>
+                <span class="material-symbols-outlined" aria-hidden="true">check</span>
+                <div>
+                    <strong>He leído y acepto el tratamiento de mis datos personales y biométricos</strong>
+                    <p>Al marcar esta casilla, confirmo que comprendo y acepto las condiciones descritas en este documento.</p>
+                </div>
+            </label>
+
+            <div class="consent-continue">
+                <button id="btn-consent-accept" class="opacity-50 cursor-not-allowed" disabled>
+                    <span class="material-symbols-outlined" aria-hidden="true">shield</span>
+                    Aceptar y continuar
+                </button>
+                <p id="consent-hint">Desplace el texto legal hasta el final.</p>
+            </div>
+        </footer>
+    </section>
+</div>
