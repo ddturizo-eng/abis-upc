@@ -1812,6 +1812,59 @@ select:focus {
   grid-template-columns: 1fr;
 }
 
+/* ── JURADOS POR MESA (TITULARES + SUPLENTES) ── */
+.jurados-mesa-grid {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: 1fr 1fr;
+}
+.jurados-mesa-field {
+  display: flex;
+  flex-direction: column;
+}
+.jurados-mesa-field input {
+  background: var(--abis-green-light);
+  border: 1px solid var(--abis-green-mid);
+  border-radius: 8px;
+  color: var(--abis-green-dark);
+  font-size: 1.3rem;
+  font-weight: 800;
+  height: 48px;
+  text-align: center;
+  width: 80px;
+}
+.jurados-mesa-field input:focus {
+  border-color: var(--abis-green);
+  box-shadow: 0 0 0 3px var(--abis-green-light);
+}
+.jurados-mesa-field small {
+  color: var(--abis-text-2);
+  font-size: 0.72rem;
+  margin-top: 4px;
+}
+.jurados-mesa-total {
+  align-items: center;
+  background: var(--abis-green-light);
+  border: 1px solid var(--abis-green-mid);
+  border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  min-height: 72px;
+}
+.jurados-mesa-total span {
+  color: var(--abis-text-2);
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+.jurados-mesa-total strong {
+  color: var(--abis-green-dark);
+  font-size: 1.6rem;
+  font-weight: 800;
+}
+
 @keyframes rotateSpinner {
   to { transform: rotate(360deg); }
 }
