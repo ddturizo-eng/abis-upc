@@ -405,7 +405,7 @@
 
   function openDrawer(voter, action) {
     if (action === 'bio') {
-      openReEnrollModal(voter);
+      window.open(`/pages/registro/index.html?re_enroll=${encodeURIComponent(voter.identificacion)}`, '_blank');
       return;
     }
     const drawer = document.getElementById('voter-drawer');
@@ -565,88 +565,6 @@
     const drawer = document.getElementById('voter-drawer');
     drawer.classList.remove('open');
     drawer.setAttribute('aria-hidden', 'true');
-  }
-
-  let reEnrollStream = null;
-
-  function openReEnrollModal(voter) {
-    let modal = document.getElementById('re-enroll-modal');
-    if (!modal) {
-      modal = document.createElement('div');
-      modal.id = 're-enroll-modal';
-      modal.className = 'voter-modal-overlay';
-      modal.innerHTML = `
-        <div class="voter-modal-panel" style="max-width:560px">
-          <div class="modal-header">
-            <h2>Re-enrolamiento biometrico</h2>
-            <button class="modal-close" id="btnCloseReEnroll">&times;</button>
-          </div>
-          <p style="color:var(--abis-text-2);font-size:0.84rem;margin-bottom:14px">
-            Votante: <strong id="reEnrollName"></strong> (${escapeHtml(voter.identificacion)})
-          </p>
-          <div class="re-enroll-video-wrap">
-            <video id="reEnrollVideo" autoplay playsinline muted style="width:100%;border-radius:8px;background:#1a1a1a"></video>
-            <canvas id="reEnrollCanvas" style="display:none"></canvas>
-          </div>
-          <p style="color:var(--abis-text-2);font-size:0.76rem;margin:8px 0">Capture una nueva foto del rostro. La huella se captura desde el modulo de registro presencial.</p>
-          <div class="modal-actions" style="margin-top:12px">
-            <button class="voters-btn voters-btn-ghost" id="btnCancelReEnroll">Cancelar</button>
-            <button class="voters-btn voters-btn-primary" id="btnCaptureReEnroll"><span class="material-symbols-outlined">photo_camera</span> Capturar foto</button>
-          </div>
-          <div id="reEnrollStatus" style="margin-top:8px;font-size:0.82rem;color:var(--abis-green-dark);display:none"></div>
-        </div>
-      `;
-      document.body.appendChild(modal);
-      modal.querySelector('#btnCloseReEnroll')?.addEventListener('click', cerrarReEnroll);
-      modal.querySelector('#btnCancelReEnroll')?.addEventListener('click', cerrarReEnroll);
-      modal.querySelector('#btnCaptureReEnroll')?.addEventListener('click', () => capturarFotoReEnroll(voter));
-    }
-    modal.querySelector('#reEnrollName').textContent = fullName(voter);
-    modal.style.display = 'flex';
-    iniciarCamaraReEnroll();
-  }
-
-  async function iniciarCamaraReEnroll() {
-    try {
-      reEnrollStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user', width: 640, height: 480 } });
-      const video = document.getElementById('reEnrollVideo');
-      if (video) video.srcObject = reEnrollStream;
-    } catch (e) {
-      document.getElementById('reEnrollStatus').textContent = 'No se pudo acceder a la camara.';
-      document.getElementById('reEnrollStatus').style.display = 'block';
-    }
-  }
-
-  async function capturarFotoReEnroll(voter) {
-    const video = document.getElementById('reEnrollVideo');
-    const canvas = document.getElementById('reEnrollCanvas');
-    const status = document.getElementById('reEnrollStatus');
-    if (!video || !canvas) return;
-    canvas.width = video.videoWidth || 640;
-    canvas.height = video.videoHeight || 480;
-    canvas.getContext('2d').drawImage(video, 0, 0);
-    const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.85));
-    const formData = new FormData();
-    formData.append('foto', blob, 're_enroll.jpg');
-    formData.append('identificacion', voter.identificacion);
-    formData.append('re_enroll', 'true');
-    try {
-      status.textContent = 'Subiendo foto...';
-      status.style.display = 'block';
-      const response = await fetch('/api/votantes/foto', { method: 'POST', body: formData });
-      if (!response.ok) throw new Error(await response.text());
-      status.textContent = 'Foto actualizada. Para nueva huella, use el lector en el modulo de registro.';
-      cerrarReEnroll();
-      await loadVoters();
-    } catch (e) {
-      status.textContent = 'Error: ' + (e.message || 'No se pudo subir la foto');
-    }
-  }
-
-  function cerrarReEnroll() {
-    if (reEnrollStream) { reEnrollStream.getTracks().forEach(t => t.stop()); reEnrollStream = null; }
-    const modal = document.getElementById('re-enroll-modal');
-    if (modal) modal.style.display = 'none';
   }
 
   async function renderAudit(limit = 6) {
