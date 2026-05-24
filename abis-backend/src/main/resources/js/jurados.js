@@ -368,16 +368,6 @@
       ocultarAlertaCritica();
     }
   }
-    const btn = $('btnEjecutarAsignacion');
-    if (btn) btn.disabled = pool === 0;
-    animateCounter('metricPool', pool);
-    animateCounter('metricJurados', total);
-    animateCounter('metricMesas', mesas);
-    animateCounter('metricCobertura', coverage);
-    animateCounter('summaryCoverage', coverage);
-    animateCounter('summaryAssignable', assignable);
-    animateDonut(total);
-  }
 
   function aplicarResumenBackend(resumen) {
     const pool = Number(resumen.pool || 0);
