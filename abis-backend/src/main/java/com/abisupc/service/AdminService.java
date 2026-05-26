@@ -7,6 +7,8 @@ import com.abisupc.repository.EleccionAdminRepository;
 import com.abisupc.repository.SesionRepository;
 import com.abisupc.repository.VotanteAdminRepository;
 
+import org.mindrot.jbcrypt.BCrypt;
+
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -44,9 +46,20 @@ public class AdminService {
         }
 
         Administrador admin = optAdmin.get();
-        String hashIngresado = sha256(password);
 
-        if (!hashIngresado.equals(admin.getPasswordHash())) {
+        boolean passwordValido = false;
+        if (admin.getPasswordHash().startsWith("$2a$")) {
+            passwordValido = BCrypt.checkpw(password, admin.getPasswordHash());
+        } else {
+            if (sha256(password).equals(admin.getPasswordHash())) {
+                String nuevoHash = hashPassword(password);
+                admin.setPasswordHash(nuevoHash);
+                adminRepo.update(admin);
+                passwordValido = true;
+            }
+        }
+
+        if (!passwordValido) {
             return new LoginResult(false, null, "Usuario o contraseña incorrectos");
         }
 
@@ -106,6 +119,10 @@ public class AdminService {
             throw new IllegalArgumentException("Administrador autenticado requerido");
         }
         eleccionAdminRepo.cerrarEleccion(idEleccion, idAdmin);
+    }
+
+    public static String hashPassword(String password) {
+        return BCrypt.hashpw(password, BCrypt.gensalt(12));
     }
 
     public static String sha256(String input) {
