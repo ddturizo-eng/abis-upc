@@ -8,6 +8,8 @@ import java.sql.SQLException;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
 
 public class VotacionService {
 
@@ -18,8 +20,20 @@ public class VotacionService {
     private final TokenContingenciaRepository tokenContingenciaRepo;
 
     public VotacionService() {
-        this(new VotoOracleRepository(), new VotanteAdminRepository(), new CertificadoService(), Executors.newSingleThreadExecutor(),
+        this(new VotoOracleRepository(), new VotanteAdminRepository(), new CertificadoService(),
+                Executors.newSingleThreadExecutor(new CertificadoThreadFactory()),
                 new TokenContingenciaRepository());
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            certificadoExecutor.shutdown();
+            try {
+                if (!certificadoExecutor.awaitTermination(5, TimeUnit.SECONDS)) {
+                    certificadoExecutor.shutdownNow();
+                }
+            } catch (InterruptedException e) {
+                certificadoExecutor.shutdownNow();
+                Thread.currentThread().interrupt();
+            }
+        }));
     }
 
     public VotacionService(
@@ -70,6 +84,15 @@ public class VotacionService {
     private void validarId(Long id, String field) {
         if (id == null || id <= 0) {
             throw new IllegalArgumentException(field + " requerido");
+        }
+    }
+
+    private static class CertificadoThreadFactory implements ThreadFactory {
+        @Override
+        public Thread newThread(Runnable r) {
+            Thread t = new Thread(r, "certificado-async");
+            t.setDaemon(true);
+            return t;
         }
     }
 }
