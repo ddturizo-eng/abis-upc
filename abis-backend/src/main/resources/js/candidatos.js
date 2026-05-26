@@ -452,6 +452,7 @@
       segundoNombre: normalizeText(document.getElementById('segundoNombre').value),
       primerApellido: normalizeText(document.getElementById('primerApellido').value),
       segundoApellido: normalizeText(document.getElementById('segundoApellido').value),
+      email: normalizeText(document.getElementById('email').value),
       numeroCampania: normalizeText(document.getElementById('numeroCampania').value),
       cargo: normalizeText(dom.cargoForm.value)
     };
@@ -495,8 +496,12 @@
       setFieldError('primerApellido', 'Primer apellido requerido');
       valid = false;
     }
-    if (!payload.numeroCampania || Number(payload.numeroCampania) <= 0) {
-      setFieldError('numeroCampania', 'Número de campaña requerido');
+    if (!payload.numeroCampania || Number(payload.numeroCampania) <= 0 || Number(payload.numeroCampania) > 9999) {
+      setFieldError('numeroCampania', 'Numero de campana requerido (1-9999)');
+      valid = false;
+    }
+    if (payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(payload.email)) {
+      setFieldError('email', 'Formato de correo invalido');
       valid = false;
     }
     if (!payload.cargo) {

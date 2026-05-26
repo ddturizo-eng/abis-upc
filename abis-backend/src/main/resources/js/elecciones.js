@@ -464,6 +464,10 @@
       mostrarErrorModal('Completa los campos obligatorios.');
       return;
     }
+    if (body.fechaHoraInicio >= body.fechaHoraFin) {
+      mostrarErrorModal('La fecha de inicio debe ser anterior a la fecha de fin.');
+      return;
+    }
     if (Object.keys(body.pesosRoles).length === 0) {
       mostrarErrorModal('Debes habilitar al menos un rol para esta elección.');
       return;
