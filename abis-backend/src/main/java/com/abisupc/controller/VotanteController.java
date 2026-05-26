@@ -21,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class VotanteController {
 
@@ -33,27 +32,29 @@ public class VotanteController {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static void getAll(Context ctx) {
-        List<Votante> votantes = repository.findAll();
+        int page = queryInt(ctx, "page", 1);
+        int size = queryInt(ctx, "size", 20);
         String rol = ctx.queryParam("rol");
         String estado = ctx.queryParam("estado");
-        String biometrico = ctx.queryParam("biometrico");
-        if (rol != null && !rol.isBlank()) {
-            votantes = votantes.stream()
-                    .filter(v -> rol.equalsIgnoreCase(rolNombre(v.getIdRol())))
-                    .collect(Collectors.toList());
+        String biometricoParam = ctx.queryParam("biometrico");
+        Boolean biometrico = null;
+        if (biometricoParam != null && !biometricoParam.isBlank()) {
+            biometrico = Boolean.parseBoolean(biometricoParam) || "S".equalsIgnoreCase(biometricoParam)
+                    || "true".equalsIgnoreCase(biometricoParam);
         }
-        if (estado != null && !estado.isBlank()) {
-            votantes = votantes.stream()
-                    .filter(v -> estado.equalsIgnoreCase(v.getEstadoVoto()))
-                    .collect(Collectors.toList());
+        ctx.json(repository.findAllPaginated(page, size, rol, estado, biometrico));
+    }
+
+    private static int queryInt(Context ctx, String name, int defaultValue) {
+        String value = ctx.queryParam(name);
+        if (value == null || value.isBlank()) {
+            return defaultValue;
         }
-        if (biometrico != null && !biometrico.isBlank()) {
-            boolean requerido = Boolean.parseBoolean(biometrico) || "S".equalsIgnoreCase(biometrico) || "true".equalsIgnoreCase(biometrico);
-            votantes = votantes.stream()
-                    .filter(v -> v.isBiometrico() == requerido)
-                    .collect(Collectors.toList());
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return defaultValue;
         }
-        ctx.json(votantes);
     }
 
     public static void porEleccion(Context ctx) {

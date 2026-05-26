@@ -9,7 +9,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class VotanteRepository implements Repository<Votante> {
@@ -61,6 +63,84 @@ public class VotanteRepository implements Repository<Votante> {
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotanteRepository.findAll", e);
         }
+    }
+
+    public Map<String, Object> findAllPaginated(int page, int size, String rol, String estado, Boolean biometrico) {
+        int safePage = Math.max(1, page);
+        int safeSize = Math.max(1, Math.min(size, 100));
+        int offset = (safePage - 1) * safeSize;
+
+        StringBuilder where = new StringBuilder();
+        List<Object> params = new ArrayList<>();
+        boolean hasRolFilter = rol != null && !rol.isBlank();
+        if (hasRolFilter) {
+            where.append(" AND UPPER(r.NOMBRE) = UPPER(?)");
+            params.add(rol.trim());
+        }
+        if (estado != null && !estado.isBlank()) {
+            where.append(" AND UPPER(v.ESTADO_VOTO) = UPPER(?)");
+            params.add(estado.trim());
+        }
+        if (biometrico != null) {
+            if (biometrico) {
+                where.append(" AND bv.ACTIVO = 'S'");
+            } else {
+                where.append(" AND (bv.ACTIVO IS NULL OR bv.ACTIVO = 'N')");
+            }
+        }
+
+        String joinRoles = hasRolFilter ? " JOIN ROLES r ON v.ID_ROL = r.ID_ROL " : " ";
+
+        String fromClause = " FROM Votantes v " +
+                "LEFT JOIN BIOMETRIA_VOTANTES bv ON v.IDENTIFICACION = bv.IDENTIFICACION" +
+                joinRoles +
+                "WHERE 1=1 " + where.toString();
+
+        String selectCols = "v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE, " +
+                "v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, v.ESTADO_VOTO, v.FOTO_URL, " +
+                "v.FECHA_CONSENTIMIENTO, v.FECHA_NACIMIENTO, v.ID_ROL, v.ID_PUESTO, v.QR_CEDULA, " +
+                "CASE WHEN bv.ACTIVO = 'S' THEN 1 ELSE 0 END AS BIOMETRICO";
+
+        List<Votante> data = new ArrayList<>();
+        int total = 0;
+        try (Connection conn = AppConfig.getConnection()) {
+            String countSql = "SELECT COUNT(*) " + fromClause;
+            try (PreparedStatement ps = conn.prepareStatement(countSql)) {
+                for (int i = 0; i < params.size(); i++) {
+                    ps.setObject(i + 1, params.get(i));
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    if (rs.next()) total = rs.getInt(1);
+                }
+            }
+
+            String dataSql = "SELECT " + selectCols + fromClause +
+                    "ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE " +
+                    "OFFSET ? ROWS FETCH NEXT ? ROWS ONLY";
+            try (PreparedStatement ps = conn.prepareStatement(dataSql)) {
+                int idx = 1;
+                for (Object param : params) {
+                    ps.setObject(idx++, param);
+                }
+                ps.setInt(idx++, offset);
+                ps.setInt(idx, safeSize);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        data.add(mapRow(rs));
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en VotanteRepository.findAllPaginated", e);
+        }
+
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("data", data);
+        result.put("total", total);
+        result.put("page", safePage);
+        result.put("size", safeSize);
+        result.put("pages", total == 0 ? 0 : (int) Math.ceil((double) total / safeSize));
+        return result;
     }
 
     @Override
