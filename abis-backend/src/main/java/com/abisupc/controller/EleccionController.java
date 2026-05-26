@@ -224,6 +224,21 @@ public class EleccionController {
                         }
                     }
                 }
+
+                String sqlBlanco = "SELECT NVL(SUM(" + pesoCol + "), 0) AS votos FROM Votos " +
+                        "WHERE ID_ELECCION = ? AND ID_CANDIDATO IS NULL";
+                try (PreparedStatement ps = conn.prepareStatement(sqlBlanco)) {
+                    ps.setLong(1, idEleccion);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next() && rs.getDouble("votos") > 0) {
+                            Map<String, Object> c = new LinkedHashMap<>();
+                            c.put("candidato", "Voto en blanco");
+                            c.put("cargo", "VOTO EN BLANCO");
+                            c.put("votos", rs.getDouble("votos"));
+                            candidatos.add(c);
+                        }
+                    }
+                }
             }
             ctx.json(ApiResponse.success(Map.of("candidatos", candidatos)));
         } catch (NumberFormatException e) {
@@ -489,6 +504,23 @@ public class EleccionController {
                                  .append("\"><td>").append(esc(c))
                                  .append("</td><td>").append(esc(cargo))
                                  .append("</td><td>").append(String.format("%.1f", v)).append("</td></tr>");
+                        }
+                    }
+                }
+
+                String sqlBlanco = "SELECT NVL(SUM(" + pesoCol + "), 0) AS votos FROM Votos " +
+                        "WHERE ID_ELECCION = ? AND ID_CANDIDATO IS NULL";
+                try (PreparedStatement ps = conn.prepareStatement(sqlBlanco)) {
+                    ps.setLong(1, idEleccion);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        if (rs.next()) {
+                            double vBlanco = rs.getDouble("votos");
+                            if (vBlanco > 0) {
+                                totalVotos += (long) vBlanco;
+                                nCandidatos++;
+                                filas.append("<tr><td>Voto en blanco</td><td>VOTO EN BLANCO</td><td>")
+                                     .append(String.format("%.1f", vBlanco)).append("</td></tr>");
+                            }
                         }
                     }
                 }
