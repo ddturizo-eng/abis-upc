@@ -134,7 +134,7 @@
       }
       window.open('/pages/votacion/index.html', 'ABISVotacionKiosko', 'noopener,noreferrer');
     } catch (error) {
-      alert(error.message || 'No fue posible abrir el modo votacion.');
+      if (window.showToast) window.showToast(error.message || 'No fue posible abrir el modo votacion.', 'error');
     }
   };
 

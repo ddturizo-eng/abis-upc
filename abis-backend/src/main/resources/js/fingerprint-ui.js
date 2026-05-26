@@ -14,11 +14,8 @@ const FingerprintUI = {
 
   async start() {
     const button = document.getElementById('btn-fingerprint-start');
-    const errorBox = document.getElementById('fingerprint-error');
     button.disabled = true;
     button.classList.add('opacity-60', 'cursor-not-allowed');
-    errorBox.classList.add('hidden');
-    errorBox.textContent = '';
     FingerprintUI.current = 0;
     FingerprintUI.render('WAITING_FINGER', 'Preparando lector biometrico...');
 
@@ -60,8 +57,7 @@ const FingerprintUI = {
     } catch (error) {
       FingerprintUI.render('ERROR', 'Error de lectura, intente nuevamente');
       FingerprintUI.closeSocket();
-      errorBox.textContent = error.message || 'No fue posible completar la captura. Intente nuevamente.';
-      errorBox.classList.remove('hidden');
+      if (window.showToast) window.showToast(error.message || 'No fue posible completar la captura. Intente nuevamente.', 'error');
       button.disabled = false;
       button.classList.remove('opacity-60', 'cursor-not-allowed');
     } finally {

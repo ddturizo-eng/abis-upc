@@ -339,7 +339,7 @@
             <td>${escapeHtml(j.sede || j.nombrePuesto || '--')}</td>
             <td style="font-size:0.72rem">${escapeHtml(j.correo || '--')}</td>
             <td>${j.notificado ? '<span class="cert-badge" style="background:#dcfce7;color:#166534;border-color:#bbf7d0">Enviado</span>' : '<span class="cert-badge" style="background:#fef3c7;color:#92400e;border-color:#fde68a">Pendiente</span>'}</td>
-            <td><button class="cert-btn cert-btn-ghost" style="padding:0 10px;min-height:30px;font-size:0.7rem" onclick="alert('Notificacion individual pendiente de implementacion')"><span class="material-symbols-outlined" style="font-size:16px">mail</span></button></td>
+            <td><button class="cert-btn cert-btn-ghost" style="padding:0 10px;min-height:30px;font-size:0.7rem" onclick="window.showToast&&window.showToast('Notificacion individual pendiente de implementacion','info')"><span class="material-symbols-outlined" style="font-size:16px">mail</span></button></td>
           </tr>
         `).join('');
       }

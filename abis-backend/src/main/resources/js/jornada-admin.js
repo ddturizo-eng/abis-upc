@@ -54,13 +54,8 @@
     }).format(value);
   }
 
-  function showMessage(message, type = 'warning') {
-    const box = $('jornada-message');
-    if (!box) return;
-    box.textContent = message || '';
-    box.className = message
-      ? `rounded-lg border p-3 text-sm font-bold ${type === 'error' ? 'border-red-200 bg-red-50 text-red-700' : 'border-amber-200 bg-amber-50 text-amber-700'}`
-      : 'hidden';
+  function showMessage(message, type) {
+    if (message && window.showToast) window.showToast(message, type || 'warning');
   }
 
   function selectedElection() {

@@ -645,16 +645,10 @@
   }
 
   function mostrarErrorModal(message) {
-    const error = document.getElementById('modal-eleccion-error');
-    error.textContent = message;
-    error.classList.add('visible');
+    if (window.showToast) window.showToast(message, 'error');
   }
 
-  function ocultarErrorModal() {
-    const error = document.getElementById('modal-eleccion-error');
-    error.textContent = '';
-    error.classList.remove('visible');
-  }
+  function ocultarErrorModal() {}
 
   function escapeHtml(value) {
     return String(value)

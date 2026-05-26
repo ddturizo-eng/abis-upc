@@ -210,17 +210,8 @@
     return 'bg-[#f3f4f6] text-[#6b7280]';
   }
 
-  function showMessage(message, type = 'success') {
-    const box = $('contingencia-message');
-    if (!box) return;
-    const styles = {
-      success: 'border-[#b7e4c7] bg-[#e8f5e9] text-[#075521]',
-      warning: 'border-amber-200 bg-amber-50 text-amber-700',
-      error: 'border-red-200 bg-red-50 text-red-700'
-    };
-    box.className = `rounded-lg border p-3 text-sm font-bold ${styles[type] || styles.success}`;
-    box.textContent = message;
-    box.classList.remove('hidden');
+  function showMessage(message, type) {
+    if (window.showToast) window.showToast(message, type || 'success');
   }
 
   function setText(id, value) {

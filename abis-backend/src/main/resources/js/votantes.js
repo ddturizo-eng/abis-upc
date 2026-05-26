@@ -542,18 +542,14 @@
   async function saveVoter(event, voter) {
     event.preventDefault();
     const form = event.currentTarget;
-    const error = document.getElementById('voter-modal-error');
     const submit = form.querySelector('button[type="submit"]');
     const payload = Object.fromEntries(new FormData(form).entries());
     if (!payload.primer_nombre?.trim() || !payload.primer_apellido?.trim()) {
-      error.textContent = 'Primer nombre y primer apellido son obligatorios.';
-      error.classList.add('visible');
+      if (window.showToast) window.showToast('Primer nombre y primer apellido son obligatorios.', 'error');
       return;
     }
 
     try {
-      error.textContent = '';
-      error.classList.remove('visible');
       if (submit) {
         submit.disabled = true;
         submit.textContent = 'Guardando...';
@@ -582,8 +578,7 @@
       closeDrawer();
       await loadVoters();
     } catch (saveError) {
-      error.textContent = saveError.message || 'No fue posible guardar los cambios.';
-      error.classList.add('visible');
+      if (window.showToast) window.showToast(saveError.message || 'No fue posible guardar los cambios.', 'error');
     } finally {
       if (submit) {
         submit.disabled = false;

@@ -112,14 +112,10 @@
   }
 
   function showError(message) {
-    dom.error.textContent = message || 'Ocurrió un error cargando candidatos.';
-    dom.error.classList.remove('hidden');
+    if (window.showToast) window.showToast(message || 'Ocurrio un error cargando candidatos.', 'error');
   }
 
-  function clearError() {
-    dom.error.textContent = '';
-    dom.error.classList.add('hidden');
-  }
+  function clearError() {}
 
   function unwrap(response) {
     return response?.data ?? response ?? [];
@@ -476,6 +472,7 @@
   function limpiarErroresFormulario() {
     dom.modalError.textContent = '';
     dom.modalError.classList.remove('visible');
+    // modal error handled by showToast in catch block
     dom.form.querySelectorAll('.invalid').forEach((field) => field.classList.remove('invalid'));
     dom.form.querySelectorAll('.field-error').forEach((field) => { field.textContent = ''; });
   }
@@ -872,8 +869,7 @@
     try {
       await guardarCandidato(payload);
     } catch (error) {
-      dom.modalError.textContent = error.message;
-      dom.modalError.classList.add('visible');
+      if (window.showToast) window.showToast(error.message, 'error');
     }
   });
 

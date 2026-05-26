@@ -218,19 +218,10 @@ function mapDocType(type) {
 }
 
 function showPaso1Error(message) {
-  const errorBox = document.getElementById('error-msg');
-  if (!errorBox) return;
-  errorBox.textContent = message;
-  errorBox.classList.remove('hidden');
+  if (window.showToast) window.showToast(message, 'error');
 }
 
-function hidePaso1Error() {
-  const errorBox = document.getElementById('error-msg');
-  if (errorBox) {
-    errorBox.classList.add('hidden');
-    errorBox.textContent = '';
-  }
-}
+function hidePaso1Error() {}
 
 function fillFormFromOCR(data) {
   if (!(data.status === 'complete' || (data.overall_confidence && data.overall_confidence > 0))) {
@@ -392,7 +383,7 @@ async function toggleCamera() {
 
   } catch (err) {
     console.error("Error accediendo a la cámara:", err);
-    alert("No se pudo acceder a la cámara. Verifique los permisos.");
+    window.showToast("No se pudo acceder a la camara. Verifique los permisos.", 'error');
   }
 }
 
@@ -943,9 +934,7 @@ async function abrirCamaraFoto() {
     document.getElementById('btn-capturar-foto').classList.remove('hidden');
     document.getElementById('btn-repetir-foto').classList.add('hidden');
   } catch (e) {
-    const errorBox = document.getElementById('bio-error');
-    errorBox.textContent = 'No se pudo acceder a la cámara: ' + e.message;
-    errorBox.classList.remove('hidden');
+    window.showToast('No se pudo acceder a la camara: ' + e.message, 'error');
   }
 }
 
@@ -956,9 +945,7 @@ function capturarFoto() {
   const guide = document.getElementById('foto-guide');
 
   if (video.videoWidth === 0 || video.videoHeight === 0) {
-    const errorBox = document.getElementById('bio-error');
-    errorBox.textContent = 'La cámara no está lista. Por favor abre la cámara primero.';
-    errorBox.classList.remove('hidden');
+    window.showToast('La camara no esta lista. Por favor abre la camara primero.', 'error');
     return;
   }
 
@@ -1051,9 +1038,7 @@ function initPaso2() {
   document.getElementById('btn-repetir-foto').addEventListener('click', repetirFoto);
 
   document.getElementById('btn-enroll').addEventListener('click', async () => {
-    const errorBox = document.getElementById('bio-error');
     const button = document.getElementById('btn-enroll');
-    errorBox.classList.add('hidden');
     button.disabled = true;
 
     const progressItems = [

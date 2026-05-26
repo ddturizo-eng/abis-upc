@@ -1,6 +1,8 @@
 (function () {
   const STACK_ID = 'abis-toast-stack';
-  const DURATION = 4000;
+  const DURATION_SUCCESS = 5000;
+  const DURATION_WARNING = 5000;
+  const DURATION_INFO = 5000;
 
   function ensureStack() {
     let stack = document.getElementById(STACK_ID);
@@ -27,22 +29,27 @@
 
   function removeToast(toast) {
     toast.classList.add('toast-exit');
-    setTimeout(() => { if (toast.parentNode) toast.remove(); }, 300);
+    setTimeout(function () { if (toast.parentNode) toast.remove(); }, 300);
   }
 
-  window.showToast = function (message, type = 'info') {
-    const stack = ensureStack();
-    const toast = createToast(message, type);
-    toast.querySelector('.toast-close').addEventListener('click', () => removeToast(toast));
+  window.showToast = function (message, type) {
+    type = type || 'info';
+    var stack = ensureStack();
+    var toast = createToast(message, type);
+    toast.querySelector('.toast-close').addEventListener('click', function () { removeToast(toast); });
     stack.appendChild(toast);
-    requestAnimationFrame(() => toast.classList.add('toast-enter'));
-    setTimeout(() => { if (toast.parentNode) removeToast(toast); }, DURATION);
+    requestAnimationFrame(function () { toast.classList.add('toast-enter'); });
+    if (type !== 'error') {
+      var duration = type === 'success' ? DURATION_SUCCESS : type === 'warning' ? DURATION_WARNING : DURATION_INFO;
+      setTimeout(function () { if (toast.parentNode) removeToast(toast); }, duration);
+    }
   };
 
-  // Compatibilidad: exponer como mostrarNotificacion para modulos existentes
   window.mostrarNotificacion = window.showToast;
 
   function escapeHtml(value) {
-    return String(value ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c]));
+    return String(value || '').replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[c];
+    });
   }
 })();

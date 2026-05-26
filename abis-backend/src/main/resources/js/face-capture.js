@@ -129,16 +129,10 @@ const FaceCapture = {
   },
 
   showError(text) {
-    const errorBox = document.getElementById('face-error');
-    errorBox.textContent = text;
-    errorBox.classList.remove('hidden');
+    if (window.showToast) window.showToast(text, 'error');
   },
 
-  hideError() {
-    const errorBox = document.getElementById('face-error');
-    errorBox.textContent = '';
-    errorBox.classList.add('hidden');
-  }
+  hideError() {}
 };
 
 window.FaceCapture = FaceCapture;
