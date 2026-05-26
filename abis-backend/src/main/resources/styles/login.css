@@ -205,6 +205,61 @@
             display: block;
         }
 
+        .recover-section {
+            margin-top: 4px;
+        }
+
+        .recover-text {
+            color: var(--color-text-muted);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .btn-recover {
+            margin-top: 8px;
+        }
+
+        .btn-link {
+            background: none;
+            border: 0;
+            color: var(--color-primary);
+            cursor: pointer;
+            display: block;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            margin: 12px auto 0;
+            padding: 4px;
+            text-decoration: none;
+        }
+
+        .btn-link:hover {
+            opacity: 0.8;
+        }
+
+        .recover-msg {
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-top: 16px;
+            padding: 12px 14px;
+            text-align: center;
+        }
+
+        .recover-success {
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+        }
+
+        .recover-error {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
         .btn-login {
             background: linear-gradient(135deg, var(--color-primary-dark), var(--color-primary));
             border: 0;

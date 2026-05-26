@@ -7,6 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
     <link rel="stylesheet" href="../../styles/login.css">
+    <link rel="stylesheet" href="../../styles/toast.css">
 </head>
 <body>
     <main class="login-card" aria-label="Inicio de sesión ABIS-UPC">
@@ -15,7 +16,6 @@
         <p class="login-subtitle">Todo el proceso electoral, en un solo lugar.</p>
 
         <form id="login-form" class="login-form">
-            <div id="error-msg" class="error-msg"></div>
 
             <label class="form-group" for="usuario">
                 <span class="form-label">Usuario</span>
@@ -41,7 +41,21 @@
                     <input type="checkbox" id="remember">
                     <span>Recordarme</span>
                 </label>
-                <a href="#" class="forgot-link" onclick="return false;">¿Olvidaste tu contraseña?</a>
+                <a href="#" class="forgot-link" id="forgot-link">Olvidaste tu contraseña?</a>
+            </div>
+
+            <div id="recover-section" class="recover-section" style="display:none;">
+                <p class="recover-text">Ingresa tu usuario para solicitar la recuperacion de contrasena.</p>
+                <label class="form-group" for="recover-usuario">
+                    <span class="form-label">Usuario</span>
+                    <span class="input-shell">
+                        <span class="material-symbols-outlined">account_circle</span>
+                        <input type="text" id="recover-usuario" placeholder="Ingresa tu usuario" autocomplete="username">
+                    </span>
+                </label>
+                <button type="button" class="btn-login btn-recover" id="btn-recover">Enviar solicitud</button>
+                <button type="button" class="btn-link" id="btn-back-login">Volver al inicio de sesion</button>
+                <p id="recover-msg" class="recover-msg" style="display:none;"></p>
             </div>
 
             <button type="submit" class="btn-login" id="btn-submit">Ingresar</button>
@@ -49,6 +63,7 @@
 
         <p class="footer-text">ABIS-UPC © Universidad Popular del Cesar</p>
     </main>
+    <script src="../../js/toast.js"></script>
     <script src="../../js/login.js"></script>
 </body>
 </html>

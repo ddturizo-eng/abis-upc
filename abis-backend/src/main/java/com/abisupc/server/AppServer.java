@@ -92,6 +92,7 @@ public class AppServer {
         // Auth (publica - login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
         app.post("/api/auth/logout", AdminController::logout);
+        app.post("/api/auth/recuperar", AdminController::recuperarPassword);
 
         // Elecciones y candidatos
         app.get("/api/elecciones", EleccionController::getAll);

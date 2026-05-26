@@ -59,6 +59,22 @@ public class AdminController {
         }
     }
 
+    public static void recuperarPassword(Context ctx) {
+        try {
+            ObjectNode body = mapper.readValue(ctx.body(), ObjectNode.class);
+            String usuario = body.has("usuario") ? body.get("usuario").asText() : null;
+            if (usuario == null || usuario.isBlank()) {
+                ctx.json(errorJson("Usuario requerido"));
+                return;
+            }
+            service.solicitarRecuperacion(usuario);
+            ctx.json(ApiResponse.success("Solicitud enviada. El administrador del sistema se contactara al correo registrado."));
+        } catch (Exception e) {
+            System.err.println("[AdminController] Error recuperarPassword: " + e.getMessage());
+            ctx.json(ApiResponse.success("Solicitud enviada. El administrador del sistema se contactara al correo registrado."));
+        }
+    }
+
     public static void logout(Context ctx) {
         try {
             String token = ctx.header("Authorization");

@@ -9,10 +9,16 @@ import com.abisupc.repository.VotanteAdminRepository;
 
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
 import java.util.Optional;
 import java.util.UUID;
@@ -133,6 +139,69 @@ public class AdminService {
         } catch (NoSuchAlgorithmException e) {
             throw new RuntimeException("SHA-256 no disponible", e);
         }
+    }
+
+    public void solicitarRecuperacion(String usuario) {
+        Optional<Administrador> optAdmin = adminRepo.findByUsuario(usuario);
+        if (optAdmin.isEmpty()) {
+            return;
+        }
+        Administrador admin = optAdmin.get();
+
+        String fecha = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now());
+        String asunto = "ABIS-UPC | Solicitud de recuperacion de contrasena";
+        String cuerpo = "SOLICITUD DE RECUPERACION DE CONTRASENA\n" +
+                "============================================\n" +
+                "Fecha y hora: " + fecha + "\n" +
+                "Usuario: " + admin.getUsuario() + "\n" +
+                "Nombre: " + admin.getNombre() + "\n" +
+                "Correo: " + (admin.getCorreo() != null ? admin.getCorreo() : "No registrado") + "\n" +
+                "============================================\n" +
+                "Accion requerida: Restablecer la contrasena de este administrador y notificarle al correo registrado.";
+
+        enviarNotificacion(asunto, cuerpo);
+    }
+
+    private void enviarNotificacion(String asunto, String cuerpo) {
+        String emailServiceUrl = System.getenv().getOrDefault("EMAIL_SERVICE_URL", "http://localhost:8010");
+        String token = System.getenv().getOrDefault("EMAIL_SERVICE_TOKEN", "");
+        String destinatario = "ddturizo@unicesar.edu.co";
+
+        try {
+            String json = String.format("{\"to\":\"%s\",\"subject\":\"%s\",\"body\":\"%s\"}",
+                    destinatario,
+                    asunto.replace("\"", "\\\""),
+                    cuerpo.replace("\"", "\\\"").replace("\n", "\\n"));
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(emailServiceUrl + "/api/email/notificar-recuperacion"))
+                    .header("Content-Type", "application/json")
+                    .header("Authorization", "Bearer " + token)
+                    .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
+                    .build();
+
+            HttpClient client = HttpClient.newHttpClient();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                System.out.println("[AdminService] Notificacion de recuperacion enviada a " + destinatario);
+            } else {
+                System.err.println("[AdminService] Email-service respondio " + response.statusCode() + ": " + response.body());
+                logRecuperacionFallback(asunto, cuerpo);
+            }
+        } catch (Exception e) {
+            System.err.println("[AdminService] No fue posible contactar email-service: " + e.getMessage());
+            logRecuperacionFallback(asunto, cuerpo);
+        }
+    }
+
+    private void logRecuperacionFallback(String asunto, String cuerpo) {
+        System.out.println("============================================");
+        System.out.println("[AdminService] NOTIFICACION DE RECUPERACION (FALLBACK - email-service no disponible)");
+        System.out.println("Destinatario: ddturizo@unicesar.edu.co");
+        System.out.println("Asunto: " + asunto);
+        System.out.println(cuerpo);
+        System.out.println("============================================");
     }
 
     private void validarOperacionAdmin(String identificacion, Long idAdmin, String motivo) {
