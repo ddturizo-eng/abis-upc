@@ -63,6 +63,27 @@ function contingenciaHtml(payload) {
   `;
 }
 
+export async function enviarNotificacion(payload) {
+  ensureResendConfig();
+
+  const resend = new Resend(config.resendApiKey);
+  const { data, error } = await resend.emails.send({
+    from: config.resendFromEmail,
+    to: [payload.to],
+    subject: payload.subject,
+    html: payload.body.replace(/\n/g, '<br>')
+  });
+
+  if (error) {
+    const sendError = new Error(error.message || 'Resend no pudo enviar la notificacion');
+    sendError.statusCode = 502;
+    sendError.publicMessage = 'No fue posible enviar la notificacion por correo';
+    throw sendError;
+  }
+
+  return data;
+}
+
 export async function enviarQrContingenciaPorCorreo(payload, qrPngBuffer) {
   ensureResendConfig();
 

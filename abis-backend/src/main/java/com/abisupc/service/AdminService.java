@@ -176,7 +176,7 @@ public class AdminService {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(emailServiceUrl + "/api/email/notificar-recuperacion"))
                     .header("Content-Type", "application/json")
-                    .header("Authorization", "Bearer " + token)
+                    .header("X-Internal-Token", token)
                     .POST(HttpRequest.BodyPublishers.ofString(json, StandardCharsets.UTF_8))
                     .build();
 
