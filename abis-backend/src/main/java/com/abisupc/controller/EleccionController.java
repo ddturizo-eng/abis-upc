@@ -466,10 +466,11 @@ public class EleccionController {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
             String nombre = "";
             String fecha = "";
-            StringBuilder filas = new StringBuilder();
-            String ganador = "";
-            long totalVotos = 0;
-            int nCandidatos = 0;
+            java.util.List<Map<String, Object>> candidatos = new java.util.ArrayList<>();
+            Map<String, Object> votoBlanco = new java.util.LinkedHashMap<>();
+            votoBlanco.put("votos", 0.0);
+            double totalVotos = 0;
+
             try (Connection conn = AppConfig.getConnection()) {
                 String sqlInfo = "SELECT NOMBRE, TO_CHAR(FECHA_HORA_INICIO,'DD/MM/YYYY') AS FECHA FROM ELECCIONES WHERE ID_ELECCION = ?";
                 try (PreparedStatement ps = conn.prepareStatement(sqlInfo)) {
@@ -496,14 +497,14 @@ public class EleccionController {
                             String c = rs.getString("candidato");
                             String cargo = rs.getString("CARGO");
                             double v = rs.getDouble("votos");
-                            totalVotos += (long) v;
-                            nCandidatos++;
-                            if (first && v > 0) { ganador = c; first = false; }
-                            filas.append("<tr class=\"")
-                                 .append(ganador.equals(c) ? "winner" : "")
-                                 .append("\"><td>").append(esc(c))
-                                 .append("</td><td>").append(esc(cargo))
-                                 .append("</td><td>").append(String.format("%.1f", v)).append("</td></tr>");
+                            totalVotos += v;
+                            Map<String, Object> item = new java.util.LinkedHashMap<>();
+                            item.put("nombre", c);
+                            item.put("cargo", cargo);
+                            item.put("votos", v);
+                            item.put("ganador", first && v > 0);
+                            if (first && v > 0) first = false;
+                            candidatos.add(item);
                         }
                     }
                 }
@@ -515,57 +516,50 @@ public class EleccionController {
                     try (ResultSet rs = ps.executeQuery()) {
                         if (rs.next()) {
                             double vBlanco = rs.getDouble("votos");
-                            if (vBlanco > 0) {
-                                totalVotos += (long) vBlanco;
-                                nCandidatos++;
-                                filas.append("<tr><td>Voto en blanco</td><td>VOTO EN BLANCO</td><td>")
-                                     .append(String.format("%.1f", vBlanco)).append("</td></tr>");
-                            }
+                            votoBlanco.put("votos", vBlanco);
+                            totalVotos += vBlanco;
                         }
                     }
                 }
             }
 
-            String html = "<!DOCTYPE html>\n<html lang=\"es\">\n<head><meta charset=\"UTF-8\">" +
-                    "<title>Acta de Ganadores - " + esc(nombre) + "</title>\n" +
-                    "<style>" +
-                    "*{margin:0;padding:0;box-sizing:border-box}" +
-                    "body{font-family:'Segoe UI',system-ui,sans-serif;color:#1a3a2a;max-width:800px;margin:0 auto;padding:40px 24px}" +
-                    ".header{text-align:center;border-bottom:3px solid #1a3a2a;padding-bottom:20px;margin-bottom:24px}" +
-                    ".header h1{font-size:1.5rem;font-weight:800;letter-spacing:0.03em}" +
-                    ".header p{color:#6b7280;font-size:0.9rem;margin-top:4px}" +
-                    ".header .badge{display:inline-block;background:#1a3a2a;color:#fff;border-radius:6px;padding:4px 14px;font-size:0.75rem;font-weight:700;margin-top:8px}" +
-                    "table{width:100%;border-collapse:collapse;margin:20px 0}" +
-                    "th{background:#f8faf9;border-bottom:2px solid #d1d5db;color:#6b7280;font-size:0.72rem;font-weight:700;letter-spacing:0.05em;padding:10px 12px;text-align:left;text-transform:uppercase}" +
-                    "td{border-bottom:1px solid #eee;padding:10px 12px;font-size:0.88rem}" +
-                    "tr.winner td{background:#f0fdf4;font-weight:700}" +
-                    "tr.winner td:first-child::before{content:\"\\2605 \";color:#158759}" +
-                    ".totals{background:#f8faf9;border-radius:8px;padding:14px 18px;margin-top:16px;display:flex;gap:24px}" +
-                    ".totals div strong{display:block;font-size:1.1rem;color:#1a3a2a}" +
-                    ".totals div small{color:#6b7280;font-size:0.72rem}" +
-                    ".footer{border-top:1px solid #eee;margin-top:32px;padding-top:16px;text-align:center;color:#9ca3af;font-size:0.75rem}" +
-                    "@media print{body{padding:20px}.no-print{display:none}}" +
-                    ".no-print{margin-top:20px;text-align:center}" +
-                    ".no-print button{background:#1a3a2a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.84rem;font-weight:700;padding:10px 24px}" +
-                    "</style>\n</head>\n<body>\n" +
-                    "<div class=\"header\"><h1>Acta de Ganadores</h1><p>" + esc(nombre) + "</p>" +
-                    "<span class=\"badge\">" + esc(fecha) + "</span></div>\n" +
-                    "<table><thead><tr><th>Candidato</th><th>Cargo</th><th>Votos</th></tr></thead>" +
-                    "<tbody>" + filas.toString() + "</tbody></table>\n" +
-                    "<div class=\"totals\">" +
-                    "<div><small>Total votos</small><strong>" + totalVotos + "</strong></div>" +
-                    "<div><small>Candidatos</small><strong>" + nCandidatos + "</strong></div>" +
-                    "<div><small>Ganador</small><strong>" + esc(ganador.isEmpty() ? "Sin votos" : ganador) + "</strong></div>" +
-                    "</div>\n" +
-                    "<div class=\"footer\">ABIS-UPC · Sistema Electoral · Tribunal de Garantias Electorales</div>\n" +
-                    "<div class=\"no-print\"><button onclick=\"window.print()\">Imprimir / Guardar como PDF</button></div>\n" +
-                    "</body></html>";
+            Map<String, Object> payload = new java.util.LinkedHashMap<>();
+            payload.put("nombre", nombre);
+            payload.put("fecha", fecha);
+            payload.put("candidatos", candidatos);
+            payload.put("votoBlanco", votoBlanco);
+            payload.put("totalVotos", totalVotos);
 
-            ctx.contentType("text/html; charset=UTF-8");
-            ctx.result(html);
+            String emailServiceUrl = System.getenv().getOrDefault("EMAIL_SERVICE_URL", "http://localhost:8010");
+            String token = System.getenv().getOrDefault("EMAIL_SERVICE_TOKEN", "");
+            String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
+
+            java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
+                    .uri(java.net.URI.create(emailServiceUrl + "/api/actas/generar"))
+                    .header("Content-Type", "application/json")
+                    .header("X-Internal-Token", token)
+                    .POST(java.net.http.HttpRequest.BodyPublishers.ofString(json, java.nio.charset.StandardCharsets.UTF_8))
+                    .build();
+
+            java.net.http.HttpClient client = java.net.http.HttpClient.newHttpClient();
+            java.net.http.HttpResponse<byte[]> response = client.send(request, java.net.http.HttpResponse.BodyHandlers.ofByteArray());
+
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                ctx.header("Content-Type", "application/pdf");
+                ctx.header("Content-Disposition", "inline; filename=\"acta-ganadores-" + idEleccion + ".pdf\"");
+                ctx.result(response.body());
+            } else {
+                String errorBody = new String(response.body(), java.nio.charset.StandardCharsets.UTF_8);
+                System.err.println("[EleccionController] Email-service respondio " + response.statusCode() + ": " + errorBody);
+                ctx.status(502).json(ApiResponse.error("No fue posible generar el acta PDF"));
+            }
         } catch (NumberFormatException e) {
             ctx.status(400).json(ApiResponse.error("ID de eleccion invalido"));
         } catch (Exception e) {
+            if (handleOracle(ctx, e)) {
+                return;
+            }
+            System.err.println("[EleccionController] Error actaPDF: " + e.getMessage());
             ctx.status(500).json(ApiResponse.error(e.getMessage()));
         }
     }
