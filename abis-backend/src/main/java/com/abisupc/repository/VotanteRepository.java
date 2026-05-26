@@ -12,8 +12,31 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Repositorio para la tabla {@code VOTANTES} en Oracle.
+ *
+ * <p>Gestiona el censo electoral y la información de los ciudadanos habilitados para votar.
+ * Realiza un acoplamiento mediante {@code LEFT JOIN} con la tabla {@code BIOMETRIA_VOTANTES}
+ * para determinar dinámicamente si el votante cuenta con un registro biométrico activo,
+ * centralizando el estado de autenticación en las consultas de lectura.
+ *
+ * <p>Tabla Oracle Principal: {@code VOTANTES}
+ * <ul>
+ * <li>{@code IDENTIFICACION} — PK primaria basada en el documento de identidad (String)</li>
+ * <li>{@code CORREO} — Correo electrónico único del ciudadano</li>
+ * <li>{@code ESTADO_VOTO} — Estado del flujo de votación (ej. PENDIENTE, VOTÓ)</li>
+ * <li>{@code ID_ROL} — FK que asocia al votante con sus permisos en elecciones</li>
+ * <li>{@code ID_PUESTO} — FK hacia el puesto de votación asignado</li>
+ * <li>{@code QR_CEDULA} — Hash o cadena del código QR de la cédula física</li>
+ * </ul>
+ */
 public class VotanteRepository implements Repository<Votante> {
 
+    /**
+     * Consulta base reutilizable para la lectura de votantes.
+     * * <p>Integra la verificación biométrica transformando el indicador alfabético
+     * ({@code 'S'/ 'N'}) en un entero binario ({@code 1 / 0}) ejecutable por el mapeador.
+     */
     private static final String SELECT_BASE = """
             SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE,
                    v.PRIMER_APELLIDO, v.SEGUNDO_APELLIDO, v.ESTADO_VOTO, v.FOTO_URL,
@@ -23,6 +46,16 @@ public class VotanteRepository implements Repository<Votante> {
             LEFT JOIN BIOMETRIA_VOTANTES bv ON v.IDENTIFICACION = bv.IDENTIFICACION
             """;
 
+    /**
+     * Convierte una fila del {@link ResultSet} en un objeto {@link Votante}.
+     *
+     * <p>Centraliza la extracción de datos relacionales asegurando que cualquier cambio
+     * en el esquema de columnas de la base de datos impacte a un único método.
+     *
+     * @param rs cursor posicionado en la fila a mapear
+     * @return objeto {@link Votante} construido con los datos de la fila actual
+     * @throws SQLException si alguna columna mapeada no coincide con la proyección SQL
+     */
     private Votante mapRow(ResultSet rs) throws SQLException {
         Votante votante = new Votante();
         votante.setIdentificacion(rs.getString("IDENTIFICACION"));
@@ -42,11 +75,26 @@ public class VotanteRepository implements Repository<Votante> {
         return votante;
     }
 
+    /**
+     * Busca un votante utilizando la conversión numérica de su identificador primario.
+     *
+     * <p>Delega internamente la búsqueda a {@link #findByIdentificacion(String)}
+     * garantizando la reutilización del diseño y consistencia en consultas por índice.
+     *
+     * @param id identificador numérico convertido a cadena
+     * @return {@link Optional} con el votante si existe, o vacío en caso contrario
+     */
     @Override
     public Optional<Votante> findById(Long id) {
         return findByIdentificacion(String.valueOf(id));
     }
 
+    /**
+     * Recupera todos los votantes del censo electoral ordenados alfabéticamente.
+     *
+     * @return lista con todos los votantes registrados; nunca devuelve {@code null}
+     * @throws RuntimeException si se genera un fallo de comunicación o sintaxis en Oracle
+     */
     @Override
     public List<Votante> findAll() {
         String sql = SELECT_BASE + " ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE";
@@ -63,6 +111,16 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Inserta un nuevo votante en la base de datos.
+     *
+     * <p>Si el {@code estadoVoto} provisto por la entidad es nulo, se predetermina
+     * de forma automática al estado {@code PENDIENTE} utilizando {@link EstadoVotante}.
+     *
+     * @param entity objeto votante con la información requerida para el registro
+     * @throws RuntimeException si se viola la restricción de unicidad de la PK (ORA-00001),
+     * indicando que el documento ya se encuentra registrado
+     */
     @Override
     public void save(Votante entity) {
         String sql = "INSERT INTO Votantes (IDENTIFICACION, CORREO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, " +
@@ -92,6 +150,16 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Actualiza los datos demográficos y de configuración de un votante existente.
+     *
+     * <p>Nota de diseño: Este método modifica datos del perfil mas **no** altera el estado
+     * del voto por seguridad transaccional. Si el registro no es localizado por su PK,
+     * se genera una excepción explícita.
+     *
+     * @param entity votante con las modificaciones actualizadas; debe portar una identificación válida
+     * @throws RuntimeException si no se encuentra ningún registro con la identificación suministrada
+     */
     @Override
     public void update(Votante entity) {
         String sql = "UPDATE Votantes SET CORREO = ?, PRIMER_NOMBRE = ?, SEGUNDO_NOMBRE = ?, " +
@@ -120,6 +188,12 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Elimina del censo a un votante a través de su clave primaria.
+     *
+     * @param id documento de identidad mapeado temporalmente como numérico largo
+     * @throws RuntimeException si ocurre una falla en la instrucción o violación de integridad
+     */
     @Override
     public void delete(Long id) {
         String sql = "DELETE FROM Votantes WHERE IDENTIFICACION = ?";
@@ -132,6 +206,13 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Busca un votante de manera exacta a través de su documento de identidad.
+     *
+     * @param identificacion número del documento en formato String
+     * @return {@link Optional} encapsulando al votante si es localizado; vacío si no existe
+     * @throws RuntimeException en caso de error crítico en la capa de datos
+     */
     public Optional<Votante> findByIdentificacion(String identificacion) {
         String sql = SELECT_BASE + " WHERE v.IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
@@ -145,6 +226,13 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Busca un votante mediante su dirección de correo electrónico institucional o personal.
+     *
+     * @param correo dirección de correo electrónico exacta
+     * @return {@link Optional} con el votante correspondiente o vacío si no hay coincidencia
+     * @throws RuntimeException en caso de fallas imprevistas del controlador JDBC
+     */
     public Optional<Votante> findByCorreo(String correo) {
         String sql = SELECT_BASE + " WHERE v.CORREO = ?";
         try (Connection conn = AppConfig.getConnection();
@@ -158,6 +246,13 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Localiza un votante interpretando el código bidimensional descodificado de su documento.
+     *
+     * @param qrCedula cadena representativa extraída del QR del documento
+     * @return {@link Optional} con el registro del votante si coincide el código QR
+     * @throws RuntimeException si se interrumpe la consulta SQL
+     */
     public Optional<Votante> findByQrCedula(String qrCedula) {
         String sql = SELECT_BASE + " WHERE v.QR_CEDULA = ?";
         try (Connection conn = AppConfig.getConnection();
@@ -171,6 +266,13 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Recupera la lista de votantes vinculados a un perfil o rol electoral específico.
+     *
+     * @param idRol identificador del rol requerido
+     * @return lista de votantes que ejercen dicho rol; estructurada y ordenada por apellidos
+     * @throws RuntimeException si se produce un fallo de conexión a la base de datos
+     */
     public List<Votante> findByIdRol(Long idRol) {
         String sql = SELECT_BASE + " WHERE v.ID_ROL = ? ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
@@ -188,6 +290,13 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Obtiene todos los votantes asignados a una misma sede o puesto físico de votación.
+     *
+     * @param idPuesto identificador de la ubicación física o mesa principal
+     * @return lista de votantes adscritos al puesto físico correspondiente
+     * @throws RuntimeException si ocurre una anomalía durante la lectura del cursor
+     */
     public List<Votante> findByIdPuesto(Long idPuesto) {
         String sql = SELECT_BASE + " WHERE v.ID_PUESTO = ? ORDER BY v.PRIMER_APELLIDO, v.PRIMER_NOMBRE";
         List<Votante> lista = new ArrayList<>();
@@ -205,6 +314,17 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Consulta los votantes idóneos para activar protocolos de contingencia en una elección.
+     *
+     * <p>Filtra estrictamente los ciudadanos asociados a la elección vía la tabla
+     * asociativa {@code Eleccion_roles}, cuyo estado se mantenga estrictamente en
+     * {@code 'PENDIENTE'} y dispongan de una dirección de correo válida para notificaciones urgentes.
+     *
+     * @param idEleccion identificador de la jornada electoral activa
+     * @return lista filtrada de votantes aptos para contingencia ordenados alfabéticamente
+     * @throws RuntimeException si el motor relacional falla al procesar las uniones
+     */
     public List<Votante> findHabilitadosParaContingencia(Long idEleccion) {
         String sql = """
                 SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE,
@@ -230,10 +350,20 @@ public class VotanteRepository implements Repository<Votante> {
             }
             return lista;
         } catch (SQLException e) {
-            throw new RuntimeException("Error consultando votantes habilitados para contingencia", e);
+            throw new RuntimeException("Error consulting votantes habilitados para contingencia", e);
         }
     }
 
+    /**
+     * Recupera el censo total de votantes vinculados a una elección específica.
+     *
+     * <p>Utiliza un {@code INNER JOIN} implícito con {@code Eleccion_roles} para aislar
+     * exclusivamente los registros adscritos a los roles asignados a la jornada indicada.
+     *
+     * @param idEleccion identificador único de la elección
+     * @return lista de votantes adscritos al proceso electoral parametrizado
+     * @throws RuntimeException si la base de datos devuelve un fallo en la ejecución
+     */
     public List<Votante> findByEleccion(Long idEleccion) {
         String sql = """
                 SELECT v.IDENTIFICACION, v.CORREO, v.PRIMER_NOMBRE, v.SEGUNDO_NOMBRE,
@@ -261,6 +391,16 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Valida de manera rápida si un ciudadano se encuentra habilitado para ejercer el voto.
+     *
+     * <p>Un votante se asume habilitado si y sólo si su columna {@code ESTADO_VOTO}
+     * coincide textualmente con el literal de {@link EstadoVotante#PENDIENTE}.
+     *
+     * @param identificacion número del documento del votante bajo escrutinio
+     * @return {@code true} si el votante existe y su estado es PENDIENTE; {@code false} en cualquier otro caso
+     * @throws RuntimeException si se presenta un error de conectividad JDBC
+     */
     public boolean estaHabilitado(String identificacion) {
         String sql = "SELECT ESTADO_VOTO FROM Votantes WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
@@ -274,10 +414,31 @@ public class VotanteRepository implements Repository<Votante> {
         }
     }
 
+    /**
+     * Operación no soportada localmente.
+     *
+     * <p>Por directrices de auditoría y seguridad del sistema electoral, la mutación
+     * del estado de votación debe ser efectuada estrictamente de forma centralizada
+     * mediante procedimientos almacenados Oracle autorizados.
+     *
+     * @param identificacion número de documento del votante
+     * @param estado nuevo estado a aplicar
+     * @throws UnsupportedOperationException de forma invariable al invocarse este método
+     */
     public void actualizarEstado(String identificacion, String estado) {
         throw new UnsupportedOperationException("El estado del votante se cambia mediante procedimientos Oracle autorizados");
     }
 
+    /**
+     * Modifica exclusivamente la URL de la fotografía de perfil o reconocimiento del votante.
+     *
+     * <p>Diseñado para flujos rápidos de enrolamiento o actualización en mesa. Si la
+     * identificación suministrada no existe en el censo, abortará emitiendo una excepción.
+     *
+     * @param identificacion documento de identidad del ciudadano
+     * @param fotoUrl ruta web o del storage con la nueva imagen cargada
+     * @throws RuntimeException si no existe el registro de votante mapeado a la identificación
+     */
     public void actualizarFoto(String identificacion, String fotoUrl) {
         String sql = "UPDATE Votantes SET FOTO_URL = ? WHERE IDENTIFICACION = ?";
         try (Connection conn = AppConfig.getConnection();
