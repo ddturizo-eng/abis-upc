@@ -534,7 +534,8 @@
       if (resumen && resumen.candidatos) {
         let html = '<div class="elegibilidad-panel"><h3>Resultados de la eleccion</h3><table><thead><tr><th>Candidato</th><th>Cargo</th><th>Votos</th></tr></thead><tbody>';
         resumen.candidatos.forEach(c => {
-          html += `<tr><td>${c.candidato || c.nombre || ''}</td><td>${c.cargo || ''}</td><td>${c.votos || c.total_votos || 0}</td></tr>`;
+          const votoValue = c.votosPonderados ?? c.votos ?? c.total_votos ?? 0;
+          html += `<tr${c.idCandidato == null ? ' class="blank-vote-row"' : ''}><td>${c.candidato || c.nombre || 'Voto en blanco'}</td><td>${c.cargo || 'VOTO EN BLANCO'}</td><td>${typeof votoValue === 'number' ? votoValue.toFixed(1) : votoValue}</td></tr>`;
         });
         html += '</tbody></table></div>';
         mostrarModalElegibilidad(html, 'Resultados');
