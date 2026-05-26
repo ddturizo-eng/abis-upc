@@ -163,6 +163,13 @@ public class AppServer {
         app.before("/api/elecciones/*", auth);
         app.before("/api/elecciones/{id}/candidatos", auth);
         app.before("/api/elecciones/{id}/candidatos/*", auth);
+        app.before("/api/puestos", ctx -> {
+            if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
+        });
+        app.before("/api/puestos/*", auth);
+        app.post("/api/puestos", PuestoController::create);
+        app.put("/api/puestos/{id}", PuestoController::update);
+        app.delete("/api/puestos/{id}", PuestoController::delete);
         app.get("/api/admin/dashboard", AdminController::dashboard);
         app.get("/api/auditoria/reciente", AdminController::auditoriaReciente);
         app.get("/api/votantes", VotanteController::getAll);

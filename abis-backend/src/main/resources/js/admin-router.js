@@ -1,5 +1,5 @@
 const AdminRouter = {
-  secciones: ['dashboard', 'registro', 'votantes', 'elecciones', 'candidatos', 'jurados', 'votacion', 'contingencia', 'certificados'],
+  secciones: ['dashboard', 'registro', 'votantes', 'elecciones', 'candidatos', 'jurados', 'puestos', 'votacion', 'contingencia', 'certificados'],
 
   init() {
     const hash = window.location.hash.replace('#', '');
@@ -63,6 +63,7 @@ const AdminRouter = {
       elecciones: 'Gestión de Elecciones',
       candidatos: 'Candidatos',
       jurados: 'Mesas y Jurados',
+      puestos: 'Puestos de Votacion',
       votacion: 'Modo de Votacion',
       contingencia: 'QR de Contingencia',
       certificados: 'Certificados de Participación'

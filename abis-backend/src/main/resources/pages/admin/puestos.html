@@ -1,0 +1,82 @@
+<div class="admin-section">
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Puestos de Votacion</h1>
+      <p class="section-subtitle">Gestiona las ubicaciones fisicas donde se instalan los kioscos de votacion.</p>
+    </div>
+    <button class="btn-primary" id="btnNuevoPuesto" onclick="PuestosAdmin.abrirModal()">
+      <span class="material-symbols-outlined">add</span> Nuevo puesto
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table id="tablaPuestos">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nombre</th>
+          <th>Ciudad</th>
+          <th>Sede</th>
+          <th>Hora Inicio</th>
+          <th>Hora Salida</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="puestos-tbody">
+        <tr><td colspan="7"><div class="dashboard-skeleton h-[46px]"></div></td></tr>
+        <tr><td colspan="7"><div class="dashboard-skeleton h-[46px]"></div></td></tr>
+        <tr><td colspan="7"><div class="dashboard-skeleton h-[46px]"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="candidate-modal" id="modalPuesto" aria-hidden="true">
+  <div class="candidate-modal-panel" role="dialog" aria-modal="true">
+    <div class="candidate-modal-header">
+      <div>
+        <span class="module-badge">PUESTO</span>
+        <h2 id="modalPuestoTitulo">Nuevo puesto de votacion</h2>
+      </div>
+      <button class="modal-close" onclick="PuestosAdmin.cerrarModal()" type="button">&times;</button>
+    </div>
+    <form id="formPuesto" class="candidate-form" novalidate>
+      <input type="hidden" id="puestoId">
+      <div class="form-grid">
+        <label>
+          <span>Ciudad *</span>
+          <input id="puestoCiudad" name="ciudad" type="text" required autocomplete="off" placeholder="Ej: Valledupar">
+        </label>
+        <label>
+          <span>Sede *</span>
+          <select id="puestoSede" name="sede">
+            <option value="SEDE CENTRAL">SEDE CENTRAL</option>
+            <option value="SEDE RIO">SEDE RIO</option>
+            <option value="SEDE BELLAS ARTES">SEDE BELLAS ARTES</option>
+            <option value="OTRA">OTRA</option>
+          </select>
+        </label>
+        <label>
+          <span>Nombre del puesto *</span>
+          <input id="puestoNombre" name="nombrePuesto" type="text" required autocomplete="off" placeholder="Ej: Bloque A - Salon 201">
+        </label>
+      </div>
+      <div class="form-grid">
+        <label>
+          <span>Hora de inicio *</span>
+          <input id="puestoInicio" name="horaInicio" type="datetime-local" required>
+        </label>
+        <label>
+          <span>Hora de salida *</span>
+          <input id="puestoSalida" name="horaSalida" type="datetime-local" required>
+        </label>
+      </div>
+      <div class="candidate-modal-footer">
+        <button type="button" class="btn-secondary" onclick="PuestosAdmin.cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" id="btnGuardarPuesto">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../js/puestos.js"></script>
