@@ -39,6 +39,11 @@ def _get_connection():
     return _pool.acquire()
 
 
+def _release_connection(conn):
+    if conn and _pool:
+        _pool.release(conn)
+
+
 def save_template(identificacion: str, template_b64: str, hash_sha256: str) -> bool:
     """Guarda o actualiza plantilla biometrica en BIOMETRIA_VOTANTES."""
     conn = _get_connection()
@@ -83,7 +88,7 @@ def save_template(identificacion: str, template_b64: str, hash_sha256: str) -> b
         conn.commit()
         return updated
     finally:
-        conn.close()
+        _release_connection(conn)
 
 
 def get_all_templates() -> list[dict]:
@@ -117,7 +122,7 @@ def get_all_templates() -> list[dict]:
             for r in rows
         ]
     finally:
-        conn.close()
+        _release_connection(conn)
 
 
 def get_user_by_id(identificacion: str) -> dict | None:
@@ -153,7 +158,7 @@ def get_user_by_id(identificacion: str) -> dict | None:
             "template_b64": _get_template_by_identificacion(identificacion),
         }
     finally:
-        conn.close()
+        _release_connection(conn)
 
 
 def get_votante_completo(identificacion: str) -> dict | None:
@@ -194,7 +199,7 @@ def get_votante_completo(identificacion: str) -> dict | None:
             "puesto_id": r[10],
         }
     finally:
-        conn.close()
+        _release_connection(conn)
 
 
 def marcar_voto_ejercido(identificacion: str) -> bool:
@@ -212,7 +217,7 @@ def marcar_voto_ejercido(identificacion: str) -> bool:
         conn.commit()
         return cur.rowcount > 0
     finally:
-        conn.close()
+        _release_connection(conn)
 
 
 def actualizar_foto(identificacion: str, foto_url: str) -> bool:
@@ -229,7 +234,7 @@ def actualizar_foto(identificacion: str, foto_url: str) -> bool:
         conn.commit()
         return cur.rowcount > 0
     finally:
-        conn.close()
+        _release_connection(conn)
 
 
 def _get_template_by_identificacion(identificacion: str) -> str | None:
@@ -246,7 +251,7 @@ def _get_template_by_identificacion(identificacion: str) -> str | None:
         row = cur.fetchone()
         return _blob_to_text(row[0]) if row else None
     finally:
-        conn.close()
+        _release_connection(conn)
 
 
 def _blob_to_text(value) -> str | None:
