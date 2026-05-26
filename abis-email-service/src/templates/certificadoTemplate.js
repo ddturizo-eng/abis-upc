@@ -64,8 +64,6 @@ export function renderCertificadoHtml(payload, qrDataUri) {
     ? `<img src="${qrDataUri}" alt="QR de verificacion" class="qr-code" width="120" height="120">`
     : '';
   const firmas = firmasConfig();
-    ? `<img src="${qrDataUri}" alt="QR de verificacion" class="qr-code" width="120" height="120">`
-    : '';
 
   return `<!doctype html>
 <html lang="es">
