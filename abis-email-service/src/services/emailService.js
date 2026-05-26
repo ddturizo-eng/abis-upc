@@ -71,7 +71,7 @@ function emailHtml(payload) {
 </table>
 </body>
 </html>`;
-}`
+}
 
 export async function enviarCertificadoPorCorreo(payload, pdfBuffer) {
   ensureResendConfig();
@@ -152,7 +152,7 @@ function contingenciaHtml(payload) {
 </table>
 </body>
 </html>`;
-}`
+}
 
 export async function enviarNotificacion(payload) {
   ensureResendConfig();
