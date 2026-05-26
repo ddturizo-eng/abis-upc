@@ -158,7 +158,10 @@ public class AppServer {
         app.before("/api/contingencia/tokens/*", auth);
         app.before("/api/votantes/{id}/inhabilitar", auth);
         app.before("/api/votantes/{id}/habilitar", auth);
-        app.before("/api/elecciones/{id}/cerrar", auth);
+        app.before("/api/elecciones", auth);
+        app.before("/api/elecciones/*", auth);
+        app.before("/api/elecciones/{id}/candidatos", auth);
+        app.before("/api/elecciones/{id}/candidatos/*", auth);
         app.get("/api/admin/dashboard", AdminController::dashboard);
         app.get("/api/auditoria/reciente", AdminController::auditoriaReciente);
         app.get("/api/votantes", VotanteController::getAll);
