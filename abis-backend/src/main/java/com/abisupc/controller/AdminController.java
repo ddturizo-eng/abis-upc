@@ -154,6 +154,80 @@ public class AdminController {
         }
     }
 
+    public static void listarAdmins(Context ctx) {
+        try {
+            List<Administrador> admins = service.listarAdmins();
+            List<Map<String, Object>> response = new ArrayList<>();
+            for (Administrador a : admins) {
+                Map<String, Object> item = new LinkedHashMap<>();
+                item.put("id", a.getId());
+                item.put("usuario", a.getUsuario());
+                item.put("nombre", a.getNombre());
+                item.put("correo", a.getCorreo());
+                response.add(item);
+            }
+            ctx.json(ApiResponse.success(response));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    public static void crearAdmin(Context ctx) {
+        try {
+            ObjectNode body = mapper.readValue(ctx.body(), ObjectNode.class);
+            String usuario = body.has("usuario") ? body.get("usuario").asText() : null;
+            String password = body.has("password") ? body.get("password").asText() : null;
+            String nombre = body.has("nombre") ? body.get("nombre").asText() : null;
+            String correo = body.has("correo") ? body.get("correo").asText() : null;
+
+            if (usuario == null || usuario.isBlank()) throw new IllegalArgumentException("Usuario requerido");
+            if (password == null || password.isBlank()) throw new IllegalArgumentException("Contrasena requerida");
+            if (nombre == null || nombre.isBlank()) throw new IllegalArgumentException("Nombre requerido");
+
+            service.crearAdmin(usuario.trim(), password, nombre.trim(), correo != null ? correo.trim() : null);
+            ctx.status(201).json(ApiResponse.success("Administrador creado"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    public static void editarAdmin(Context ctx) {
+        try {
+            Long id = Long.parseLong(ctx.pathParam("id"));
+            ObjectNode body = mapper.readValue(ctx.body(), ObjectNode.class);
+            String nombre = body.has("nombre") ? body.get("nombre").asText() : null;
+            String correo = body.has("correo") ? body.get("correo").asText() : null;
+            String nuevaPassword = body.has("password") && !body.get("password").asText().isBlank()
+                    ? body.get("password").asText() : null;
+
+            if (nombre == null || nombre.isBlank()) throw new IllegalArgumentException("Nombre requerido");
+
+            service.actualizarAdmin(id, nombre.trim(), correo != null ? correo.trim() : null, nuevaPassword);
+            ctx.json(ApiResponse.success("Administrador actualizado"));
+        } catch (IllegalArgumentException e) {
+            ctx.status(400).json(ApiResponse.error(e.getMessage()));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    public static void eliminarAdmin(Context ctx) {
+        try {
+            Long id = Long.parseLong(ctx.pathParam("id"));
+            Long idAdminActual = ctx.attribute("idAdmin");
+            if (idAdminActual != null && idAdminActual.equals(id)) {
+                ctx.status(400).json(ApiResponse.error("No puedes eliminar tu propio usuario"));
+                return;
+            }
+            service.eliminarAdmin(id);
+            ctx.json(ApiResponse.success("Administrador eliminado"));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
     public static void estadisticasVotantes(Context ctx) {
         String sql = """
                 SELECT

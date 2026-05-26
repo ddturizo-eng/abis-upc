@@ -20,6 +20,7 @@ import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HexFormat;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -115,6 +116,39 @@ public class AdminService {
     public void habilitarVotante(String identificacion, Long idAdmin, String motivo) throws SQLException {
         validarOperacionAdmin(identificacion, idAdmin, motivo);
         votanteAdminRepo.habilitarVotante(identificacion, idAdmin, motivo);
+    }
+
+    public List<Administrador> listarAdmins() {
+        return adminRepo.findAll();
+    }
+
+    public void crearAdmin(String usuario, String password, String nombre, String correo) {
+        if (adminRepo.findByUsuario(usuario).isPresent()) {
+            throw new IllegalArgumentException("El usuario '" + usuario + "' ya existe");
+        }
+        Administrador admin = new Administrador();
+        admin.setUsuario(usuario);
+        admin.setPasswordHash(hashPassword(password));
+        admin.setNombre(nombre);
+        admin.setCorreo(correo);
+        adminRepo.save(admin);
+    }
+
+    public void actualizarAdmin(Long id, String nombre, String correo, String nuevaPassword) {
+        Administrador admin = adminRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Administrador no encontrado"));
+        admin.setNombre(nombre);
+        admin.setCorreo(correo);
+        if (nuevaPassword != null && !nuevaPassword.isBlank()) {
+            admin.setPasswordHash(hashPassword(nuevaPassword));
+        }
+        adminRepo.update(admin);
+    }
+
+    public void eliminarAdmin(Long id) {
+        Administrador admin = adminRepo.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Administrador no encontrado"));
+        adminRepo.delete(id);
     }
 
     public void cerrarEleccion(Long idEleccion, Long idAdmin) throws SQLException {

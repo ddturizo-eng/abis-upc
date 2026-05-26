@@ -1,0 +1,69 @@
+<div class="admin-section">
+  <div class="section-header">
+    <div>
+      <h1 class="section-title">Administradores</h1>
+      <p class="section-subtitle">Gestiona los usuarios con acceso al panel de administracion.</p>
+    </div>
+    <button class="btn-primary" onclick="AdministradoresAdmin.abrirModal()">
+      <span class="material-symbols-outlined">person_add</span> Nuevo administrador
+    </button>
+  </div>
+
+  <div class="table-container">
+    <table id="tablaAdmins">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Usuario</th>
+          <th>Nombre</th>
+          <th>Correo</th>
+          <th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="admins-tbody">
+        <tr><td colspan="5"><div class="dashboard-skeleton h-[46px]"></div></td></tr>
+        <tr><td colspan="5"><div class="dashboard-skeleton h-[46px]"></div></td></tr>
+        <tr><td colspan="5"><div class="dashboard-skeleton h-[46px]"></div></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="candidate-modal" id="modalAdmin" aria-hidden="true">
+  <div class="candidate-modal-panel" role="dialog" aria-modal="true">
+    <div class="candidate-modal-header">
+      <div>
+        <span class="module-badge">ADMINISTRADOR</span>
+        <h2 id="modalAdminTitulo">Nuevo administrador</h2>
+      </div>
+      <button class="modal-close" onclick="AdministradoresAdmin.cerrarModal()" type="button">&times;</button>
+    </div>
+    <form id="formAdmin" class="candidate-form" novalidate>
+      <input type="hidden" id="adminId">
+      <div class="form-grid">
+        <label>
+          <span>Usuario *</span>
+          <input id="adminUsuario" name="usuario" type="text" required autocomplete="off">
+        </label>
+        <label>
+          <span>Nombre completo *</span>
+          <input id="adminNombre" name="nombre" type="text" required autocomplete="off">
+        </label>
+        <label>
+          <span>Correo electronico</span>
+          <input id="adminCorreo" name="correo" type="email" autocomplete="off" placeholder="admin@ejemplo.com">
+        </label>
+        <label>
+          <span id="adminPasswordLabel">Contrasena *</span>
+          <input id="adminPassword" name="password" type="password" autocomplete="off" minlength="4">
+        </label>
+      </div>
+      <div class="candidate-modal-footer">
+        <button type="button" class="btn-secondary" onclick="AdministradoresAdmin.cerrarModal()">Cancelar</button>
+        <button type="submit" class="btn-primary" id="btnGuardarAdmin">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="../../js/administradores.js"></script>

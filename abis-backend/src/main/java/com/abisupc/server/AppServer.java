@@ -170,6 +170,12 @@ public class AppServer {
         app.post("/api/puestos", PuestoController::create);
         app.put("/api/puestos/{id}", PuestoController::update);
         app.delete("/api/puestos/{id}", PuestoController::delete);
+        app.before("/api/admin/usuarios", auth);
+        app.before("/api/admin/usuarios/*", auth);
+        app.get("/api/admin/usuarios", AdminController::listarAdmins);
+        app.post("/api/admin/usuarios", AdminController::crearAdmin);
+        app.put("/api/admin/usuarios/{id}", AdminController::editarAdmin);
+        app.delete("/api/admin/usuarios/{id}", AdminController::eliminarAdmin);
         app.get("/api/admin/dashboard", AdminController::dashboard);
         app.get("/api/auditoria/reciente", AdminController::auditoriaReciente);
         app.get("/api/votantes", VotanteController::getAll);
