@@ -201,25 +201,27 @@ public class EleccionController {
     public static void resultadosDirectos(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
-            String sql = "SELECT c.PRIMER_NOMBRE || ' ' || c.PRIMER_APELLIDO AS candidato, " +
-                    "ce.CARGO, COUNT(v.ID_VOTOS) AS votos " +
-                    "FROM Candidatos_eleccion ce " +
-                    "JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
-                    "LEFT JOIN Votos v ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION " +
-                    "WHERE ce.ID_ELECCION = ? " +
-                    "GROUP BY c.PRIMER_NOMBRE, c.PRIMER_APELLIDO, ce.CARGO " +
-                    "ORDER BY votos DESC";
             List<Map<String, Object>> candidatos = new ArrayList<>();
-            try (Connection conn = AppConfig.getConnection();
-                 PreparedStatement ps = conn.prepareStatement(sql)) {
-                ps.setLong(1, idEleccion);
-                try (ResultSet rs = ps.executeQuery()) {
-                    while (rs.next()) {
-                        Map<String, Object> c = new LinkedHashMap<>();
-                        c.put("candidato", rs.getString("candidato"));
-                        c.put("cargo", rs.getString("CARGO"));
-                        c.put("votos", rs.getLong("votos"));
-                        candidatos.add(c);
+            try (Connection conn = AppConfig.getConnection()) {
+                String pesoCol = pesoColumn(conn);
+                String sql = "SELECT c.PRIMER_NOMBRE || ' ' || c.PRIMER_APELLIDO AS candidato, " +
+                        "ce.CARGO, NVL(SUM(v." + pesoCol + "), 0) AS votos " +
+                        "FROM Candidatos_eleccion ce " +
+                        "JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
+                        "LEFT JOIN Votos v ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION " +
+                        "WHERE ce.ID_ELECCION = ? " +
+                        "GROUP BY c.PRIMER_NOMBRE, c.PRIMER_APELLIDO, ce.CARGO " +
+                        "ORDER BY votos DESC";
+                try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                    ps.setLong(1, idEleccion);
+                    try (ResultSet rs = ps.executeQuery()) {
+                        while (rs.next()) {
+                            Map<String, Object> c = new LinkedHashMap<>();
+                            c.put("candidato", rs.getString("candidato"));
+                            c.put("cargo", rs.getString("CARGO"));
+                            c.put("votos", rs.getDouble("votos"));
+                            candidatos.add(c);
+                        }
                     }
                 }
             }
@@ -462,8 +464,9 @@ public class EleccionController {
                     }
                 }
 
+                String pesoCol = pesoColumn(conn);
                 String sqlResultados = "SELECT c.PRIMER_NOMBRE || ' ' || c.PRIMER_APELLIDO AS candidato, " +
-                        "ce.CARGO, COUNT(v.ID_VOTOS) AS votos " +
+                        "ce.CARGO, NVL(SUM(v." + pesoCol + "), 0) AS votos " +
                         "FROM Candidatos_eleccion ce " +
                         "JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
                         "LEFT JOIN Votos v ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION " +
@@ -477,16 +480,15 @@ public class EleccionController {
                         while (rs.next()) {
                             String c = rs.getString("candidato");
                             String cargo = rs.getString("CARGO");
-                            long v = rs.getLong("votos");
-                            totalVotos += v;
+                            double v = rs.getDouble("votos");
+                            totalVotos += (long) v;
                             nCandidatos++;
                             if (first && v > 0) { ganador = c; first = false; }
-                            String clase = (!first && v > 0) || (first && v > 0) ? "winner" : "";
                             filas.append("<tr class=\"")
                                  .append(ganador.equals(c) ? "winner" : "")
                                  .append("\"><td>").append(esc(c))
                                  .append("</td><td>").append(esc(cargo))
-                                 .append("</td><td>").append(v).append("</td></tr>");
+                                 .append("</td><td>").append(String.format("%.1f", v)).append("</td></tr>");
                         }
                     }
                 }
@@ -539,5 +541,20 @@ public class EleccionController {
     private static String esc(String text) {
         if (text == null) return "";
         return text.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;");
+    }
+
+    private static String pesoColumn(Connection conn) throws SQLException {
+        return columnExists(conn, "VOTOS", "PESO_VOTO_APLICADO") ? "PESO_VOTO_APLICADO" : "PESOVOTO_APLICADO";
+    }
+
+    private static boolean columnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
+        }
     }
 }

@@ -87,37 +87,41 @@ public class VotoRepository implements Repository<Voto> {
         }
     }
 
-    public int countByCandidato(Long idCandidato) {
-        String sql = idCandidato == null
-                ? "SELECT COUNT(*) FROM Votos WHERE ID_CANDIDATO IS NULL"
-                : "SELECT COUNT(*) FROM Votos WHERE ID_CANDIDATO = ?";
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            if (idCandidato != null) {
-                ps.setLong(1, idCandidato);
-            }
-            try (ResultSet rs = ps.executeQuery()) {
-                rs.next();
-                return rs.getInt(1);
+    public double countByCandidato(Long idCandidato) {
+        try (Connection conn = AppConfig.getConnection()) {
+            String pesoCol = pesoColumn(conn);
+            String sql = idCandidato == null
+                    ? "SELECT NVL(SUM(" + pesoCol + "), 0) FROM Votos WHERE ID_CANDIDATO IS NULL"
+                    : "SELECT NVL(SUM(" + pesoCol + "), 0) FROM Votos WHERE ID_CANDIDATO = ?";
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                if (idCandidato != null) {
+                    ps.setLong(1, idCandidato);
+                }
+                try (ResultSet rs = ps.executeQuery()) {
+                    rs.next();
+                    return rs.getDouble(1);
+                }
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotoRepository.countByCandidato - idCandidato: " + idCandidato, e);
         }
     }
 
-    public Map<Long, Integer> obtenerResultados(Long idEleccion) {
-        String sql = "SELECT ID_CANDIDATO, COUNT(*) AS TOTAL_VOTOS FROM Votos " +
-                "WHERE ID_ELECCION = ? GROUP BY ID_CANDIDATO";
-        Map<Long, Integer> resultados = new HashMap<>();
-        try (Connection conn = AppConfig.getConnection();
-             PreparedStatement ps = conn.prepareStatement(sql)) {
-            ps.setLong(1, idEleccion);
-            try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) {
-                    Long idCandidato = rs.getLong("ID_CANDIDATO");
-                    resultados.put(rs.wasNull() ? null : idCandidato, rs.getInt("TOTAL_VOTOS"));
+    public Map<Long, Double> obtenerResultados(Long idEleccion) {
+        try (Connection conn = AppConfig.getConnection()) {
+            String pesoCol = pesoColumn(conn);
+            String sql = "SELECT ID_CANDIDATO, NVL(SUM(" + pesoCol + "), 0) AS TOTAL_PESO FROM Votos " +
+                    "WHERE ID_ELECCION = ? GROUP BY ID_CANDIDATO";
+            Map<Long, Double> resultados = new HashMap<>();
+            try (PreparedStatement ps = conn.prepareStatement(sql)) {
+                ps.setLong(1, idEleccion);
+                try (ResultSet rs = ps.executeQuery()) {
+                    while (rs.next()) {
+                        Long idCandidato = rs.getLong("ID_CANDIDATO");
+                        resultados.put(rs.wasNull() ? null : idCandidato, rs.getDouble("TOTAL_PESO"));
+                    }
+                    return resultados;
                 }
-                return resultados;
             }
         } catch (SQLException e) {
             throw new RuntimeException("Error en VotoRepository.obtenerResultados - idEleccion: " + idEleccion, e);

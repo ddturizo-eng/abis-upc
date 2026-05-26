@@ -198,21 +198,22 @@ public class VotacionController {
     }
 
     private static List<Map<String, Object>> resultadosPorCandidato(Connection conn, Long idEleccion) throws SQLException {
+        String pesoCol = pesoColumn(conn);
         String sql = "SELECT ce.ID_CANDIDATO, ce.NUMERO_CAMPANIA, ce.CARGO, c.PRIMER_NOMBRE, c.SEGUNDO_NOMBRE, " +
-                "c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO, COUNT(v.ID_CANDIDATO) AS VOTOS, " +
-                "NVL(SUM(v." + pesoColumn(conn) + "), 0) AS VOTOS_PONDERADOS " +
+                "c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO, NVL(SUM(v." + pesoCol + "), 0) AS VOTOS, " +
+                "NVL(SUM(v." + pesoCol + "), 0) AS VOTOS_PONDERADOS " +
                 "FROM Candidatos_eleccion ce JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
                 "LEFT JOIN Votos v ON v.ID_ELECCION = ce.ID_ELECCION AND v.ID_CANDIDATO = ce.ID_CANDIDATO " +
                 "WHERE ce.ID_ELECCION = ? " +
                 "GROUP BY ce.ID_CANDIDATO, ce.NUMERO_CAMPANIA, ce.CARGO, c.PRIMER_NOMBRE, c.SEGUNDO_NOMBRE, c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO " +
-                "ORDER BY VOTOS DESC, ce.CARGO, ce.NUMERO_CAMPANIA";
+                "ORDER BY VOTOS_PONDERADOS DESC, ce.CARGO, ce.NUMERO_CAMPANIA";
         List<Map<String, Object>> rows = queryRows(conn, sql, idEleccion, rs -> {
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("idCandidato", rs.getLong("ID_CANDIDATO"));
             row.put("numeroCampania", rs.getInt("NUMERO_CAMPANIA"));
             row.put("cargo", rs.getString("CARGO"));
             row.put("nombre", nombre(rs));
-            row.put("votos", rs.getLong("VOTOS"));
+            row.put("votos", rs.getDouble("VOTOS"));
             row.put("votosPonderados", rs.getDouble("VOTOS_PONDERADOS"));
             return row;
         });
@@ -224,12 +225,12 @@ public class VotacionController {
     }
 
     private static Map<String, Object> resultadoVotoEnBlanco(Connection conn, Long idEleccion) throws SQLException {
-        String sql = "SELECT COUNT(*) AS VOTOS, NVL(SUM(" + pesoColumn(conn) + "), 0) AS VOTOS_PONDERADOS " +
+        String sql = "SELECT NVL(SUM(" + pesoColumn(conn) + "), 0) AS VOTOS, NVL(SUM(" + pesoColumn(conn) + "), 0) AS VOTOS_PONDERADOS " +
                 "FROM Votos WHERE ID_ELECCION = ? AND ID_CANDIDATO IS NULL";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setLong(1, idEleccion);
             try (ResultSet rs = ps.executeQuery()) {
-                if (!rs.next() || rs.getLong("VOTOS") == 0) {
+                if (!rs.next() || rs.getDouble("VOTOS") == 0) {
                     return null;
                 }
                 Map<String, Object> row = new LinkedHashMap<>();
@@ -237,7 +238,7 @@ public class VotacionController {
                 row.put("numeroCampania", 0);
                 row.put("cargo", "VOTO EN BLANCO");
                 row.put("nombre", "VOTO EN BLANCO");
-                row.put("votos", rs.getLong("VOTOS"));
+                row.put("votos", rs.getDouble("VOTOS"));
                 row.put("votosPonderados", rs.getDouble("VOTOS_PONDERADOS"));
                 row.put("votoBlanco", true);
                 return row;

@@ -134,17 +134,18 @@ public class CandidatoRepository implements Repository<Candidato> {
     }
 
     public List<CandidatoEleccion> findByEleccion(Long idEleccion) {
-        String sql = "SELECT ce.ID_CANDIDATO, ce.ID_ELECCION, ce.NUMERO_CAMPANIA, ce.CARGO, " +
-                "c.PRIMER_NOMBRE, c.SEGUNDO_NOMBRE, c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO, c.FOTO_URL, " +
-                "NVL(v.TOTAL_VOTOS, 0) AS VOTOS " +
-                "FROM Candidatos_eleccion ce JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
-                "LEFT JOIN (SELECT ID_CANDIDATO, ID_ELECCION, COUNT(*) AS TOTAL_VOTOS FROM Votos " +
-                "WHERE ID_ELECCION = ? GROUP BY ID_CANDIDATO, ID_ELECCION) v " +
-                "ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION " +
-                "WHERE ce.ID_ELECCION = ? ORDER BY ce.CARGO, ce.NUMERO_CAMPANIA";
         List<CandidatoEleccion> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection()) {
             ensureFotoUrlColumn(conn);
+            String pesoCol = pesoColumn(conn);
+            String sql = "SELECT ce.ID_CANDIDATO, ce.ID_ELECCION, ce.NUMERO_CAMPANIA, ce.CARGO, " +
+                    "c.PRIMER_NOMBRE, c.SEGUNDO_NOMBRE, c.PRIMER_APELLIDO, c.SEGUNDO_APELLIDO, c.FOTO_URL, " +
+                    "NVL(v.TOTAL_VOTOS, 0) AS VOTOS " +
+                    "FROM Candidatos_eleccion ce JOIN Candidatos c ON c.ID_CANDIDATO = ce.ID_CANDIDATO " +
+                    "LEFT JOIN (SELECT ID_CANDIDATO, ID_ELECCION, SUM(" + pesoCol + ") AS TOTAL_VOTOS FROM Votos " +
+                    "WHERE ID_ELECCION = ? GROUP BY ID_CANDIDATO, ID_ELECCION) v " +
+                    "ON v.ID_CANDIDATO = ce.ID_CANDIDATO AND v.ID_ELECCION = ce.ID_ELECCION " +
+                    "WHERE ce.ID_ELECCION = ? ORDER BY ce.CARGO, ce.NUMERO_CAMPANIA";
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
                 ps.setLong(1, idEleccion);
                 ps.setLong(2, idEleccion);
@@ -243,7 +244,7 @@ public class CandidatoRepository implements Repository<Candidato> {
         ce.setPrimerApellido(rs.getString("PRIMER_APELLIDO"));
         ce.setSegundoApellido(rs.getString("SEGUNDO_APELLIDO"));
         ce.setFotoUrl(rs.getString("FOTO_URL"));
-        ce.setVotos(rs.getInt("VOTOS"));
+        ce.setVotos(rs.getDouble("VOTOS"));
         return ce;
     }
 
@@ -257,6 +258,21 @@ public class CandidatoRepository implements Repository<Candidato> {
         }
         try (PreparedStatement ps = conn.prepareStatement("ALTER TABLE Candidatos ADD FOTO_URL VARCHAR2(500)")) {
             ps.executeUpdate();
+        }
+    }
+
+    private static String pesoColumn(Connection conn) throws SQLException {
+        return columnExists(conn, "VOTOS", "PESO_VOTO_APLICADO") ? "PESO_VOTO_APLICADO" : "PESOVOTO_APLICADO";
+    }
+
+    private static boolean columnExists(Connection conn, String tableName, String columnName) throws SQLException {
+        String sql = "SELECT COUNT(*) FROM USER_TAB_COLUMNS WHERE TABLE_NAME = ? AND COLUMN_NAME = ?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() && rs.getInt(1) > 0;
+            }
         }
     }
 }

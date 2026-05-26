@@ -14,7 +14,7 @@ public class CandidatoEleccion {
     private String primerApellido;
     private String segundoApellido;
     private String fotoUrl;
-    private Integer votos = 0;
+    private Double votos = 0.0;
 
     public Long getIdCandidato() {
         return idCandidato;
@@ -92,15 +92,15 @@ public class CandidatoEleccion {
         this.fotoUrl = fotoUrl;
     }
 
-    public Integer getVotos() {
+    public Double getVotos() {
         return votos;
     }
 
-    public Integer getTotalVotos() {
+    public Double getTotalVotos() {
         return votos;
     }
 
-    public void setVotos(Integer votos) {
-        this.votos = votos != null ? votos : 0;
+    public void setVotos(Double votos) {
+        this.votos = votos != null ? votos : 0.0;
     }
 }
