@@ -18,14 +18,14 @@ const form = document.getElementById('login-form');
 
         forgotLink.addEventListener('click', function (e) {
             e.preventDefault();
-            form.querySelectorAll('.form-group, .form-meta, #btn-submit').forEach(function (el) { el.style.display = 'none'; });
+            form.querySelectorAll(':scope > .form-group, :scope > .form-meta, :scope > #btn-submit').forEach(function (el) { el.style.display = 'none'; });
             recoverSection.style.display = 'block';
             recoverMsg.style.display = 'none';
         });
 
         btnBackLogin.addEventListener('click', function () {
             recoverSection.style.display = 'none';
-            form.querySelectorAll('.form-group, .form-meta, #btn-submit').forEach(function (el) { el.style.display = ''; });
+            form.querySelectorAll(':scope > .form-group, :scope > .form-meta, :scope > #btn-submit').forEach(function (el) { el.style.display = ''; });
         });
 
         btnRecover.addEventListener('click', async function () {
