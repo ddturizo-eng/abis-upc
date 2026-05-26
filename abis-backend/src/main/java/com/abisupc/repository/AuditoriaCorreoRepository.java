@@ -127,9 +127,12 @@ public class AuditoriaCorreoRepository {
         String sql = "SELECT * FROM (" +
                 "SELECT a.ID_AUDITORIA, rv.IDENTIFICACION, rv.ID_ELECCION, v.CORREO AS CORREO_VOTANTE, " +
                 "a.FECHA_SOLICITUD, a.FECHA_ENVIO, NVL(a.ESTADO, 'SIN_SOLICITUD') AS ESTADO, " +
-                "a.PROVIDER, a.MESSAGE_ID, a.CODIGO_CERTIFICADO, a.OBSERVACIONES " +
+                "a.PROVIDER, a.MESSAGE_ID, a.CODIGO_CERTIFICADO, a.OBSERVACIONES, " +
+                "v.PRIMER_NOMBRE || ' ' || NVL(v.PRIMER_APELLIDO, '') AS NOMBRE_VOTANTE, " +
+                "e.NOMBRE AS NOMBRE_ELECCION " +
                 "FROM Registro_votos rv " +
                 "JOIN Votantes v ON v.IDENTIFICACION = rv.IDENTIFICACION " +
+                "JOIN Elecciones e ON e.ID_ELECCION = rv.ID_ELECCION " +
                 "LEFT JOIN (" +
                 "  SELECT ac.*, ROW_NUMBER() OVER (PARTITION BY ac.IDENTIFICACION, ac.ID_ELECCION ORDER BY ac.FECHA_SOLICITUD DESC) rn " +
                 "  FROM Auditoria_correos ac" +
@@ -390,6 +393,8 @@ public class AuditoriaCorreoRepository {
         auditoria.setMessageId(rs.getString("MESSAGE_ID"));
         auditoria.setCodigoCertificado(rs.getString("CODIGO_CERTIFICADO"));
         auditoria.setObservaciones(rs.getString("OBSERVACIONES"));
+        try { auditoria.setNombreCompleto(rs.getString("NOMBRE_VOTANTE")); } catch (SQLException ignored) {}
+        try { auditoria.setNombreEleccion(rs.getString("NOMBRE_ELECCION")); } catch (SQLException ignored) {}
         return auditoria;
     }
 

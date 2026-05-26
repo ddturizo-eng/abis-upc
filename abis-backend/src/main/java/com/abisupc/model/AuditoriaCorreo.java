@@ -18,6 +18,9 @@ public class AuditoriaCorreo extends Entity {
     private String codigoCertificado;
     private String observaciones;
 
+    private String nombreCompleto;
+    private String nombreEleccion;
+
     public String getIdentificacion() {
         return identificacion;
     }
@@ -96,5 +99,21 @@ public class AuditoriaCorreo extends Entity {
 
     public void setObservaciones(String observaciones) {
         this.observaciones = observaciones;
+    }
+
+    public String getNombreCompleto() {
+        return nombreCompleto;
+    }
+
+    public void setNombreCompleto(String nombreCompleto) {
+        this.nombreCompleto = nombreCompleto;
+    }
+
+    public String getNombreEleccion() {
+        return nombreEleccion;
+    }
+
+    public void setNombreEleccion(String nombreEleccion) {
+        this.nombreEleccion = nombreEleccion;
     }
 }

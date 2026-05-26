@@ -195,8 +195,8 @@ public class CertificadoService {
         item.put("observaciones", auditoria.getObservaciones());
         item.put("fechaSolicitud", auditoria.getFechaSolicitud() != null ? auditoria.getFechaSolicitud().toInstant().toString() : null);
         item.put("fechaEnvio", auditoria.getFechaEnvio() != null ? auditoria.getFechaEnvio().toInstant().toString() : null);
-        votanteRepo.findByIdentificacion(auditoria.getIdentificacion()).ifPresent(v -> item.put("nombre", nombreCompleto(v)));
-        eleccionRepo.findById(auditoria.getIdEleccion()).ifPresent(e -> item.put("eleccion", e.getNombre()));
+        item.put("nombre", auditoria.getNombreCompleto() != null ? auditoria.getNombreCompleto() : "");
+        item.put("eleccion", auditoria.getNombreEleccion() != null ? auditoria.getNombreEleccion() : "");
         return item;
     }
 
