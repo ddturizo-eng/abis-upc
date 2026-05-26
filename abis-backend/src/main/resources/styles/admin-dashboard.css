@@ -2071,3 +2071,30 @@
   border-color: #fecaca;
   color: #991b1b;
 }
+
+.skeleton-row {
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  border-radius: 6px;
+  height: 16px;
+  margin: 8px 0;
+  width: 100%;
+}
+
+.skeleton-row.skeleton-short { width: 60%; }
+.skeleton-row.skeleton-medium { width: 80%; }
+.skeleton-row.skeleton-tall { height: 42px; }
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-table tr td {
+  padding: 12px 16px;
+  vertical-align: middle;
+}
+
+.skeleton-table tr td:first-child { padding-left: 24px; }
+.skeleton-table tr td:last-child { padding-right: 24px; }

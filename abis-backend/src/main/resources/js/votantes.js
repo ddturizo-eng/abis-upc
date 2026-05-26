@@ -809,7 +809,7 @@
 
   async function loadVoters() {
     const tbody = document.getElementById('voters-table-body');
-    tbody.innerHTML = '<tr><td colspan="9" class="voters-empty">Cargando censo electoral...</td></tr>';
+    tbody.innerHTML = Array.from({length:6},function(_,i){return '<tr><td colspan="9"><div class="skeleton-row skeleton-tall" style="width:'+(100-i*10)+'%"></div></td></tr>';}).join('');
     try {
       const response = await fetch('/api/votantes', { headers });
       if (!response.ok) throw new Error('No fue posible cargar votantes');
