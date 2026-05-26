@@ -143,6 +143,22 @@ public class CertificadoService {
         return resumen;
     }
 
+    public Map<String, Object> verificarCertificado(String codigo) {
+        if (codigo == null || codigo.isBlank()) {
+            throw new IllegalArgumentException("codigo requerido");
+        }
+        AuditoriaCorreo auditoria = auditoriaCorreoRepo.findByCodigo(codigo.trim().toUpperCase())
+                .orElseThrow(() -> new IllegalArgumentException("Certificado no encontrado o no valido"));
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("codigo", auditoria.getCodigoCertificado());
+        result.put("valido", true);
+        result.put("nombre", auditoria.getNombreCompleto());
+        result.put("eleccion", auditoria.getNombreEleccion());
+        result.put("fechaParticipacion", auditoria.getFechaEnvio() != null
+                ? auditoria.getFechaEnvio().toInstant().toString() : null);
+        return result;
+    }
+
     public void prepararAuditoria() {
         auditoriaCorreoRepo.asegurarInfraestructura();
     }

@@ -398,6 +398,28 @@ public class AuditoriaCorreoRepository {
         return auditoria;
     }
 
+    public Optional<AuditoriaCorreo> findByCodigo(String codigo) {
+        String sql = "SELECT a.ID_AUDITORIA, a.IDENTIFICACION, a.ID_ELECCION, a.CORREO_VOTANTE, " +
+                "a.FECHA_SOLICITUD, a.FECHA_ENVIO, a.ESTADO, a.PROVIDER, a.MESSAGE_ID, " +
+                "a.CODIGO_CERTIFICADO, a.OBSERVACIONES, " +
+                "v.PRIMER_NOMBRE || ' ' || NVL(v.PRIMER_APELLIDO, '') AS NOMBRE_VOTANTE, " +
+                "e.NOMBRE AS NOMBRE_ELECCION " +
+                "FROM Auditoria_correos a " +
+                "JOIN Votantes v ON v.IDENTIFICACION = a.IDENTIFICACION " +
+                "JOIN Elecciones e ON e.ID_ELECCION = a.ID_ELECCION " +
+                "WHERE a.CODIGO_CERTIFICADO = ? AND a.ESTADO = 'ENVIADO' " +
+                "ORDER BY a.FECHA_ENVIO DESC FETCH FIRST 1 ROWS ONLY";
+        try (Connection conn = AppConfig.getConnection();
+             PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, codigo);
+            try (ResultSet rs = ps.executeQuery()) {
+                return rs.next() ? Optional.of(mapRow(rs)) : Optional.empty();
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Error en AuditoriaCorreoRepository.findByCodigo", e);
+        }
+    }
+
     private String selectBase() {
         return "SELECT ID_AUDITORIA, IDENTIFICACION, ID_ELECCION, CORREO_VOTANTE, FECHA_SOLICITUD, " +
                 "FECHA_ENVIO, ESTADO, PROVIDER, MESSAGE_ID, CODIGO_CERTIFICADO, OBSERVACIONES " +

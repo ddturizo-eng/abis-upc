@@ -18,6 +18,7 @@ public class CertificadoController {
         app.get("/api/certificados", CertificadoController::listar);
         app.get("/api/certificados/resumen", CertificadoController::resumen);
         app.get("/api/certificados/elecciones", CertificadoController::elecciones);
+        app.get("/api/certificados/verificar/{codigo}", CertificadoController::verificar);
         app.post("/api/certificados/{id}/reenviar", CertificadoController::reenviarPorAuditoria);
         app.post("/api/certificados/reenviar", CertificadoController::reenviarPorVotante);
     }
@@ -36,6 +37,17 @@ public class CertificadoController {
         try {
             Long idEleccion = queryLong(ctx, "eleccionId");
             ctx.json(ApiResponse.success(certificadoService.resumenPanel(idEleccion)));
+        } catch (Exception e) {
+            ctx.status(500).json(ApiResponse.error(e.getMessage()));
+        }
+    }
+
+    private static void verificar(Context ctx) {
+        try {
+            String codigo = ctx.pathParam("codigo");
+            ctx.json(ApiResponse.success(certificadoService.verificarCertificado(codigo)));
+        } catch (IllegalArgumentException e) {
+            ctx.status(404).json(ApiResponse.error(e.getMessage()));
         } catch (Exception e) {
             ctx.status(500).json(ApiResponse.error(e.getMessage()));
         }
