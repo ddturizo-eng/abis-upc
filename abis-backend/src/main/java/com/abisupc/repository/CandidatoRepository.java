@@ -16,7 +16,7 @@ public class CandidatoRepository implements Repository<Candidato> {
 
     @Override
     public List<Candidato> findAll() {
-        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, FOTO_URL FROM Candidatos ORDER BY ID_CANDIDATO";
+        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, FOTO_URL, EMAIL FROM Candidatos ORDER BY ID_CANDIDATO";
         List<Candidato> lista = new ArrayList<>();
         try (Connection conn = AppConfig.getConnection()) {
             ensureFotoUrlColumn(conn);
@@ -34,7 +34,7 @@ public class CandidatoRepository implements Repository<Candidato> {
 
     @Override
     public Optional<Candidato> findById(Long id) {
-        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, FOTO_URL FROM Candidatos WHERE ID_CANDIDATO = ?";
+        String sql = "SELECT ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, FOTO_URL, EMAIL FROM Candidatos WHERE ID_CANDIDATO = ?";
         try (Connection conn = AppConfig.getConnection()) {
             ensureFotoUrlColumn(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -58,8 +58,8 @@ public class CandidatoRepository implements Repository<Candidato> {
     }
 
     public Long savePersona(Candidato c) {
-        String sql = "INSERT INTO Candidatos (ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, FOTO_URL) " +
-                "VALUES (seq_candidatos.NEXTVAL, ?, ?, ?, ?, ?)";
+        String sql = "INSERT INTO Candidatos (ID_CANDIDATO, PRIMER_NOMBRE, SEGUNDO_NOMBRE, PRIMER_APELLIDO, SEGUNDO_APELLIDO, FOTO_URL, EMAIL) " +
+                "VALUES (seq_candidatos.NEXTVAL, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = AppConfig.getConnection()) {
             ensureFotoUrlColumn(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -68,6 +68,7 @@ public class CandidatoRepository implements Repository<Candidato> {
                 ps.setString(3, c.getPrimerApellido());
                 ps.setString(4, c.getSegundoApellido());
                 ps.setString(5, c.getFotoUrl());
+                ps.setString(6, c.getEmail());
                 ps.executeUpdate();
             }
             try (PreparedStatement seq = conn.prepareStatement("SELECT seq_candidatos.CURRVAL FROM dual");
@@ -101,7 +102,7 @@ public class CandidatoRepository implements Repository<Candidato> {
 
     @Override
     public void update(Candidato entity) {
-        String sql = "UPDATE Candidatos SET PRIMER_NOMBRE = ?, SEGUNDO_NOMBRE = ?, PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, FOTO_URL = COALESCE(?, FOTO_URL) WHERE ID_CANDIDATO = ?";
+        String sql = "UPDATE Candidatos SET PRIMER_NOMBRE = ?, SEGUNDO_NOMBRE = ?, PRIMER_APELLIDO = ?, SEGUNDO_APELLIDO = ?, FOTO_URL = COALESCE(?, FOTO_URL), EMAIL = ? WHERE ID_CANDIDATO = ?";
         try (Connection conn = AppConfig.getConnection()) {
             ensureFotoUrlColumn(conn);
             try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -110,7 +111,8 @@ public class CandidatoRepository implements Repository<Candidato> {
                 ps.setString(3, entity.getPrimerApellido());
                 ps.setString(4, entity.getSegundoApellido());
                 ps.setString(5, entity.getFotoUrl());
-                ps.setLong(6, entity.getId());
+                ps.setString(6, entity.getEmail());
+                ps.setLong(7, entity.getId());
                 ps.executeUpdate();
             }
         } catch (SQLException e) {
@@ -230,6 +232,7 @@ public class CandidatoRepository implements Repository<Candidato> {
         c.setPrimerApellido(rs.getString("PRIMER_APELLIDO"));
         c.setSegundoApellido(rs.getString("SEGUNDO_APELLIDO"));
         c.setFotoUrl(rs.getString("FOTO_URL"));
+        c.setEmail(rs.getString("EMAIL"));
         return c;
     }
 

@@ -113,6 +113,11 @@ public class CandidatoController {
         candidato.setSegundoNombre(segundoNombre != null ? segundoNombre.trim() : null);
         candidato.setPrimerApellido(primerApellido.trim());
         candidato.setSegundoApellido(segundoApellido != null ? segundoApellido.trim() : null);
+        String email = text(body, "email");
+        if (email != null && !email.isBlank() && !email.contains("@")) {
+            throw new IllegalArgumentException("Email invalido");
+        }
+        candidato.setEmail(email != null ? email.trim() : null);
         return candidato;
     }
 
@@ -134,6 +139,11 @@ public class CandidatoController {
         candidato.setSegundoNombre(segundoNombre != null ? segundoNombre.trim() : null);
         candidato.setPrimerApellido(primerApellido.trim());
         candidato.setSegundoApellido(segundoApellido != null ? segundoApellido.trim() : null);
+        String email = text(ctx, "email");
+        if (email != null && !email.isBlank() && !email.contains("@")) {
+            throw new IllegalArgumentException("Email invalido");
+        }
+        candidato.setEmail(email != null ? email.trim() : null);
         return candidato;
     }
 
