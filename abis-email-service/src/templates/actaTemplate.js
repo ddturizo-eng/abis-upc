@@ -6,15 +6,25 @@ function escapeHtml(value) {
     .replace(/"/g, '&quot;');
 }
 
+function firmasConfig() {
+  return {
+    firma1: process.env.ABIS_CERT_FIRMA1 || 'Amilkar Sierra',
+    cargo1: process.env.ABIS_CERT_CARGO1 || 'Docente de Bases de Datos',
+    firma2: process.env.ABIS_CERT_FIRMA2 || 'Alfredo Bautista',
+    cargo2: process.env.ABIS_CERT_CARGO2 || 'Asesor y Supervisor de Desarrollo'
+  };
+}
+
 export function renderActaHtml(payload) {
   const nombre = escapeHtml(payload.nombre);
   const fecha = escapeHtml(payload.fecha);
   const totalVotos = Number(payload.totalVotos || 0);
   const candidatos = (payload.candidatos || []);
   const votoBlanco = payload.votoBlanco || {};
+  const envFirmas = firmasConfig();
   const firmas = payload.firmas || [
-    { nombre: 'Amilkar Sierra', cargo: 'Docente de Bases de Datos' },
-    { nombre: 'Alfredo Bautista', cargo: 'Asesor y Supervisor de Desarrollo' }
+    { nombre: envFirmas.firma1, cargo: envFirmas.cargo1 },
+    { nombre: envFirmas.firma2, cargo: envFirmas.cargo2 }
   ];
 
   const filas = candidatos.map(c => {
