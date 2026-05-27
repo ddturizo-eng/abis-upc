@@ -5,6 +5,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Representa el resultado del OCR sobre una cedula de ciudadania colombiana.
+ *
+ * <p>Lo produce el microservicio {@code abis-ocr} (FastAPI :8002) y lo consume
+ * {@code OcrController}. {@code @JsonIgnoreProperties(ignoreUnknown = true)}
+ * permite que el modelo sea tolerante a campos adicionales que el microservicio
+ * pueda agregar en versiones futuras sin romper la deserializacion.
+ *
+ * <p>{@code overallConfidence} y {@code classificationConfidence} son scores
+ * entre 0 y 1 que indican la confianza del motor OCR. {@code fieldConfidence}
+ * desglosa la confianza por campo individual (nombre, apellido, fecha, etc.).
+ * Si {@code status} es distinto de {@code "success"}, {@code errors} contiene
+ * los mensajes de fallo del pipeline.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class ScanResult {
 
