@@ -24,18 +24,48 @@ import io.javalin.http.staticfiles.Location;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CountDownLatch;
 
+/**
+ * Punto de entrada principal del backend ABIS-UPC.
+ *
+ * <p>Inicializa el servidor Javalin en el puerto {@code 7000}, registra
+ * todas las rutas de la API REST y aplica {@link AuthMiddleware} a los
+ * endpoints protegidos. Al arrancar, sincroniza los estados de las
+ * elecciones via {@link EleccionLifecycleService#sincronizarEstados()}
+ * para corregir cualquier inconsistencia que haya quedado de sesiones
+ * anteriores.
+ *
+ * <p>Estructura de rutas:
+ * <ul>
+ *   <li>Publicas: {@code /api/auth/*}, {@code /api/enroll}, {@code /api/verify},
+ *       {@code /api/document/scan}, {@code /api/registro/*}, {@code /api/votacion/*}</li>
+ *   <li>Protegidas por {@link AuthMiddleware}: {@code /api/admin/*},
+ *       {@code /api/auditoria/*}, {@code /api/jurados/*}, {@code /api/elecciones/*},
+ *       {@code /api/contingencia/*} (gestion), {@code /api/votantes/*} (gestion)</li>
+ * </ul>
+ *
+ * <p>El servidor bloquea el hilo principal con un {@link CountDownLatch}
+ * para mantenerlo activo indefinidamente hasta que sea interrumpido,
+ * momento en el cual llama a {@code app.stop()} para cerrar limpiamente.
+ */
 public class AppServer {
 
+    /**
+     * Arranca el servidor Javalin, registra rutas y bloquea el hilo principal.
+     *
+     * @param args argumentos de linea de comandos (no utilizados)
+     */
     public static void main(String[] args) {
         new EleccionLifecycleService().sincronizarEstados();
 
         Javalin app = Javalin.create(config -> {
             config.staticFiles.add("C:/PROYECTOS P3/abis-upc/abis-backend/src/main/resources", Location.EXTERNAL);
             config.bundledPlugins.enableCors(cors ->
-                cors.addRule(it -> it.anyHost())
+                    cors.addRule(it -> it.anyHost())
             );
         });
 
+        // Forzar UTF-8 en todas las respuestas para evitar problemas con
+        // tildes y caracteres especiales del espanol en nombres de votantes.
         app.before(ctx -> ctx.res().setCharacterEncoding(StandardCharsets.UTF_8.name()));
         app.after(ctx -> {
             String contentType = ctx.res().getContentType();
@@ -51,7 +81,7 @@ public class AppServer {
 
         // Status
         app.get("/api/status", ctx ->
-            ctx.json("{\"service\":\"javalin\",\"status\":\"ok\"}")
+                ctx.json("{\"service\":\"javalin\",\"status\":\"ok\"}")
         );
 
         // Puestos de votacion
@@ -89,7 +119,7 @@ public class AppServer {
         app.post("/api/contingencia/tokens/{idToken}/revocar", ContingenciaController::revocar);
         app.post("/api/contingencia/tokens/{idToken}/regenerar", ContingenciaController::regenerar);
 
-        // Auth (publica - login no requiere autenticacion previa)
+        // Auth (publica — login no requiere autenticacion previa)
         app.post("/api/auth/login", AdminController::login);
         app.post("/api/auth/logout", AdminController::logout);
 
@@ -129,7 +159,9 @@ public class AppServer {
         app.post("/api/biometria/enrolar", BiometriaController::enrolar);
         CertificadoController.register(app);
 
-        // Rutas de administracion protegidas por token de sesion
+        // Rutas protegidas por token de sesion via AuthMiddleware.
+        // Las rutas publicas dentro de /api/votantes/* se excluyen explicitamente
+        // para no requerir autenticacion en el flujo de registro y kiosco.
         AuthMiddleware auth = new AuthMiddleware();
         app.before("/api/admin/*", auth);
         app.before("/api/auditoria/*", auth);
@@ -142,8 +174,8 @@ public class AppServer {
         app.before("/api/votantes/*", ctx -> {
             String path = ctx.path();
             if (path.equals("/api/votantes/foto") ||
-                path.equals("/api/votantes/segunda-llave") ||
-                path.matches("/api/votantes/\\d+/puede-votar")) {
+                    path.equals("/api/votantes/segunda-llave") ||
+                    path.matches("/api/votantes/\\d+/puede-votar")) {
                 return;
             }
             auth.handle(ctx);
@@ -181,6 +213,8 @@ public class AppServer {
         System.out.println("  POST /api/auth/logout     (admin)");
         System.out.println("  /api/admin/*              (protegido por AuthMiddleware)");
 
+        // Bloquea el hilo principal indefinidamente.
+        // Al interrumpir el proceso (Ctrl+C o SIGTERM), detiene Javalin limpiamente.
         try {
             new CountDownLatch(1).await();
         } catch (InterruptedException e) {
