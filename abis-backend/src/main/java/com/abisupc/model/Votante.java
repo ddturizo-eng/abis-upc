@@ -6,6 +6,20 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+/**
+ * Representa un votante registrado en el sistema electoral.
+ *
+ * <p>Las anotaciones {@code @JsonProperty} mapean los campos Java a los
+ * nombres snake_case que espera el frontend. {@code @JsonFormat} en
+ * {@code fechaNacimiento} garantiza que la fecha se serialice siempre
+ * como {@code yyyy-MM-dd} independiente del locale del servidor.
+ *
+ * <p>{@code biometrico} indica si el votante ya completo el enrolamiento
+ * de huella dactilar — solo los votantes con {@code biometrico = true}
+ * pueden autenticarse en el kiosco de votacion.
+ *
+ * <p>Tabla Oracle: {@code VOTANTES}.
+ */
 public class Votante extends Entity {
 
     @JsonProperty("identificacion")
