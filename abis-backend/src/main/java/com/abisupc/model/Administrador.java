@@ -1,5 +1,12 @@
 package com.abisupc.model;
 
+/**
+ * Representa un administrador del sistema electoral.
+ *
+ * <p>El campo {@code passwordHash} almacena unicamente el hash de la
+ * contrasena generado por {@code HashingService} — nunca el valor en
+ * texto plano. Tabla Oracle: {@code ADMINISTRADORES}.
+ */
 public class Administrador extends Entity {
 
     private String usuario;
