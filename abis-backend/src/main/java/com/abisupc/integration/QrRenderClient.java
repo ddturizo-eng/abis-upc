@@ -10,6 +10,20 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Map;
 
+/**
+ * Cliente HTTP para el endpoint de renderizado de codigos QR del microservicio
+ * biometrico (FastAPI :8001).
+ *
+ * <p>Genera la imagen PNG del QR a partir de un valor de texto, normalizado
+ * antes de enviarlo para evitar caracteres invalidos que Pydantic rechazaria.
+ * El resultado se usa en el flujo de contingencia para incluir el QR del token
+ * en el correo del votante.
+ *
+ * <p>Variables de entorno:
+ * <ul>
+ *   <li>{@code BIOMETRIC_SERVICE_URL} — URL base del servicio (default: {@code http://localhost:8001})</li>
+ * </ul>
+ */
 public class QrRenderClient {
 
     private static final String DEFAULT_BASE_URL = "http://localhost:8001";
@@ -20,6 +34,10 @@ public class QrRenderClient {
     private final HttpClient httpClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Constructor por defecto. Lee la URL base de la variable de entorno
+     * {@code BIOMETRIC_SERVICE_URL} o usa {@code http://localhost:8001}.
+     */
     public QrRenderClient() {
         this(System.getenv().getOrDefault(ENV_BASE_URL, DEFAULT_BASE_URL),
                 HttpClient.newBuilder()
@@ -29,12 +47,33 @@ public class QrRenderClient {
                 new ObjectMapper());
     }
 
+    /**
+     * Constructor para inyeccion de dependencias (util en pruebas).
+     *
+     * @param baseUrl      URL base del microservicio biometrico
+     * @param httpClient   cliente HTTP a usar
+     * @param objectMapper serializador JSON
+     */
     public QrRenderClient(String baseUrl, HttpClient httpClient, ObjectMapper objectMapper) {
         this.baseUrl = normalizarBaseUrl(baseUrl);
         this.httpClient = httpClient;
         this.objectMapper = objectMapper;
     }
 
+    /**
+     * Genera la imagen PNG de un codigo QR a partir de un valor de texto.
+     *
+     * <p>Normaliza el valor antes de enviarlo: elimina caracteres nulos,
+     * saltos de linea y espacios, y convierte a mayusculas. Esto evita que
+     * Pydantic rechace el request por caracteres invalidos en el campo
+     * {@code value} del esquema FastAPI.
+     *
+     * @param value texto a codificar en el QR (ej: token de contingencia)
+     * @return imagen PNG como arreglo de bytes lista para incrustar en un PDF
+     * @throws IOException si el microservicio retorna error HTTP,
+     *                     si el valor queda vacio despues de normalizar,
+     *                     o si la conexion falla
+     */
     public byte[] render(String value) throws IOException {
         // Normalizar: eliminar cualquier caracter no imprimible que cause rechazo en Pydantic
         String valorLimpio = value == null ? "" : value
@@ -73,6 +112,12 @@ public class QrRenderClient {
         }
     }
 
+    /**
+     * Normaliza la URL base eliminando la barra final si existe.
+     *
+     * @param value URL a normalizar
+     * @return URL sin barra final
+     */
     private String normalizarBaseUrl(String value) {
         String url = value == null || value.isBlank() ? DEFAULT_BASE_URL : value.trim();
         return url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
