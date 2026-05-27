@@ -1,7 +1,13 @@
 package com.abisupc.dto;
 
 /**
- * Payload interno para solicitar al microservicio Node el certificado del votante.
+ * Payload interno para solicitar al microservicio de email (Node.js :8010)
+ * la generacion y envio del certificado de participacion del votante.
+ *
+ * <p>Lo construye {@code CertificadoService} con los datos del votante,
+ * la eleccion y el puesto donde voto, y lo envia via {@code CertificadoClient}.
+ * {@code codigoCertificado} es un UUID unico que identifica el certificado
+ * emitido y permite verificarlo posteriormente.
  */
 public class CertificadoEnvioRequest {
 
