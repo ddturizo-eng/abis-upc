@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class VotanteController {
 
@@ -32,8 +33,8 @@ public class VotanteController {
     private static final ObjectMapper mapper = new ObjectMapper();
 
     public static void getAll(Context ctx) {
-        int page = queryInt(ctx, "page", 1);
-        int size = queryInt(ctx, "size", 20);
+        String pageParam = ctx.queryParam("page");
+        String sizeParam = ctx.queryParam("size");
         String rol = ctx.queryParam("rol");
         String estado = ctx.queryParam("estado");
         String biometricoParam = ctx.queryParam("biometrico");
@@ -42,7 +43,32 @@ public class VotanteController {
             biometrico = Boolean.parseBoolean(biometricoParam) || "S".equalsIgnoreCase(biometricoParam)
                     || "true".equalsIgnoreCase(biometricoParam);
         }
-        ctx.json(repository.findAllPaginated(page, size, rol, estado, biometrico));
+
+        if (pageParam != null || sizeParam != null) {
+            int page = queryInt(ctx, "page", 1);
+            int size = queryInt(ctx, "size", 20);
+            ctx.json(repository.findAllPaginated(page, size, rol, estado, biometrico));
+            return;
+        }
+
+        List<Votante> votantes = repository.findAll();
+        if (rol != null && !rol.isBlank()) {
+            votantes = votantes.stream()
+                    .filter(v -> rol.equalsIgnoreCase(rolNombre(v.getIdRol())))
+                    .collect(Collectors.toList());
+        }
+        if (estado != null && !estado.isBlank()) {
+            votantes = votantes.stream()
+                    .filter(v -> estado.equalsIgnoreCase(v.getEstadoVoto()))
+                    .collect(Collectors.toList());
+        }
+        if (biometrico != null) {
+            final boolean bioFilter = biometrico;
+            votantes = votantes.stream()
+                    .filter(v -> v.isBiometrico() == bioFilter)
+                    .collect(Collectors.toList());
+        }
+        ctx.json(votantes);
     }
 
     private static int queryInt(Context ctx, String name, int defaultValue) {
