@@ -7,6 +7,15 @@ import java.util.regex.Pattern;
 
 /**
  * Traduce errores Oracle ORA-20XXX a respuestas HTTP consistentes.
+ *
+ * <p>Captura excepciones de reglas de negocio lanzadas desde stored procedures
+ * y triggers PL/SQL (codigo ORA-20000 a ORA-20999) y las mapea a codigos de
+ * estado HTTP apropiados (400, 403, 409) con mensajes en espanol comprensibles
+ * para el usuario final.
+ *
+ * <p>Soporta tanto excepciones directas como excepciones encadenadas (causas).
+ * Cuando el mensaje Oracle contiene texto personalizado, lo prioriza sobre
+ * los mensajes por defecto definidos en esta clase.
  */
 public final class OracleErrorHandler {
 
@@ -15,6 +24,12 @@ public final class OracleErrorHandler {
     private OracleErrorHandler() {
     }
 
+    /**
+     * Extrae y traduce un error Oracle de una excepcion SQL directa.
+     *
+     * @param exception excepcion SQL a analizar
+     * @return {@link OracleError} si el codigo es ORA-20XXX, {@link Optional#empty()} en otro caso
+     */
     public static Optional<OracleError> from(SQLException exception) {
         if (exception == null) {
             return Optional.empty();
@@ -28,6 +43,15 @@ public final class OracleErrorHandler {
         return Optional.of(new OracleError(code, statusCode(code), message(exception, code)));
     }
 
+    /**
+     * Extrae y traduce un error Oracle recorriendo la cadena de causas.
+     *
+     * <p>Busca recursivamente una {@link SQLException} en las causas del throwable
+     * y delega en {@link #from(SQLException)}.
+     *
+     * @param throwable excepcion de cualquier tipo
+     * @return {@link OracleError} si se encuentra un ORA-20XXX, {@link Optional#empty()} en otro caso
+     */
     public static Optional<OracleError> from(Throwable throwable) {
         Throwable current = throwable;
         while (current != null) {
@@ -39,6 +63,12 @@ public final class OracleErrorHandler {
         return Optional.empty();
     }
 
+    /**
+     * Extrae el codigo ORA-20XXX del errorCode o del mensaje de la excepcion.
+     *
+     * @param exception excepcion SQL
+     * @return codigo de error extraido
+     */
     private static int extractCode(SQLException exception) {
         int errorCode = exception.getErrorCode();
         if (errorCode >= 20000 && errorCode <= 20999) {
@@ -49,6 +79,12 @@ public final class OracleErrorHandler {
         return matcher.find() ? Integer.parseInt(matcher.group(1)) : errorCode;
     }
 
+    /**
+     * Mapea un codigo ORA-20XXX a un codigo de estado HTTP.
+     *
+     * @param oraCode codigo de error Oracle
+     * @return 403 (prohibido), 409 (conflicto) o 400 (solicitud incorrecta)
+     */
     private static int statusCode(int oraCode) {
         if (oraCode == 20070 || inRange(oraCode, 20090, 20093)) {
             return 403;
@@ -71,6 +107,15 @@ public final class OracleErrorHandler {
         return 400;
     }
 
+    /**
+     * Obtiene el mensaje legible para un error Oracle.
+     *
+     * <p>Prioriza el mensaje extraido del exception sobre el mensaje por defecto.
+     *
+     * @param exception excepcion SQL con el mensaje original
+     * @param code codigo ORA-20XXX
+     * @return mensaje en espanol para el usuario
+     */
     private static String message(SQLException exception, int code) {
         Matcher matcher = ORA_PATTERN.matcher(fullMessage(exception));
         if (matcher.find() && !matcher.group(2).isBlank()) {
@@ -79,6 +124,12 @@ public final class OracleErrorHandler {
         return defaultMessage(code);
     }
 
+    /**
+     * Concatena todos los mensajes encadenados de la excepcion SQL.
+     *
+     * @param exception excepcion SQL
+     * @return mensaje completo incluyendo excepciones anidadas
+     */
     private static String fullMessage(SQLException exception) {
         StringBuilder message = new StringBuilder();
         SQLException current = exception;
@@ -95,6 +146,12 @@ public final class OracleErrorHandler {
         return value >= start && value <= end;
     }
 
+    /**
+     * Retorna el mensaje por defecto para un codigo de error conocido.
+     *
+     * @param code codigo ORA-20XXX
+     * @return mensaje descriptivo en espanol
+     */
     private static String defaultMessage(int code) {
         return switch (code) {
             case 20001 -> "El voto no puede registrarse porque la eleccion no esta en curso.";
@@ -116,6 +173,12 @@ public final class OracleErrorHandler {
         };
     }
 
+    /**
+     * Retorna mensaje por defecto para rangos de codigo no cubiertos individualmente.
+     *
+     * @param code codigo ORA-20XXX
+     * @return mensaje generico del rango o mensaje por defecto final
+     */
     private static String defaultRangeMessage(int code) {
         if (inRange(code, 20100, 20103)) {
             return "La solicitud de inhabilitacion es invalida.";
@@ -138,6 +201,13 @@ public final class OracleErrorHandler {
         return "Error de regla de negocio Oracle.";
     }
 
+    /**
+     * Representa un error Oracle traducido con su codigo, status HTTP y mensaje.
+     *
+     * @param oraCode    codigo ORA-20XXX original
+     * @param statusCode codigo de estado HTTP equivalente (400, 403, 409)
+     * @param message    mensaje descriptivo en espanol
+     */
     public record OracleError(int oraCode, int statusCode, String message) {
     }
 }
