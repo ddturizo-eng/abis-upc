@@ -184,21 +184,21 @@ public class AdminService {
 
         String fecha = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss").format(LocalDateTime.now());
         String asunto = "ABIS-UPC | Solicitud de recuperacion de contrasena";
-        String cuerpo = "SOLICITUD DE RECUPERACION DE CONTRASENA\n" +
-                "============================================\n" +
-                "Fecha y hora: " + fecha + "\n" +
-                "Usuario: " + admin.getUsuario() + "\n" +
-                "Nombre: " + admin.getNombre() + "\n" +
-                "Correo: " + (admin.getCorreo() != null ? admin.getCorreo() : "No registrado") + "\n" +
-                "============================================\n" +
-                "Accion requerida: Restablecer la contrasena de este administrador y notificarle al correo registrado.";
+        String cuerpo = "Se ha recibido una solicitud de recuperacion de contrasena.\n\n" +
+                "  Fecha y hora: " + fecha + "\n" +
+                "  Usuario     : " + admin.getUsuario() + "\n" +
+                "  Nombre      : " + admin.getNombre() + "\n" +
+                "  Correo      : " + (admin.getCorreo() != null ? admin.getCorreo() : "No registrado") + "\n\n" +
+                "Accion requerida: restablecer la contrasena de este administrador\n" +
+                "y notificarle al correo registrado.\n\n" +
+                "Este mensaje fue generado automaticamente por ABIS-UPC.";
 
         enviarNotificacion(asunto, cuerpo);
     }
 
     private void enviarNotificacion(String asunto, String cuerpo) {
-        String emailServiceUrl = System.getenv().getOrDefault("EMAIL_SERVICE_URL", "http://localhost:8010");
-        String token = System.getenv().getOrDefault("EMAIL_SERVICE_TOKEN", "");
+        String emailServiceUrl = System.getenv().getOrDefault("ABIS_EMAIL_SERVICE_URL", "http://localhost:8010");
+        String token = System.getenv().getOrDefault("ABIS_EMAIL_SERVICE_TOKEN", "");
         String destinatario = "ddturizo@unicesar.edu.co";
 
         try {

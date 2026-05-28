@@ -530,8 +530,8 @@ public class EleccionController {
             payload.put("votoBlanco", votoBlanco);
             payload.put("totalVotos", totalVotos);
 
-            String emailServiceUrl = System.getenv().getOrDefault("EMAIL_SERVICE_URL", "http://localhost:8010");
-            String token = System.getenv().getOrDefault("EMAIL_SERVICE_TOKEN", "");
+            String emailServiceUrl = System.getenv().getOrDefault("ABIS_EMAIL_SERVICE_URL", "http://localhost:8010");
+            String token = System.getenv().getOrDefault("ABIS_EMAIL_SERVICE_TOKEN", "");
             String json = new com.fasterxml.jackson.databind.ObjectMapper().writeValueAsString(payload);
 
             java.net.http.HttpRequest request = java.net.http.HttpRequest.newBuilder()
