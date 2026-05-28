@@ -153,7 +153,7 @@
   function renderizarSelectorElecciones() {
     dom.selectEleccion.innerHTML = '<option value="">Seleccione una elección...</option>' + state.elecciones.map((eleccion) => {
       const id = electionId(eleccion);
-      return `<option value="${escapeHtml(id)}">${escapeHtml(eleccion.nombre || 'Elección sin nombre')} - ${escapeHtml(eleccion.estado || 'SIN ESTADO')}</option>`;
+      return `<option value="${escapeHtml(id)}">${escapeHtml(eleccion.nombre || 'Elección sin nombre')}</option>`;
     }).join('');
   }
 
@@ -311,16 +311,21 @@
       ['briefcase', 'CARGOS CONFIGURADOS', number(cargos), 'Cargos distintos en tarjetón'],
       ['check', 'CON VOTOS', number(conVotos), `${porcentaje}% del total`],
       ['shield', 'TARJETÓN', tarjeton, total ? 'Listo para vista previa' : 'Pendiente de candidatos']
-    ].map(([iconName, label, value, note]) => `
+    ].map(([iconName, label, value, note]) => {
+      const isTextStatus = String(value).length > 4 && !/^\d/.test(String(value));
+      const displayValue = isTextStatus
+        ? `<span class="stat-value-badge stat-value-badge-${String(value).toLowerCase().replace('_', '-')}">${escapeHtml(value)}</span>`
+        : `<span class="candidate-stat-value-num">${escapeHtml(value)}</span>`;
+      return `
       <article class="candidate-stat-card">
         <span class="candidate-stat-icon">${icon(iconName)}</span>
         <div>
           <p class="candidate-stat-label">${label}</p>
-          <p class="candidate-stat-value">${escapeHtml(value)}</p>
+          ${displayValue}
           <p class="candidate-stat-note">${escapeHtml(note)}</p>
         </div>
       </article>
-    `).join('');
+    `;}).join('');
   }
 
   function renderizarGruposCargo(candidatosAgrupados) {
@@ -344,7 +349,7 @@
             <div class="cargo-info">
               <span class="cargo-icon">${icon('briefcase')}</span>
               <span class="cargo-nombre">${escapeHtml(cargo)}</span>
-              <span class="cargo-count-badge">${number(items.length)} candidatos</span>
+              <span class="cargo-count-badge">${pluralizarCandidatos(items.length)}</span>
             </div>
             <div class="cargo-meta">
               <span class="cargo-total-votos">Total votos: ${number(totalVotos)}</span>
@@ -361,6 +366,10 @@
         </section>
       `;
     }).join('');
+  }
+
+  function pluralizarCandidatos(count) {
+    return count === 1 ? '1 candidato' : `${number(count)} candidatos`;
   }
 
   function escapeAttribute(value) {
@@ -382,7 +391,7 @@
         <div class="candidate-number">${escapeHtml(numero)}</div>
         ${avatar}
         <div class="candidate-info">
-          <span class="candidate-name">${escapeHtml(candidato.nombreCompleto)}</span>
+          <span class="candidate-name" title="${escapeHtml(candidato.nombreCompleto)}">${escapeHtml(candidato.nombreCompleto)}</span>
           <span class="candidate-faculty">Postulación a ${escapeHtml(candidato.cargo)}</span>
         </div>
         <div class="candidate-actions">
@@ -390,7 +399,7 @@
           <button class="btn-icon btn-icon-danger" onclick="eliminarCandidato(${Number(id)})" title="Eliminar" type="button">${icon('trash')}</button>
         </div>
         <div class="candidate-badges">
-          <span class="badge-votos ${tieneVotos ? 'con-votos' : 'sin-votos'}">${tieneVotos ? 'CON VOTOS' : 'SIN VOTOS'}</span>
+          <span class="badge-votos ${tieneVotos ? 'con-votos' : 'sin-votos'}">${tieneVotos ? icon('check') + 'CON VOTOS' : 'SIN VOTOS'}</span>
           <span class="badge-estado ${activo ? 'activo' : 'inactivo'}">${activo ? 'ACTIVO' : 'INACTIVO'}</span>
         </div>
       </div>

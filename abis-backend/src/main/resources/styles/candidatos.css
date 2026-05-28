@@ -253,10 +253,60 @@
 
 .candidate-stat-value {
   color: var(--gray-900);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-top: 5px;
+}
+
+.candidate-stat-value-num {
+  color: var(--gray-900);
   font-size: 1.6rem;
   font-weight: 700;
   line-height: 1;
   margin-top: 5px;
+}
+
+.stat-value-badge {
+  border-radius: 4px;
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  margin-top: 5px;
+  padding: 5px 8px;
+  text-transform: uppercase;
+}
+
+.stat-value-badge-cerrada,
+.stat-value-badge-finalizada {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.stat-value-badge-validado {
+  background: var(--green-100);
+  color: var(--green-800);
+}
+
+.stat-value-badge-pendiente {
+  background: var(--gray-100);
+  color: var(--gray-500);
+}
+
+.stat-value-badge-programada {
+  background: var(--green-100);
+  color: var(--green-700);
+}
+
+.stat-value-badge-en-curso {
+  background: var(--green-100);
+  color: var(--green-800);
+}
+
+.stat-value-badge-sin-estado {
+  background: var(--gray-100);
+  color: var(--gray-500);
 }
 
 .candidate-stat-note {
@@ -387,10 +437,17 @@
   background: var(--white);
   border: 1px solid var(--gray-200);
   border-radius: 4px;
-  color: var(--gray-500);
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: 0.75rem;
+  font-weight: 900;
   padding: 4px 8px;
+}
+
+.cargo-count-badge {
+  color: var(--green-800);
+}
+
+.cargo-total-votos {
+  color: var(--green-800);
 }
 
 .cargo-total-votos {
@@ -481,7 +538,7 @@
 .candidate-info {
   display: grid;
   gap: 4px;
-  min-width: 0;
+  min-width: 140px;
 }
 
 .candidate-name {
@@ -508,6 +565,9 @@
 .badge-votos,
 .badge-estado {
   border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   font-size: 0.64rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -516,8 +576,20 @@
 }
 
 .badge-votos.con-votos {
-  background: var(--badge-con-votos-bg);
-  color: var(--badge-con-votos-text);
+  background: transparent;
+  border: 1.5px solid var(--green-700);
+  color: var(--green-700);
+}
+
+.badge-votos.con-votos svg {
+  fill: none;
+  height: 11px;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.5;
+  width: 11px;
+  flex-shrink: 0;
 }
 
 .badge-votos.sin-votos {
@@ -573,11 +645,14 @@
   cursor: pointer;
   grid-template-columns: 40px 1fr;
   justify-content: start;
+  opacity: 0.6;
+  transition: opacity 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
 .candidate-card-add:hover {
   background: var(--green-50);
   border-color: var(--green-700);
+  opacity: 1;
 }
 
 .add-icon {
@@ -642,7 +717,7 @@
 }
 
 .tarjeton-cargo {
-  border-bottom: 1px solid var(--gray-900);
+  border-bottom: 2px solid var(--green-800);
   display: grid;
 }
 
@@ -651,14 +726,14 @@
 }
 
 .tarjeton-cargo-title {
-  background: var(--gray-50);
-  border-bottom: 1px solid var(--gray-900);
-  color: var(--gray-900);
-  font-size: 0.66rem;
+  background: var(--green-50);
+  border-bottom: 1px solid var(--green-800);
+  color: var(--green-800);
+  font-size: 0.68rem;
   font-weight: 900;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin: 0;
-  padding: 10px;
+  padding: 10px 12px;
   text-align: center;
   text-transform: uppercase;
 }
@@ -667,7 +742,7 @@
   display: grid;
   gap: 8px;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  padding: 10px;
+  padding: 12px;
 }
 
 .tarjeton-mini {
@@ -676,8 +751,8 @@
   border-radius: 4px;
   display: grid;
   gap: 6px;
-  min-height: 88px;
-  padding: 8px;
+  min-height: 100px;
+  padding: 10px 8px;
   text-align: center;
 }
 
@@ -698,7 +773,7 @@
 
 .tarjeton-mini-name {
   color: var(--gray-900);
-  font-size: 0.64rem;
+  font-size: 11px;
   font-weight: 900;
   line-height: 1.25;
   overflow: hidden;
@@ -712,7 +787,7 @@
   border: 1px solid #b7e4c7;
   border-radius: 2px;
   color: var(--green-800);
-  font-size: 0.55rem;
+  font-size: 9px;
   font-weight: 900;
   letter-spacing: 0.04em;
   overflow: hidden;
