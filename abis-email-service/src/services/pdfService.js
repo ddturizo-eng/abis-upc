@@ -1,7 +1,8 @@
 import puppeteer from 'puppeteer';
 import QRCode from 'qrcode';
-import { renderCertificadoHtml } from '../templates/certificadoTemplate.js';
-import { renderActaHtml } from '../templates/actaTemplate.js';
+import { mapearVariablesCertificado } from '../templates/certificadoTemplate.js';
+import { mapearVariablesActa } from '../templates/actaTemplate.js';
+import { renderizar } from '../services/templateService.js';
 
 let browserPromise = null;
 
@@ -21,13 +22,13 @@ export async function generarCertificadoPdf(payload) {
     { width: 180, margin: 2, color: { dark: '#1a3a2a', light: '#ffffff' } }
   );
 
+  const vars = mapearVariablesCertificado({ ...payload, _qrDataUri: qrDataUri });
+  const html = await renderizar('certificado_voto', vars);
+
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
-    await page.setContent(renderCertificadoHtml(payload, qrDataUri), {
-      waitUntil: 'networkidle0'
-    });
-
+    await page.setContent(html, { waitUntil: 'networkidle0' });
     return await page.pdf({
       format: 'Letter',
       landscape: true,
@@ -40,13 +41,13 @@ export async function generarCertificadoPdf(payload) {
 }
 
 export async function generarActaPdf(payload) {
+  const vars = mapearVariablesActa(payload);
+  const html = await renderizar('acta_ganadores', vars);
+
   const browser = await getBrowser();
   const page = await browser.newPage();
   try {
-    await page.setContent(renderActaHtml(payload), {
-      waitUntil: 'networkidle0'
-    });
-
+    await page.setContent(html, { waitUntil: 'networkidle0' });
     return await page.pdf({
       format: 'Letter',
       printBackground: true,
