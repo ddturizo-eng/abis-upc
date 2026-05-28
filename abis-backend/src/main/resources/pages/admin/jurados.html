@@ -1,7 +1,26 @@
 <section class="jurados-page">
   <link rel="stylesheet" href="../../styles/jurados.css">
 
-  <nav class="jurados-tabs" aria-label="Secciones de jurados">
+  <header class="engine-hero">
+    <div class="engine-hero-top">
+      <span class="engine-icon" aria-hidden="true"><i class="ti ti-users-group"></i></span>
+      <div>
+        <h1>Asignación de Jurados</h1>
+        <p>Distribución automatizada de jurados electorales</p>
+      </div>
+    </div>
+    <div class="engine-actions">
+      <div class="eleccion-selector-wrap">
+        <label class="eleccion-selector-label" for="jurados-eleccion">Elección</label>
+        <select id="jurados-eleccion" class="eleccion-selector">
+          <option value="">Cargando...</option>
+        </select>
+      </div>
+      <button class="btn-soft" id="btnVerPool" type="button"><i class="ti ti-list"></i> Ver pool</button>
+    </div>
+  </header>
+
+  <nav class="jurados-tabs" aria-label="Secciones">
     <button class="jurados-tab active" type="button" data-tab="asignacion">Asignación aleatoria</button>
     <button class="jurados-tab" type="button" data-tab="mesas">Mesas y jurados</button>
     <button class="jurados-tab" type="button" data-tab="planillas">Planillas</button>
@@ -9,64 +28,59 @@
 
   <section class="jurados-tab-panel active" id="tab-asignacion">
     <article class="assignment-engine">
-      <header class="engine-hero">
-        <div class="engine-title-wrap">
-          <span class="engine-icon" aria-hidden="true"><i class="ti ti-users-group"></i></span>
-          <div>
-            <h1>Motor Inteligente de Asignación de Jurados</h1>
-            <p>Automatización y distribución inteligente de jurados para mesas electorales</p>
-          </div>
-        </div>
-        <div class="engine-actions">
-          <div class="eleccion-selector-wrap">
-            <label class="eleccion-selector-label" for="jurados-eleccion">Elección</label>
-            <select id="jurados-eleccion" class="eleccion-selector">
-              <option value="">Cargando...</option>
-            </select>
-          </div>
-          <button class="btn-soft" id="btnVerPool" type="button"><i class="ti ti-list"></i> Ver pool</button>
-        </div>
-      </header>
 
-      <!-- BANNER DE RESUMEN (sticky) -->
-      <div class="summary-banner" id="summaryBanner">
-        <div class="sb-item">
-          <div class="sb-icon"><i class="ti ti-chart-donut"></i></div>
-          <div>
-            <div class="sb-label">Cobertura estimada</div>
-            <div class="sb-value"><span id="metricCobertura">—</span><span id="metricCoberturaUnit"></span></div>
+      <div class="kpi-cards" id="summaryBanner">
+        <div class="kpi-card">
+          <div class="kpi-card-top">
+            <svg class="kpi-donut-ring" viewBox="0 0 112 112" width="48" height="48">
+              <circle class="kpi-donut-bg" cx="56" cy="56" r="42" fill="none" stroke-width="18"/>
+              <circle class="kpi-donut-fill seg-1" cx="56" cy="56" r="42" fill="none" stroke-width="18"/>
+            </svg>
+            <span class="kpi-value"><span id="metricCobertura">—</span><span id="metricCoberturaUnit">%</span></span>
           </div>
+          <span class="kpi-label">Cobertura</span>
+          <span class="kpi-sub">De <span id="metricPool">—</span> elegibles</span>
+          <span class="kpi-badge kpi-badge-success" id="coverageBadge">—</span>
         </div>
-        <div class="sb-item">
-          <div class="sb-icon"><i class="ti ti-users-group"></i></div>
-          <div>
-            <div class="sb-label">Jurados asignables</div>
-            <div class="sb-value"><span id="metricJurados">—</span></div>
-          </div>
+        <div class="kpi-card">
+          <span class="kpi-value" id="metricJurados">—</span>
+          <span class="kpi-label">Jurados</span>
+          <span class="kpi-sub">Asignables</span>
         </div>
-        <div class="sb-item">
-          <div class="sb-icon"><i class="ti ti-building"></i></div>
-          <div>
-            <div class="sb-label">Mesas</div>
-            <div class="sb-value"><span id="metricMesas">—</span></div>
-          </div>
+        <div class="kpi-card">
+          <span class="kpi-value" id="metricMesas">—</span>
+          <span class="kpi-label">Mesas</span>
+          <span class="kpi-sub"><span id="distMesasCompletas">—</span> completas</span>
         </div>
-        <div class="sb-item">
-          <div class="sb-icon"><i class="ti ti-id-badge-2"></i></div>
-          <div>
-            <div class="sb-label">Pool total</div>
-            <div class="sb-value"><span id="metricPool">—</span></div>
-          </div>
+        <div class="kpi-card">
+          <span class="kpi-value" id="metricPoolTotal">—</span>
+          <span class="kpi-label">Pool total</span>
+          <span class="kpi-sub">Elegibles</span>
+        </div>
+        <div class="kpi-card">
+          <span class="kpi-value" id="metricAsignados">—</span>
+          <span class="kpi-label">Asignados</span>
+          <span class="kpi-sub"><span id="distMesasParciales">—</span> parciales</span>
         </div>
       </div>
 
-      <!-- ALERTA CRITICA (oculta por defecto) -->
-      <div id="alertCritica" class="alert-banner critico hidden">
+      <div id="alertCritica" class="banner-alert banner-danger hidden">
         <i class="ti ti-alert-triangle"></i>
-        <span id="alertCriticaMsg"></span>
+        <div class="banner-alert-body">
+          <strong>Pool insuficiente</strong>
+          <span id="alertCriticaMsg"></span>
+        </div>
+      </div>
+      <div id="bannerReady" class="banner-alert banner-success hidden">
+        <i class="ti ti-circle-check"></i>
+        <div class="banner-alert-body">
+          <strong>Listo para ejecutar</strong>
+          <span>El pool de elegibles cubre los requisitos de la elección actual.</span>
+        </div>
+        <button class="btn-primary" id="btnBannerEjecutar" type="button">Ejecutar asignación</button>
       </div>
 
-      <!-- STEPPER INDICADOR DE PROGRESO -->
+      <p class="stepper-section-label">Proceso de asignación</p>
       <div class="stepper-progresso" id="stepperProgreso">
         <div class="step-dot activo" data-step="1">
           <div class="step-bubble">1</div>
@@ -74,46 +88,50 @@
         </div>
         <div class="step-dot" data-step="2">
           <div class="step-bubble">2</div>
-          <div class="stepper-info"><strong>Distribución</strong><small>Cantidad y modo</small></div>
+          <div class="stepper-info"><strong>Distribución</strong><small>Modo y cantidad</small></div>
         </div>
         <div class="step-dot" data-step="3">
           <div class="step-bubble">3</div>
-          <div class="stepper-info"><strong>Revisión</strong><small>Confirmar y generar</small></div>
+          <div class="stepper-info"><strong>Revisión</strong><small>Confirmar</small></div>
         </div>
       </div>
 
       <div class="assignment-layout-v2">
 
-        <!-- PASO 1: POOL Y ELEGIBLES -->
+        <!-- PASO 1 -->
         <section class="wizard-card wizard-step activo" data-step="1">
           <h2><span>1.</span> Definir pool de votantes elegibles</h2>
-          <div class="wizard-grid">
-            <div>
+          <div class="step1-grid">
+            <div class="step1-left">
               <label class="field-label">Roles incluidos</label>
               <div class="role-chip-grid" id="rolesPool">
                 <button class="role-chip-v2" type="button" data-value="ESTUDIANTE">
                   <i class="ti ti-school"></i><span>Estudiante</span>
                   <span class="chip-counter">0</span>
                   <span class="chip-counter-tooltip">0 en el pool</span>
+                  <span class="chip-check">&#10003;</span>
                 </button>
                 <button class="role-chip-v2 active" type="button" data-value="DOCENTE">
                   <i class="ti ti-school"></i><span>Docente</span>
                   <span class="chip-counter">0</span>
                   <span class="chip-counter-tooltip">0 en el pool</span>
+                  <span class="chip-check">&#10003;</span>
                 </button>
                 <button class="role-chip-v2 active" type="button" data-value="ADMINISTRATIVO">
                   <i class="ti ti-id-badge-2"></i><span>Administrativo</span>
                   <span class="chip-counter">0</span>
                   <span class="chip-counter-tooltip">0 en el pool</span>
+                  <span class="chip-check">&#10003;</span>
                 </button>
                 <button class="role-chip-v2" type="button" data-value="EGRESADO">
                   <i class="ti ti-certificate"></i><span>Egresado</span>
                   <span class="chip-counter">0</span>
                   <span class="chip-counter-tooltip">0 en el pool</span>
+                  <span class="chip-check">&#10003;</span>
                 </button>
               </div>
               <div class="switch-list">
-                <div class="info-note" style="margin-bottom:8px"><i class="ti ti-info-circle"></i> Candidatos inscritos en esta eleccion excluidos automaticamente (regla TGE).</div>
+                <div class="info-note" style="margin-bottom:4px"><i class="ti ti-info-circle"></i> Candidatos de esta elección excluidos (regla TGE).</div>
                 <label class="switch-row">
                   <input id="requerirBiometrico" type="checkbox">
                   <span class="switch-ui"></span>
@@ -125,52 +143,77 @@
                   <span>Solo votantes que no hayan votado</span>
                 </label>
               </div>
-            </div>
-            <div>
-              <label class="field-label">Estado del votante</label>
-              <div class="state-card-group" id="estadosPool">
-                <button class="state-card active" type="button" data-value="PENDIENTE">
-                  <span class="radio-dot"></span>
-                  <div><strong>Pendiente</strong><small>No han sido asignados</small></div>
-                </button>
-                <button class="state-card" type="button" data-value="EJERCIDO">
-                  <span class="radio-dot"></span>
-                  <div><strong>Ya votó</strong><small>Excluir del pool</small></div>
-                </button>
+              <div style="margin-top:14px">
+                <label class="field-label">Estado del votante</label>
+                <div class="state-card-group" id="estadosPool">
+                  <button class="state-card active" type="button" data-value="PENDIENTE">
+                    <span class="radio-dot"></span>
+                    <div><strong>Pendiente</strong><small>Sin asignar</small></div>
+                  </button>
+                  <button class="state-card" type="button" data-value="EJERCIDO">
+                    <span class="radio-dot"></span>
+                    <div><strong>Ya votó</strong><small>Excluir</small></div>
+                  </button>
+                </div>
               </div>
-              <p class="info-note"><i class="ti ti-info-circle"></i> Se recomienda solo PENDIENTE para garantizar que el jurado pueda votar</p>
+            </div>
+            <div class="step1-right">
+              <h3 class="pool-status-title">Estado del pool</h3>
+              <table class="pool-metrics-table">
+                <thead>
+                  <tr><th>Elegibles</th><th>Disponibles</th><th>No disponibles</th></tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><strong id="poolTotalNum">—</strong></td>
+                    <td><strong class="text-success" id="poolDisponiblesNum">—</strong> <small id="poolDisponiblesPct"></small></td>
+                    <td><strong class="text-danger" id="poolNoDisponiblesNum">—</strong> <small id="poolNoDisponiblesPct"></small></td>
+                  </tr>
+                </tbody>
+              </table>
+              <h4 class="pool-causes-title">Causas de no disponibilidad</h4>
+              <table class="pool-causes-table">
+                <thead>
+                  <tr><th>Causa</th><th class="col-n">N</th><th class="col-pct">%</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>Asignado en otra mesa</td><td class="col-n" id="causaAsignado">—</td><td class="col-pct" id="causaAsignadoPct">—</td></tr>
+                  <tr><td>No cumple requisitos</td><td class="col-n" id="causaNoCumple">—</td><td class="col-pct" id="causaNoCumplePct">—</td></tr>
+                  <tr><td>Excusa justificada</td><td class="col-n" id="causaExcusa">—</td><td class="col-pct" id="causaExcusaPct">—</td></tr>
+                </tbody>
+              </table>
             </div>
           </div>
           <div class="wizard-nav">
             <button disabled>← Anterior</button>
-            <span style="color:var(--abis-text-2);font-size:0.78rem;">Paso 1 de 3</span>
+            <span style="color:var(--text2);font-size:12px;">Paso 1 de 3</span>
             <button class="btn-primary-wizard" onclick="juradosWizardNext(1)">Siguiente →</button>
           </div>
         </section>
 
-        <!-- PASO 2: DISTRIBUCIÓN -->
+        <!-- PASO 2 -->
         <section class="wizard-card wizard-step" data-step="2">
-          <h2><span>2.</span> Definir cantidad y distribución</h2>
+          <h2><span>2.</span> Configurar distribución</h2>
           <div class="distribution-grid">
             <div>
               <label class="field-label">Jurados por mesa</label>
               <div class="jurados-mesa-grid">
                 <div class="jurados-mesa-field">
-                  <span class="field-label" style="margin-bottom:6px;">Titulares</span>
+                  <span class="field-label" style="margin-bottom:4px">Titulares</span>
                   <input type="number" min="1" max="10" value="3" id="titularesPorMesa" readonly>
                   <small>Presidente, Vicepresidente, Vocal</small>
                 </div>
                 <div class="jurados-mesa-field">
-                  <span class="field-label" style="margin-bottom:6px;">Suplentes</span>
+                  <span class="field-label" style="margin-bottom:4px">Suplentes</span>
                   <input type="number" min="1" max="10" value="3" id="suplentesPorMesa" readonly>
                   <small>Uno por cada titular</small>
                 </div>
                 <div class="jurados-mesa-total">
-                  <span>Total por mesa</span>
+                  <span>Total</span>
                   <strong id="totalPorMesa">6</strong>
                 </div>
               </div>
-              <p class="info-note"><i class="ti ti-info-circle"></i> El Acuerdo 032/1994 establece 3 titulares y 3 suplentes por mesa.</p>
+              <p class="info-note"><i class="ti ti-info-circle"></i> Acuerdo 032/1994: 3 titulares + 3 suplentes por mesa.</p>
             </div>
             <div>
               <label class="field-label">Modo de asignación</label>
@@ -178,29 +221,29 @@
                 <button class="mode-card-v2 active" type="button" data-value="fijo_por_puesto">
                   <i class="ti ti-settings-2 mode-icon"></i>
                   <strong class="mode-title">Automático</strong>
-                  <small class="mode-desc">Distribución aleatoria con restricciones de rol, edad y puesto</small>
-                  <small class="mode-when">Recomendado para la mayoria de casos</small>
+                  <small class="mode-desc">Distribución aleatoria con restricciones</small>
+                  <small class="mode-when">Recomendado</small>
                 </button>
                 <button class="mode-card-v2" type="button" data-value="total_manual">
                   <i class="ti ti-clipboard-list mode-icon"></i>
                   <strong class="mode-title">Manual</strong>
-                  <small class="mode-desc">Asignación individual mesa por mesa</small>
-                  <small class="mode-when">Para ajustes finos o pocas mesas</small>
+                  <small class="mode-desc">Asignación individual por mesa</small>
+                  <small class="mode-when">Casos puntuales</small>
                 </button>
                 <button class="mode-card-v2" type="button" data-value="porcentaje">
                   <i class="ti ti-circle-half mode-icon"></i>
                   <strong class="mode-title">Mixto</strong>
-                  <small class="mode-desc">Automático con ajuste manual posterior</small>
-                  <small class="mode-when">Cuando necesitas control parcial</small>
+                  <small class="mode-desc">Automático con ajuste manual</small>
+                  <small class="mode-when">Control parcial</small>
                 </button>
               </div>
             </div>
           </div>
           <div class="distribution-table">
-            <div><small>Total jurados requeridos</small><strong id="totalEstimado">—</strong></div>
-            <div><small>Mesas completas (6/6)</small><strong id="distMesasCompletas">—</strong></div>
-            <div><small>Mesas parciales (>3)</small><strong id="distMesasParciales">—</strong></div>
-            <div><small>Mesas criticas (<3)</small><strong id="distMesasCriticas">0</strong></div>
+            <div><small>Requeridos</small><strong id="totalEstimado">—</strong></div>
+            <div><small>Completas 6/6</small><strong id="distMesasCompletas">—</strong></div>
+            <div><small>Parciales &gt;3</small><strong id="distMesasParciales">—</strong></div>
+            <div><small>Críticas &lt;3</small><strong id="distMesasCriticas">0</strong></div>
           </div>
           <input type="hidden" id="porcentajeJurados" value="5">
           <input type="hidden" id="totalManual" value="0">
@@ -208,41 +251,35 @@
           <input type="radio" class="hidden" name="puestoAsignado" value="distinto" checked>
           <div class="wizard-nav">
             <button onclick="juradosWizardPrev(2)">← Anterior</button>
-            <span style="color:var(--abis-text-2);font-size:0.78rem;">Paso 2 de 3</span>
+            <span style="color:var(--text2);font-size:12px">Paso 2 de 3</span>
             <span style="display:flex;gap:8px;margin-left:auto">
-              <button onclick="recalcularAsignacion()" title="Actualizar calculo de jurados requeridos" style="font-size:0.82rem"><i class="ti ti-calculator"></i> Calcular</button>
+              <button onclick="recalcularAsignacion()" title="Actualizar cálculo" style="font-size:12px"><i class="ti ti-calculator"></i> Calcular</button>
               <button class="btn-primary-wizard" onclick="juradosWizardNext(2)">Siguiente →</button>
             </span>
           </div>
         </section>
 
-        <!-- PASO 3: REVISION Y CONFIRMACION -->
+        <!-- PASO 3 -->
         <section class="wizard-card wizard-step" data-step="3">
           <h2><span>3.</span> Revisión y confirmación</h2>
-          <p style="color:var(--abis-text-2);font-size:0.84rem;margin-bottom:16px;">Revise la distribución propuesta antes de generar la asignación oficial.</p>
-
+          <p style="color:var(--text2);font-size:13px;margin-bottom:12px">Revise la distribución antes de generar la asignación.</p>
           <div class="revision-table-wrap" id="revisionTableWrap">
             <div class="revision-loading">Ejecutando simulación...</div>
           </div>
-
-          <div class="alert-banner info" style="margin-top:14px;">
+          <div class="alert-banner info" style="margin-top:10px">
             <i class="ti ti-info-circle"></i>
-            <span>Jornada electoral: <strong>9:00 a.m. – 9:00 p.m.</strong> — continua, sin turnos rotativos (Acuerdo 032/1994)</span>
+            <span>Jornada: <strong>9:00 a.m. – 9:00 p.m.</strong> — continua (Acuerdo 032/1994).</span>
           </div>
-
-          <div class="revision-alertas" id="revisionAlertas" style="display:none;"></div>
-
-          <label class="switch-row" style="margin-top:16px;">
+          <div class="revision-alertas" id="revisionAlertas" style="display:none"></div>
+          <label class="switch-row" style="margin-top:14px">
             <input type="checkbox" id="confirmRevision" onchange="onConfirmRevision()">
             <span class="switch-ui"></span>
-            <span>Confirmo que la distribución ha sido revisada y autorizo la generación de la asignación oficial.</span>
+            <span>Confirmo que la distribución ha sido revisada y autorizo la generación.</span>
           </label>
-
           <div class="wizard-nav">
             <button onclick="juradosWizardPrev(3)">← Anterior</button>
-            <span style="color:var(--abis-text-2);font-size:0.78rem;">Paso 3 de 3</span>
-            <button class="btn-primary-wizard" id="btnGenerarDesdePaso3" disabled
-                    onclick="confirmarYGenerar()">Generar asignación oficial →</button>
+            <span style="color:var(--text2);font-size:12px">Paso 3 de 3</span>
+            <button class="btn-primary-wizard" id="btnGenerarDesdePaso3" disabled onclick="confirmarYGenerar()">Generar asignación →</button>
           </div>
         </section>
 
@@ -254,23 +291,30 @@
         <i class="ti ti-alert-triangle"></i>
         <span id="ctaAlertMsg"></span>
       </div>
-      <div style="display:flex;gap:10px;margin-left:auto;">
-        <button class="btn-outline" id="btnSimular" type="button"><i class="ti ti-chart-bar"></i> Simular</button>
+      <button class="btn-ghost-danger" id="btnCancelarProceso" type="button">
+        <i class="ti ti-x"></i> Cancelar
+      </button>
+      <div style="display:flex;gap:8px">
+        <button class="btn-secondary-filled" id="btnSimular" type="button">
+          <i class="ti ti-device-floppy"></i> Guardar configuración
+          <span class="simulate-tooltip">Previsualiza sin guardar</span>
+        </button>
         <button class="btn-generate" id="btnEjecutarAsignacion" type="button" disabled>
           <span class="spinner"></span>
-          <span class="btn-text"><i class="ti ti-player-play"></i> Generar asignación automática</span>
-          <span class="cta-tooltip">Completa todos los pasos del wizard</span>
+          <span class="btn-text"><i class="ti ti-arrow-right"></i> Siguiente</span>
+          <span class="cta-tooltip">Complete los pasos del wizard</span>
         </button>
       </div>
     </div>
   </section>
 
+  <!-- TAB: MESAS -->
   <section class="jurados-tab-panel" id="tab-mesas">
     <div class="mesas-layout">
       <aside class="puestos-panel">
         <div class="panel-header">
           <h2>Puestos de votación</h2>
-          <button class="btn-outline" id="btnNuevaMesa" type="button">Nueva mesa</button>
+          <button class="btn-soft" id="btnNuevaMesa" type="button">Nueva mesa</button>
         </div>
         <div class="puestos-list" id="puestosList"></div>
       </aside>
@@ -284,6 +328,7 @@
     </div>
   </section>
 
+  <!-- TAB: PLANILLAS -->
   <section class="jurados-tab-panel" id="tab-planillas">
     <article class="planillas-section">
       <h2>Generar planillas oficiales</h2>
@@ -293,9 +338,9 @@
       </div>
       <div class="planilla-preview" id="planillaPreview"></div>
       <div class="planillas-actions">
-        <button class="btn-outline" id="btnPreviewPDF" type="button">Vista previa</button>
+        <button class="btn-soft" id="btnPreviewPDF" type="button">Vista previa</button>
         <button class="btn-primary" id="btnExportarPDF" type="button">Descargar PDF</button>
-        <button class="btn-outline" id="btnNotificarTodos" type="button" disabled title="Módulo SendGrid pendiente de implementación">Notificar jurados por correo</button>
+        <button class="btn-soft" id="btnNotificarTodos" type="button" disabled title="Módulo SendGrid pendiente">Notificar por correo</button>
       </div>
       <div class="feature-pending-notice">
         <span>La notificación por correo estará disponible próximamente.</span>
@@ -304,16 +349,17 @@
     </article>
   </section>
 
+  <!-- MODALS (sin cambios) -->
   <div class="jurados-modal" id="modalResultado" aria-hidden="true">
     <div class="jurados-modal-panel wide">
       <div class="modal-header">
         <h2 id="resultadoTitulo">Resultado de simulación</h2>
-        <button class="modal-close" data-close-modal="modalResultado" type="button">×</button>
+        <button class="modal-close" data-close-modal="modalResultado" type="button">&times;</button>
       </div>
       <div id="resultadoAsignacion"></div>
       <label class="disabled-mail"><input type="checkbox" disabled> Notificar por correo al confirmar <span>Módulo SendGrid pendiente</span></label>
       <div class="modal-actions">
-        <button class="btn-outline" data-close-modal="modalResultado" type="button">Volver a configurar</button>
+        <button class="btn-soft" data-close-modal="modalResultado" type="button">Volver a configurar</button>
         <button class="btn-primary" id="btnConfirmarAsignacion" type="button">Confirmar y guardar</button>
       </div>
     </div>
@@ -323,7 +369,7 @@
     <div class="jurados-modal-panel">
       <div class="modal-header">
         <h2 id="modalMesaTitulo">Nueva mesa</h2>
-        <button class="modal-close" data-close-modal="modalMesa" type="button">×</button>
+        <button class="modal-close" data-close-modal="modalMesa" type="button">&times;</button>
       </div>
       <form id="formMesa" class="jurados-form">
         <input type="hidden" id="mesaId">
@@ -332,7 +378,7 @@
         <label><span>Hora salida</span><input type="time" id="mesaHoraSalida" value="12:00"></label>
         <label><span>Cargo principal</span><select id="mesaCargo"><option>PRESIDENTE</option><option>VOCAL</option><option>SECRETARIO</option><option>JURADOS</option></select></label>
         <div class="modal-actions">
-          <button class="btn-outline" data-close-modal="modalMesa" type="button">Cancelar</button>
+          <button class="btn-soft" data-close-modal="modalMesa" type="button">Cancelar</button>
           <button class="btn-primary" type="submit">Guardar</button>
         </div>
       </form>
@@ -343,7 +389,7 @@
     <div class="jurados-modal-panel wide">
       <div class="modal-header">
         <h2>Asignar jurado manualmente</h2>
-        <button class="modal-close" data-close-modal="modalAsignar" type="button">×</button>
+        <button class="modal-close" data-close-modal="modalAsignar" type="button">&times;</button>
       </div>
       <div class="manual-search">
         <input id="buscarVotanteJurado" type="search" placeholder="Buscar por nombre o identificación">
@@ -358,7 +404,7 @@
     <div class="jurados-modal-panel wide">
       <div class="modal-header">
         <h2>Votantes elegibles en el pool</h2>
-        <button class="modal-close" data-close-modal="modalPoolElegible" type="button">×</button>
+        <button class="modal-close" data-close-modal="modalPoolElegible" type="button">&times;</button>
       </div>
       <div class="pool-modal-toolbar">
         <input id="buscarPoolElegible" type="search" placeholder="Buscar por nombre, identificación, rol o puesto">
@@ -376,17 +422,16 @@
 
   <div class="toast-stack" id="juradosToasts"></div>
 
-  <!-- MODAL DE RESULTADO POST-GENERACION -->
   <div class="jurados-modal" id="modalResultadoAsignacion" aria-hidden="true">
-    <div class="jurados-modal-panel" style="max-width:520px">
+    <div class="jurados-modal-panel" style="max-width:480px">
       <div class="modal-header">
-        <h2><i class="ti ti-check" style="color:#52b788"></i> Asignación generada</h2>
+        <h2><i class="ti ti-check" style="color:var(--g500)"></i> Asignación generada</h2>
         <button class="modal-close" onclick="cerrarModalResultado()" type="button">&times;</button>
       </div>
       <div id="resultadoAsignacionBody"></div>
-      <div class="modal-actions" style="margin-top:16px">
-        <button class="btn-soft" onclick="verDetalleMesas()"><i class="ti ti-list-details"></i> Ver detalle por mesa</button>
-        <button class="btn-soft" onclick="exportarActaPDF()"><i class="ti ti-file-export"></i> Exportar acta PDF</button>
+      <div class="modal-actions" style="margin-top:14px">
+        <button class="btn-soft" onclick="verDetalleMesas()"><i class="ti ti-list-details"></i> Ver detalle</button>
+        <button class="btn-soft" onclick="exportarActaPDF()"><i class="ti ti-file-export"></i> Exportar PDF</button>
         <button class="btn-primary" onclick="cerrarModalResultado()">Cerrar</button>
       </div>
     </div>

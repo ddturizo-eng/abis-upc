@@ -132,6 +132,8 @@
       }
     });
     $('btnNotificarTodos')?.addEventListener('click', () => enviarCorreosJurados(juradosFiltradosPlanilla()));
+    $('btnCancelarProceso')?.addEventListener('click', () => { onCambioEleccion(); mostrarNotificacion('Proceso cancelado. Wizard reiniciado.', 'info'); });
+    $('btnBannerEjecutar')?.addEventListener('click', ejecutarAsignacion);
     document.querySelectorAll('[data-close-modal]').forEach((button) => {
       button.addEventListener('click', () => cerrarModal(button.dataset.closeModal));
     });
@@ -284,15 +286,6 @@
     JuradosState.distribucionConfig.puestoAsignado = document.querySelector('input[name="puestoAsignado"]:checked')?.value || 'distinto';
   }
 
-  function leerDistribucionConfig() {
-    JuradosState.distribucionConfig.modo = document.querySelector('input[name="modoAsignacion"]:checked')?.value || 'fijo_por_puesto';
-    JuradosState.distribucionConfig.valorFijo = Number($('juradosPorPuesto')?.value || 3);
-    JuradosState.distribucionConfig.porcentaje = Number($('porcentajeJurados')?.value || 5);
-    JuradosState.distribucionConfig.totalManual = Number($('totalManual')?.value || 0);
-    JuradosState.distribucionConfig.distribucion = $('distribucionPuestos')?.value || 'equitativa';
-    JuradosState.distribucionConfig.puestoAsignado = document.querySelector('input[name="puestoAsignado"]:checked')?.value || 'distinto';
-  }
-
   function calcularPool() {
     leerPoolConfig();
     if (!JuradosState.votantes.length) {
@@ -366,11 +359,15 @@
 
     if (pool < total * 0.5) {
       mostrarAlertaCritica('Solo hay ' + number(pool) + ' jurados elegibles disponibles para ' + number(total) + ' requeridos');
+      mostrarBannerReady(false);
     } else if (pool < total) {
       mostrarAlertaCritica('Pool insuficiente: ' + number(pool) + ' disponibles de ' + number(total) + ' necesarios');
+      mostrarBannerReady(false);
     } else {
       ocultarAlertaCritica();
+      mostrarBannerReady(pool > 0 && total > 0);
     }
+    actualizarKPIAdicionales(pool, assignable, mesas, total, coverage);
   }
 
   function aplicarResumenBackend(resumen) {
@@ -396,8 +393,10 @@
 
     if (pool < total) {
       mostrarAlertaCritica('Solo hay ' + number(pool) + ' jurados elegibles para ' + number(total) + ' requeridos');
+      mostrarBannerReady(false);
     } else {
       ocultarAlertaCritica();
+      mostrarBannerReady(pool > 0 && total > 0);
     }
     const btn = $('btnEjecutarAsignacion');
     if (btn) btn.disabled = pool === 0 || total === 0;
@@ -405,6 +404,7 @@
     animateCounter('metricJurados', assignable);
     animateCounter('metricMesas', mesas);
     animateCounter('metricCobertura', coverage);
+    actualizarKPIAdicionales(pool, assignable, mesas, total, coverage);
   }
 
   function requestBody() {
@@ -873,11 +873,13 @@
   function resetMetricas() {
     [
       'metricPool', 'metricJurados', 'metricMesas', 'metricCobertura',
+      'metricPoolTotal', 'metricPoolSub', 'metricAsignados',
       'totalEstimado', 'distMesasCompletas', 'distMesasParciales', 'footerAsignar'
     ].forEach((id) => setText(id, '—'));
     setText('distMesasCriticas', '0');
     setText('metricCoberturaUnit', '');
     ocultarAlertaCritica();
+    mostrarBannerReady(false);
     if ($('btnEjecutarAsignacion')) $('btnEjecutarAsignacion').disabled = true;
   }
 
@@ -1165,6 +1167,7 @@
       const tooltip = chip.querySelector('.chip-counter-tooltip');
       if (counter) counter.textContent = count;
       if (tooltip) tooltip.textContent = count + ' en el pool';
+      chip.classList.toggle('zero-count', count === 0);
     });
   }
 
@@ -1180,6 +1183,32 @@
   function ocultarAlertaCritica() {
     const alerta = $('alertCritica');
     if (alerta) alerta.classList.add('hidden');
+  }
+
+  function mostrarBannerReady(show) {
+    const banner = $('bannerReady');
+    if (!banner) return;
+    if (show) { banner.classList.remove('hidden'); }
+    else { banner.classList.add('hidden'); }
+  }
+
+  function actualizarKPIAdicionales(pool, assignable, mesas, total, coverage) {
+    setText('metricPoolTotal', number(pool));
+    setText('metricPoolSub', number(pool));
+    setText('metricAsignados', number(assignable));
+    const badge = $('coverageBadge');
+    if (badge) {
+      badge.className = 'kpi-badge';
+      if (coverage >= 80) { badge.classList.add('kpi-badge-success'); badge.textContent = 'Excelente'; }
+      else if (coverage >= 50) { badge.classList.add('kpi-badge-warning'); badge.textContent = 'Moderado'; }
+      else { badge.classList.add('kpi-badge-danger'); badge.textContent = 'Bajo'; }
+    }
+    const noDisponibles = Math.max(0, pool - assignable);
+    setText('poolTotalNum', number(pool));
+    setText('poolDisponiblesNum', number(assignable));
+    setText('poolDisponiblesPct', pool ? '(' + Math.round((assignable / pool) * 100) + '%)' : '(0%)');
+    setText('poolNoDisponiblesNum', number(noDisponibles));
+    setText('poolNoDisponiblesPct', pool ? '(' + Math.round((noDisponibles / pool) * 100) + '%)' : '(0%)');
   }
 
   initJurados();
