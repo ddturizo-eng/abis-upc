@@ -11,11 +11,26 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.UUID;
 
+/**
+ * Endpoint para carga de foto de votante.
+ *
+ * <p>Recibe una imagen por multipart, la almacena en el directorio de assets
+ * y actualiza la ruta en el registro del votante. Genera un nombre de archivo
+ * unico con UUID para evitar colisiones.
+ */
 public class FotoController {
 
     private static final VotanteRepository repository = new VotanteRepository();
     private static final String FOTOS_DIR = "C:/PROYECTOS P3/abis-upc/abis-backend/src/main/resources/assets/fotos/";
 
+    /**
+     * Sube y almacena la foto de un votante.
+     *
+     * <p>Genera un nombre de archivo unico con UUID y actualiza la ruta en
+     * el registro del votante.
+     *
+     * @param ctx contexto HTTP con multipart {@code identificacion} y {@code foto}
+     */
     public static void subirFoto(Context ctx) {
         try {
             String identificacion = ctx.formParam("identificacion");
