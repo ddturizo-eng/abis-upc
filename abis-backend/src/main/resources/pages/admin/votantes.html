@@ -21,9 +21,9 @@
         <span class="material-symbols-outlined">download</span>
         Exportar
       </button>
-      <button class="voters-btn voters-btn-ghost" id="voters-audit-button">
+      <button class="voters-btn voters-btn-ghost" id="voters-audit-toggle">
         <span class="material-symbols-outlined">assignment</span>
-        Ver auditoría
+        Auditoría
       </button>
       <button class="voters-btn voters-btn-primary" id="voters-new">
         <span class="material-symbols-outlined">add</span>
@@ -37,55 +37,70 @@
   <div class="voters-main-grid">
     <div class="voters-left">
       <div class="voters-toolbar">
-        <label class="search-wrap">
-          <span class="voters-field-label">Búsqueda</span>
-          <span class="voters-search">
-            <input id="voters-search" type="search" placeholder="Identificación, nombre o correo">
-            <span class="material-symbols-outlined">search</span>
-          </span>
-        </label>
-        <label>
-          <span class="voters-field-label">Estado</span>
-          <select class="voters-select" id="voters-filter-state">
-            <option value="">Todos</option>
-          </select>
-        </label>
-        <label>
-          <span class="voters-field-label">Rol</span>
-          <select class="voters-select" id="voters-filter-role">
-            <option value="">Todos</option>
-          </select>
-        </label>
-        <label>
-          <span class="voters-field-label">Puesto</span>
-          <select class="voters-select" id="voters-filter-place">
-            <option value="">Todos</option>
-          </select>
-        </label>
-        <label>
-          <span class="voters-field-label">Biométrico</span>
-          <select class="voters-select" id="voters-filter-bio">
-            <option value="">Todos</option>
-            <option value="enrolado">Enrolado</option>
-            <option value="no_enrolado">No enrolado</option>
-          </select>
-        </label>
-        <label>
-          <span class="voters-field-label">QR cédula</span>
-          <select class="voters-select" id="voters-filter-qr">
-            <option value="">Todos</option>
-            <option value="registrado">Registrado</option>
-            <option value="pendiente">Pendiente</option>
-          </select>
-        </label>
-        <button class="voters-btn voters-btn-ghost voters-filter-btn" id="voters-clear">
-          <span class="material-symbols-outlined">refresh</span>
-          Limpiar
-        </button>
-        <button class="voters-btn voters-btn-primary voters-filter-btn" id="voters-apply">
-          <span class="material-symbols-outlined">filter_alt</span>
-          Aplicar
-        </button>
+        <div class="voters-toolbar-left">
+          <label class="search-wrap">
+            <span class="voters-field-label">Búsqueda</span>
+            <span class="voters-search">
+              <input id="voters-search" type="search" placeholder="Identificación, nombre o correo">
+              <span class="material-symbols-outlined">search</span>
+            </span>
+          </label>
+          <div class="voters-filter-select-wrap">
+            <span class="voters-field-label">Estado</span>
+            <select class="voters-select" id="voters-filter-state">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="voters-filter-select-wrap">
+            <span class="voters-field-label">Rol</span>
+            <select class="voters-select" id="voters-filter-role">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="voters-filter-select-wrap">
+            <span class="voters-field-label">Puesto</span>
+            <select class="voters-select" id="voters-filter-place">
+              <option value="">Todos</option>
+            </select>
+          </div>
+          <div class="voters-filter-select-wrap" id="bio-filter-wrap">
+            <span class="voters-field-label">Biométrico</span>
+            <select class="voters-select" id="voters-filter-bio">
+              <option value="">Todos</option>
+              <option value="enrolado">Enrolado</option>
+              <option value="no_enrolado">No enrolado</option>
+            </select>
+          </div>
+          <div class="voters-filter-select-wrap" id="qr-filter-wrap">
+            <span class="voters-field-label">QR cédula</span>
+            <select class="voters-select" id="voters-filter-qr">
+              <option value="">Todos</option>
+              <option value="registrado">Registrado</option>
+              <option value="pendiente">Pendiente</option>
+            </select>
+          </div>
+          <div class="col-toggle-wrap">
+            <button class="col-toggle-btn" id="col-toggle-btn">
+              <span class="material-symbols-outlined" style="font-size:16px">view_column</span>
+              Columnas
+              <span class="material-symbols-outlined" style="font-size:16px">expand_more</span>
+            </button>
+            <div class="col-toggle-dropdown" id="col-toggle-dropdown">
+              <label><input type="checkbox" id="col-qr-check" checked> QR Cédula</label>
+              <label><input type="checkbox" id="col-activity-check" checked> Última Actividad</label>
+            </div>
+          </div>
+        </div>
+        <div class="voters-toolbar-right">
+          <button class="voters-btn voters-btn-ghost voters-filter-btn" id="voters-clear">
+            <span class="material-symbols-outlined">refresh</span>
+            Limpiar
+          </button>
+          <button class="voters-btn voters-btn-primary voters-filter-btn" id="voters-apply">
+            <span class="material-symbols-outlined">filter_alt</span>
+            Aplicar
+          </button>
+        </div>
       </div>
 
       <div class="voters-table-card">
@@ -100,7 +115,7 @@
                 <th>Puesto de votación</th>
                 <th>Biométrico</th>
                 <th>Estado</th>
-                <th>Última actividad</th>
+                <th class="col-activity">Última actividad</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -113,17 +128,74 @@
         </div>
       </div>
     </div>
+  </div>
 
-    <aside class="voters-audit-card">
-      <div class="audit-header">
-        <div class="audit-title">
-          <span class="material-symbols-outlined">history</span>
-          Auditoría reciente
-        </div>
-        <button class="audit-link" id="voters-audit-link">Ver toda</button>
+  <!-- Slide-over de auditoría -->
+  <div class="voters-audit-overlay" id="audit-overlay"></div>
+  <aside class="voters-audit-slideover" id="audit-slideover">
+    <div class="audit-slideover-header">
+      <div class="audit-title">
+        <span class="material-symbols-outlined">history</span>
+        Auditoría Reciente
       </div>
-      <div class="audit-list" id="voters-audit-list"></div>
-    </aside>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="voters-btn voters-btn-ghost" id="voters-audit-link" style="height:30px;padding:0 10px;font-size:0.75rem;">
+          Ver toda
+        </button>
+        <button class="audit-close-btn" id="audit-close-btn">
+          <span class="material-symbols-outlined" style="font-size:18px">close</span>
+        </button>
+      </div>
+    </div>
+    <div class="audit-slideover-list" id="voters-audit-list"></div>
+  </aside>
+
+  <!-- Modal completo de auditoría -->
+  <div class="audit-full-modal" id="audit-full-modal">
+    <div class="audit-full-panel">
+      <div class="audit-full-header">
+        <div class="audit-full-header-left">
+          <span class="material-symbols-outlined" style="font-size:24px">history</span>
+          <span class="audit-title">Auditoría del Sistema</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <button class="voters-btn voters-btn-ghost" id="audit-full-export" style="height:32px;padding:0 12px;font-size:0.76rem;">
+            <span class="material-symbols-outlined" style="font-size:16px">download</span>
+            Exportar
+          </button>
+          <button class="audit-close-btn" id="audit-full-close-btn">
+            <span class="material-symbols-outlined" style="font-size:18px">close</span>
+          </button>
+        </div>
+      </div>
+      <div class="audit-full-search" style="margin:12px 20px 0;">
+        <span class="material-symbols-outlined" style="font-size:18px;color:var(--gray-400)">search</span>
+        <input type="search" id="audit-full-search-input" placeholder="Buscar por votante, acción o identificacion...">
+      </div>
+      <div class="audit-full-filters" id="audit-full-filters">
+        <button class="audit-filter-chip active" data-filter="">Todos</button>
+        <button class="audit-filter-chip" data-filter="EDICION_DATOS">Edición de datos</button>
+        <button class="audit-filter-chip" data-filter="CAMBIO_ROL">Cambio de rol</button>
+        <button class="audit-filter-chip" data-filter="CAMBIO_PUESTO">Cambio de puesto</button>
+        <button class="audit-filter-chip" data-filter="INHABILITACION">Inhabilitación</button>
+        <button class="audit-filter-chip" data-filter="HABILITACION">Habilitación</button>
+        <button class="audit-filter-chip" data-filter="RE_ENROLAMIENTO">Re-enrolamiento</button>
+      </div>
+      <div class="audit-full-body">
+        <table class="audit-full-table">
+          <thead>
+            <tr>
+              <th>Fecha y Hora</th>
+              <th>Evento</th>
+              <th>Votante</th>
+              <th>Detalle</th>
+              <th>Responsable</th>
+            </tr>
+          </thead>
+          <tbody id="audit-full-tbody"></tbody>
+        </table>
+      </div>
+    </div>
   </div>
 
   <div class="voter-drawer" id="voter-drawer" aria-hidden="true">

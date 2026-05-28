@@ -163,7 +163,7 @@
     const bio = state.voters.filter(isBiometric).length;
 
     document.getElementById('voters-kpis').innerHTML = [
-      ['groups', 'TOTAL VOTANTES', number(total), '100% del censo', 'green', ''],
+      ['groups', 'TOTAL VOTANTES', number(total), '100% del censo', 'green', 'voter-kpi-green voter-kpi-total'],
       ['check_box', 'PENDIENTES', number(pending), `${percent(pending, total)} del total`, 'light-green', 'voter-kpi-green'],
       ['how_to_vote', 'EJERCIDOS', number(voted), `${percent(voted, total)} del total`, 'blue', 'voter-kpi-blue'],
       ['person_cancel', 'INHABILITADOS', number(disabled), `${percent(disabled, total)} del total`, 'red', 'voter-kpi-red'],
@@ -245,7 +245,7 @@
         const activity = lastActivity(voter);
         const bio = isBiometric(voter);
         return `
-          <tr>
+          <tr data-voter-ident="${escapeAttr(voter.identificacion || '')}">
             <td><div class="voter-avatar-lite">${escapeHtml(initials(name))}</div></td>
             <td>
               <div class="voter-id">${escapeHtml(voter.identificacion || '--')}</div>
@@ -267,14 +267,24 @@
               </span>
             </td>
             <td><span class="voter-badge ${stateClass(voter)}">${escapeHtml(stateLabel(voter))}</span></td>
-            <td>
+            <td class="col-activity">
               <div class="voter-name">${escapeHtml(activity.title)}</div>
               <div class="voter-subcopy">${escapeHtml(activity.detail)}</div>
             </td>
             <td class="voter-actions">
-              <button class="voter-menu-btn" data-voter-menu="${escapeHtml(voter.identificacion || '')}">
-                <span class="material-symbols-outlined">more_vert</span>
-              </button>
+              <div class="voter-action-icons">
+                <button class="action-icon-btn" data-voter-ident="${escapeAttr(voter.identificacion || '')}" data-action="details" title="Ver detalles">
+                  <span class="material-symbols-outlined" style="font-size:17px">visibility</span>
+                  <span class="tooltip">Ver detalles</span>
+                </button>
+                <button class="action-icon-btn" data-voter-ident="${escapeAttr(voter.identificacion || '')}" data-action="edit" title="Editar">
+                  <span class="material-symbols-outlined" style="font-size:17px">edit</span>
+                  <span class="tooltip">Editar</span>
+                </button>
+                <button class="voter-menu-btn" data-voter-menu="${escapeAttr(voter.identificacion || '')}">
+                  <span class="material-symbols-outlined">more_vert</span>
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -317,6 +327,23 @@
         event.stopPropagation();
         const voter = state.voters.find((item) => item.identificacion === button.dataset.voterMenu);
         openPopover(button, voter);
+      });
+    });
+
+    document.querySelectorAll('.action-icon-btn').forEach((button) => {
+      button.addEventListener('click', (event) => {
+        event.stopPropagation();
+        const voter = state.voters.find((item) => item.identificacion === button.dataset.voterIdent);
+        const action = button.dataset.action || 'details';
+        handleAction(action, voter);
+      });
+    });
+
+    document.querySelectorAll('tr[data-voter-ident]').forEach((row) => {
+      row.addEventListener('click', (event) => {
+        if (event.target.closest('button') || event.target.closest('input')) return;
+        const voter = state.voters.find((item) => item.identificacion === row.dataset.voterIdent);
+        if (voter) openDrawer(voter, 'details');
       });
     });
   }
@@ -376,6 +403,116 @@
   function closePopover() {
     const existing = document.getElementById('voter-popover');
     if (existing) existing.remove();
+  }
+
+  function openAuditSlideover() {
+    closeAuditFullModal();
+    document.getElementById('audit-overlay').classList.add('open');
+    document.getElementById('audit-slideover').classList.add('open');
+    renderAudit(50);
+  }
+
+  function closeAuditSlideover() {
+    document.getElementById('audit-overlay').classList.remove('open');
+    document.getElementById('audit-slideover').classList.remove('open');
+  }
+
+  function openAuditFullModal() {
+    closeAuditSlideover();
+    const modal = document.getElementById('audit-full-modal');
+    modal.classList.add('open');
+    renderAuditFull();
+  }
+
+  function closeAuditFullModal() {
+    document.getElementById('audit-full-modal').classList.remove('open');
+  }
+
+  let auditFullAll = [];
+  let auditFullFilter = '';
+
+  async function renderAuditFull() {
+    const tbody = document.getElementById('audit-full-tbody');
+    try {
+      const response = await fetch(`/api/auditoria/reciente?limit=300`, { headers });
+      if (!response.ok) throw new Error('audit unavailable');
+      const data = await response.json();
+      auditFullAll = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+    } catch (e) {
+      auditFullAll = [];
+    }
+    renderAuditFullFiltered();
+  }
+
+  function renderAuditFullFiltered() {
+    const tbody = document.getElementById('audit-full-tbody');
+    const search = document.getElementById('audit-full-search-input')?.value?.toLowerCase() || '';
+    const rows = auditFullAll.filter(item => {
+      const matchFilter = !auditFullFilter || (item.accion || item.campo_modificado || '').includes(auditFullFilter);
+      const matchSearch = !search || [item.identificacion || '', item.accion || '', item.campo_modificado || '', item.motivo || ''].join(' ').toLowerCase().includes(search);
+      return matchFilter && matchSearch;
+    });
+    if (!rows.length) {
+      tbody.innerHTML = '<tr><td colspan="5" style="padding:32px;text-align:center;color:var(--gray-500);font-size:0.86rem">Sin registros de auditoría para mostrar.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = rows.map(item => {
+      const action = item.accion || item.campo_modificado || 'Edicion de datos';
+      const type = auditType(action);
+      return `
+        <tr>
+          <td style="white-space:nowrap;color:var(--gray-500)">${escapeHtml(item.fechaHora || item.fecha_hora || '--')}</td>
+          <td><span class="audit-type-badge ${type}">${escapeHtml(action)}</span></td>
+          <td><span style="font-family:var(--font-mono);font-size:0.78rem">${escapeHtml(item.identificacion || '--')}</span></td>
+          <td>${escapeHtml(item.motivo || `${item.valorAnterior || item.valor_anterior || ''} ${item.valorNuevo || item.valor_nuevo ? '→ ' + (item.valorNuevo || item.valor_nuevo) : ''}`.trim() || 'Sin detalle')}</td>
+          <td><span style="color:var(--gray-500);font-size:0.78rem">${escapeHtml(item.idAdmin || item.id_admin || 'Sistema')}</span></td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function initAuditFullModal() {
+    document.getElementById('audit-full-close-btn')?.addEventListener('click', closeAuditFullModal);
+    document.getElementById('audit-full-modal')?.addEventListener('click', e => {
+      if (e.target.id === 'audit-full-modal') closeAuditFullModal();
+    });
+
+    document.getElementById('audit-full-search-input')?.addEventListener('input', renderAuditFullFiltered);
+
+    document.querySelectorAll('.audit-filter-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('.audit-filter-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        auditFullFilter = chip.dataset.filter || '';
+        renderAuditFullFiltered();
+      });
+    });
+  }
+
+  function initColumnToggle() {
+    const btn = document.getElementById('col-toggle-btn');
+    const dropdown = document.getElementById('col-toggle-dropdown');
+    const qrCheck = document.getElementById('col-qr-check');
+    const activityCheck = document.getElementById('col-activity-check');
+
+    if (!btn || !dropdown) return;
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      dropdown.classList.toggle('open');
+    });
+
+    document.addEventListener('click', () => dropdown.classList.remove('open'));
+
+    qrCheck.addEventListener('change', () => {
+      const col = document.querySelector('.col-qr');
+      if (col) col.classList.toggle('visible', qrCheck.checked);
+    });
+
+    activityCheck.addEventListener('change', () => {
+      const cols = document.querySelectorAll('.col-activity');
+      cols.forEach(c => c.classList.toggle('visible', activityCheck.checked));
+    });
   }
 
   function handleAction(action, voter) {
@@ -813,7 +950,8 @@
     try {
       const response = await fetch('/api/votantes', { headers });
       if (!response.ok) throw new Error('No fue posible cargar votantes');
-      state.voters = await response.json();
+      const payload = await response.json();
+      state.voters = Array.isArray(payload) ? payload : (payload.data || []);
       state.filtered = [...state.voters];
       await loadKpiStats();
       renderKpis();
@@ -843,11 +981,10 @@
   document.getElementById('voters-import').addEventListener('click', () => document.getElementById('voters-import-input').click());
   document.getElementById('voters-import-input').addEventListener('change', () => showToast('Importacion masiva pendiente de endpoint backend.', 'warning'));
   document.getElementById('voters-new').addEventListener('click', () => { window.location.href = '/pages/registro/index.html'; });
-  document.getElementById('voters-audit-button').addEventListener('click', async () => {
-    await renderAudit(50);
-    document.querySelector('.voters-audit-card')?.scrollIntoView({ behavior: 'smooth' });
-  });
-  document.getElementById('voters-audit-link').addEventListener('click', () => renderAudit(50));
+  document.getElementById('voters-audit-toggle').addEventListener('click', openAuditFullModal);
+  document.getElementById('voters-audit-link').addEventListener('click', () => { closeAuditSlideover(); openAuditFullModal(); });
+  document.getElementById('audit-close-btn').addEventListener('click', closeAuditSlideover);
+  document.getElementById('audit-overlay').addEventListener('click', closeAuditSlideover);
   document.getElementById('voter-drawer-close').addEventListener('click', closeDrawer);
   document.getElementById('voter-drawer').addEventListener('click', (event) => {
     if (event.target.id === 'voter-drawer') closeDrawer();
@@ -856,9 +993,13 @@
     if (event.key === 'Escape') {
       closePopover();
       closeDrawer();
+      closeAuditSlideover();
+      closeAuditFullModal();
     }
   });
 
+  initColumnToggle();
+  initAuditFullModal();
   loadPuestos().then(() => loadVoters());
 })();
 
