@@ -23,6 +23,14 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/**
+ * Endpoints para la gestion de votantes: listado, edicion, inhabilitacion
+ * y validacion de identidad durante la jornada electoral.
+ *
+ * <p>Expone operaciones CRUD sobre votantes con filtros por rol, estado y
+ * biometria. Tambien maneja la validacion de segunda llave (QR + identificacion)
+ * para el fallback de contingencia y registra auditoria de cada modificacion.
+ */
 public class VotanteController {
 
     private static final VotanteRepository repository = new VotanteRepository();
@@ -32,6 +40,11 @@ public class VotanteController {
     private static final VotacionService votacionService = new VotacionService();
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Lista todos los votantes con filtros opcionales por rol, estado y biometria.
+     *
+     * @param ctx contexto HTTP con query params {@code rol}, {@code estado}, {@code biometrico}
+     */
     public static void getAll(Context ctx) {
         List<Votante> votantes = repository.findAll();
         String rol = ctx.queryParam("rol");
@@ -56,6 +69,11 @@ public class VotanteController {
         ctx.json(votantes);
     }
 
+    /**
+     * Lista votantes filtrados por eleccion activa.
+     *
+     * @param ctx contexto HTTP con query param {@code idEleccion}
+     */
     public static void porEleccion(Context ctx) {
         try {
             String idEleccionParam = ctx.queryParam("idEleccion");
@@ -73,6 +91,15 @@ public class VotanteController {
         }
     }
 
+    /**
+     * Valida identidad por segunda llave (QR de cedula + identificacion).
+     *
+     * <p>Usado como fallback cuando la verificacion biometrica no esta disponible.
+     * Cruza el QR escaneado con la identificacion digitada y retorna datos del
+     * votante si coinciden.
+     *
+     * @param ctx contexto HTTP con body {@code qr_cedula} e {@code identificacion}
+     */
     public static void segundaLlave(Context ctx) {
         try {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -121,6 +148,11 @@ public class VotanteController {
         }
     }
 
+    /**
+     * Consulta si un votante puede votar en una eleccion especifica.
+     *
+     * @param ctx contexto HTTP con path param {@code id} (identificacion) y query param {@code idEleccion}
+     */
     public static void puedeVotar(Context ctx) {
         try {
             String identificacion = ctx.pathParam("id");
@@ -136,6 +168,14 @@ public class VotanteController {
         }
     }
 
+    /**
+     * Edita los datos personales de un votante y registra auditoria de cada cambio.
+     *
+     * <p>Acepta campos parciales en el body. Cada modificacion se registra en
+     * {@code Auditoria_votantes} con valor anterior y nuevo.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y body con campos a modificar
+     */
     public static void editar(Context ctx) {
         try {
             String identificacion = ctx.pathParam("id");
@@ -200,10 +240,20 @@ public class VotanteController {
         }
     }
 
+    /**
+     * Inhabilita administrativamente un votante con motivo opcional.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y body con {@code motivo}
+     */
     public static void inhabilitar(Context ctx) {
         cambiarEstadoAdministrativo(ctx, true);
     }
 
+    /**
+     * Habilita administrativamente un votante previamente inhabilitado.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y body con {@code motivo}
+     */
     public static void habilitar(Context ctx) {
         cambiarEstadoAdministrativo(ctx, false);
     }
