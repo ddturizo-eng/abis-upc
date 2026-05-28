@@ -9,6 +9,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Canal en vivo para replicar eventos del lector biometrico hacia la interfaz.
+ *
+ * <p>Expone un WebSocket que mantiene conectados los clientes del panel de
+ * registro y retransmite los mensajes de progreso del enrolamiento de huella
+ * dactilar en tiempo real.
  */
 public class BiometricProgressController {
 
@@ -31,12 +35,24 @@ public class BiometricProgressController {
         });
     }
 
+    /**
+     * Recibe un evento de progreso del lector biometrico y lo retransmite a todos los clientes WebSocket.
+     *
+     * @param ctx contexto HTTP con body JSON del evento
+     */
     public static void reportProgress(Context ctx) {
         String json = ctx.body();
         broadcast(json);
         ctx.status(200).json("{\"success\":true}");
     }
 
+    /**
+     * Envía un mensaje JSON a todos los clientes WebSocket conectados.
+     *
+     * <p>Elimina clientes desconectados antes de broadcastear.
+     *
+     * @param json mensaje JSON a transmitir
+     */
     public static void broadcast(String json) {
         clients.removeIf(client -> !client.session.isOpen());
         for (WsContext client : clients) {
