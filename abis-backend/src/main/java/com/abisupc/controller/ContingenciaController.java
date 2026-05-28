@@ -10,6 +10,14 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+/**
+ * Endpoints de contingencia QR y canal WebSocket en tiempo real.
+ *
+ * <p>Gestiona la generacion, emision masiva, reenvio, revocacion y regeneracion
+ * de tokens QR para votantes que no pueden usar verificacion biometrica.
+ * Expone un WebSocket para notificar al panel de contingencia cuando se
+ * escanea un token, y valida cada escaneo contra la base de datos.
+ */
 public class ContingenciaController {
 
     private static final Set<WsContext> clients = ConcurrentHashMap.newKeySet();
@@ -33,6 +41,11 @@ public class ContingenciaController {
         });
     }
 
+    /**
+     * Genera un token QR de contingencia para un votante.
+     *
+     * @param ctx contexto HTTP con body {@code identificacion} e {@code idEleccion}
+     */
     public static void generarToken(Context ctx) {
         try {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -47,6 +60,11 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Retorna el resumen de tokens de contingencia: emitidos, enviados, usados y pendientes.
+     *
+     * @param ctx contexto HTTP con query param {@code eleccionId} o {@code idEleccion}
+     */
     public static void resumen(Context ctx) {
         try {
             Long idEleccion = number(firstQuery(ctx, "eleccionId", "idEleccion"));
@@ -59,6 +77,11 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Lista tokens de contingencia filtrados por eleccion y estado de envio.
+     *
+     * @param ctx contexto HTTP con query params {@code eleccionId} y {@code estadoEnvio}
+     */
     public static void listarTokens(Context ctx) {
         try {
             Long idEleccion = number(firstQuery(ctx, "eleccionId", "idEleccion"));
@@ -72,6 +95,11 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Lista el historial de auditoria de tokens de contingencia.
+     *
+     * @param ctx contexto HTTP con query params {@code eleccionId} y {@code limit}
+     */
     public static void auditoria(Context ctx) {
         try {
             Long idEleccion = number(firstQuery(ctx, "eleccionId", "idEleccion"));
@@ -83,6 +111,11 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Emite tokens de contingencia en lote para todos los votantes habilitados.
+     *
+     * @param ctx contexto HTTP con body {@code idEleccion}
+     */
     public static void emitirLote(Context ctx) {
         try {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -97,6 +130,11 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Reenvia un token de contingencia al correo del votante.
+     *
+     * @param ctx contexto HTTP con path param {@code idToken}
+     */
     public static void reenviar(Context ctx) {
         try {
             ctx.json(service.reenviar(Long.parseLong(ctx.pathParam("idToken"))));
@@ -112,6 +150,11 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Revoca un token de contingencia para que no pueda ser usado.
+     *
+     * @param ctx contexto HTTP con path param {@code idToken}
+     */
     public static void revocar(Context ctx) {
         try {
             ctx.json(service.revocar(Long.parseLong(ctx.pathParam("idToken"))));
@@ -123,6 +166,11 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Regenera un token de contingencia con un nuevo valor.
+     *
+     * @param ctx contexto HTTP con path param {@code idToken}
+     */
     public static void regenerar(Context ctx) {
         try {
             ctx.json(service.regenerar(Long.parseLong(ctx.pathParam("idToken"))));
@@ -134,6 +182,14 @@ public class ContingenciaController {
         }
     }
 
+    /**
+     * Valida un token QR escaneado durante la jornada de contingencia.
+     *
+     * <p>Si el token es valido, retorna datos del votante y notifica via WebSocket.
+     * Si ya voto o no existe, retorna el error correspondiente.
+     *
+     * @param ctx contexto HTTP con body {@code token}, {@code scannerId}, {@code puestoId}
+     */
     public static void scan(Context ctx) {
         try {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
