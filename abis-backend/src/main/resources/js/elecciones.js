@@ -182,7 +182,7 @@
       ...options
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) throw new Error(data.message || data.error || 'Error de comunicación');
+    if (!response.ok) throw new Error(data.message || data.error || 'Error de comunicacion');
     return data;
   }
 
@@ -327,13 +327,17 @@
     if (!next) {
       setText('next-election-name', 'Sin jornada programada');
       setText('next-election-date', 'Fecha pendiente');
+      setText('next-election-status', '');
+      const badge = document.getElementById('next-election-status');
+      if (badge) badge.outerHTML = '<span id="next-election-status"></span>';
       startCountdown(null);
       renderPreparation(null);
       return;
     }
-    setText('next-election-name', next.nombre || 'Elección programada');
+    setText('next-election-name', next.nombre || 'Eleccion programada');
     setText('next-election-date', fechaLarga(next.fechaHoraInicio));
-    document.getElementById('next-election-status').outerHTML = statusBadge(next.estado).replace('status-badge ', 'status-badge mt-2 ');
+    const badge = document.getElementById('next-election-status');
+    if (badge) badge.outerHTML = statusBadge(next.estado).replace('status-badge ', 'status-badge mt-2 ');
     startCountdown(next.fechaHoraInicio);
     renderPreparation(next.id);
   }
@@ -358,7 +362,7 @@
       ['definirCandidatos', 'Definir candidatos'],
       ['asignarJurados', 'Asignar jurados'],
       ['configurarPuestos', 'Configurar puestos'],
-      ['publicacionOficial', 'Publicación oficial']
+      ['publicacionOficial', 'Publicacion oficial']
     ];
     const completed = items.filter(([key]) => Boolean(data[key])).length;
     const percent = Number(data.porcentaje ?? completed * 25);
@@ -378,22 +382,62 @@
   }
 
   function renderTimeline() {
-    const current = state.elecciones.some((e) => normalizarEstado(e.estado) === 'EN_CURSO') ? 4 : 3;
-    const phases = ['Planeación', 'Registro', 'Validación', 'Activación', 'Votación', 'Cierre'];
-    const titleYear = state.elecciones[0]?.fechaHoraInicio ? new Date(state.elecciones[0].fechaHoraInicio).getFullYear() : new Date().getFullYear();
+    const phases = ['Planeacion', 'Registro', 'Validacion', 'Activacion', 'Votacion', 'Cierre'];
+    const phaseCopy = {
+      'Planeacion': 'Configuracion del proceso electoral y definicion de reglas.',
+      'Registro': 'Inscripcion abierta de candidatos y configuracion del tarjeton.',
+      'Validacion': 'Verificacion de candidatos y publicacion oficial.',
+      'Activacion': 'Preparacion de puestos y jurados para la jornada.',
+      'Votacion': 'La jornada electoral esta en curso. Los votantes ejercen su derecho.',
+      'Cierre': 'Conteo de votos y generacion de resultados oficiales.'
+    };
+    const active = state.elecciones.find((e) => normalizarEstado(e.estado) === 'EN_CURSO');
+    const upcoming = state.elecciones
+      .filter((e) => normalizarEstado(e.estado) === 'PROGRAMADA')
+      .sort((a, b) => new Date(a.fechaHoraInicio) - new Date(b.fechaHoraInicio))[0];
+    const target = active || upcoming;
+    const titleYear = target?.fechaHoraInicio ? new Date(target.fechaHoraInicio).getFullYear() : new Date().getFullYear();
     setText('timeline-title', `Cronograma Electoral ${titleYear}`);
+    if (!target) {
+      document.getElementById('timeline-steps').innerHTML = '<p style="color:var(--gray-500);font-size:0.82rem;text-align:center;padding:16px 0;width:100%">Sin jornada activa para mostrar cronograma.</p>';
+      setText('timeline-phase', '—');
+      setText('timeline-copy', 'No hay eleccion activa ni programada en este momento.');
+      setText('timeline-count', '0/6');
+      return;
+    }
+    const start = new Date(target.fechaHoraInicio);
+    const end = new Date(target.fechaHoraFin);
+    const now = new Date();
+    const total = end - start;
+    const ratios = [0, 0.20, 0.35, 0.50, 0.90, 1.0];
+    let currentPhase = 0;
+    for (let i = 0; i < phases.length; i++) {
+      const phaseEnd = start.getTime() + total * ratios[i];
+      if (now.getTime() < phaseEnd) {
+        currentPhase = i;
+        break;
+      }
+    }
     document.getElementById('timeline-steps').innerHTML = phases.map((phase, index) => {
-      const cls = index < current ? 'done' : index === current ? 'current' : '';
-      return `<div class="timeline-step ${cls}">${phase}<span class="timeline-dot">${index < current ? '<span class="material-symbols-outlined text-[14px]">check</span>' : ''}</span></div>`;
+      const cls = index < currentPhase ? 'done' : index === currentPhase ? 'current' : '';
+      return `<div class="timeline-step ${cls}">${phase}<span class="timeline-dot">${index < currentPhase ? '<span class="material-symbols-outlined text-[14px]">check</span>' : ''}</span></div>`;
     }).join('');
-    setText('timeline-phase', phases[current]);
-    setText('timeline-count', `${current}/6`);
+    setText('timeline-phase', phases[currentPhase]);
+    setText('timeline-copy', phaseCopy[phases[currentPhase]] || '');
+    setText('timeline-count', `${currentPhase}/6`);
   }
 
   function startCountdown(targetDate) {
     if (state.countdown) clearInterval(state.countdown);
+    const grid = document.querySelector('.countdown-grid');
+    if (!targetDate) {
+      if (grid) grid.style.display = 'none';
+      setText('cd-dias', '00'); setText('cd-horas', '00'); setText('cd-mins', '00'); setText('cd-segs', '00');
+      return;
+    }
+    if (grid) grid.style.display = 'grid';
     const tick = () => {
-      const diff = targetDate ? Math.max(0, new Date(targetDate) - new Date()) : 0;
+      const diff = Math.max(0, new Date(targetDate) - new Date());
       const days = Math.floor(diff / 86400000);
       const hours = Math.floor((diff % 86400000) / 3600000);
       const mins = Math.floor((diff % 3600000) / 60000);
@@ -415,7 +459,7 @@
   window.abrirModalNuevaEleccion = function abrirModalNuevaEleccion() {
     state.editando = null;
     renderRolesGrid();
-    document.querySelector('.modal-title').textContent = 'Nueva Elección';
+    document.querySelector('.modal-title').textContent = 'Nueva Eleccion';
     document.getElementById('form-eleccion').reset();
     setPesosDefault();
     ocultarErrorModal();
@@ -441,7 +485,7 @@
     }
     state.editando = election;
     renderRolesGrid();
-    document.querySelector('.modal-title').textContent = 'Editar Elección';
+    document.querySelector('.modal-title').textContent = 'Editar Eleccion';
     document.getElementById('eleccion-nombre').value = election.nombre || '';
     document.getElementById('eleccion-inicio').value = String(election.fechaHoraInicio || '').slice(0, 16);
     document.getElementById('eleccion-fin').value = String(election.fechaHoraFin || '').slice(0, 16);
@@ -469,29 +513,29 @@
       return;
     }
     if (Object.keys(body.pesosRoles).length === 0) {
-      mostrarErrorModal('Debes habilitar al menos un rol para esta elección.');
+      mostrarErrorModal('Debes habilitar al menos un rol para esta eleccion.');
       return;
     }
     try {
       if (state.editando) {
         await requestJson(`/api/elecciones/${state.editando.id}`, { method: 'PUT', body: JSON.stringify(body) });
-        showToast('Elección actualizada', 'success');
+        showToast('Eleccion actualizada', 'success');
       } else {
         await requestJson('/api/elecciones', { method: 'POST', body: JSON.stringify(body) });
-        showToast('Elección creada', 'success');
+        showToast('Eleccion creada', 'success');
       }
       cerrarModalEleccion();
       await Promise.all([loadElecciones(), loadStats()]);
     } catch (error) {
-      mostrarErrorModal(error.message || 'No fue posible guardar la elección.');
+      mostrarErrorModal(error.message || 'No fue posible guardar la eleccion.');
     }
   });
 
   window.iniciarEleccion = async function iniciarEleccion(idEleccion) {
-    if (!confirm('¿Está seguro de iniciar esta elección? Esta acción no se puede deshacer.')) return;
+    if (!confirm('Esta seguro de iniciar esta eleccion? Esta accion no se puede deshacer.')) return;
     try {
       await requestJson(`/api/elecciones/${idEleccion}/iniciar`, { method: 'POST' });
-      showToast('Elección iniciada correctamente', 'success');
+      showToast('Eleccion iniciada correctamente', 'success');
       await Promise.all([loadElecciones(), loadStats()]);
     } catch (error) {
       showToast(errorLegible(error), 'error');
@@ -499,24 +543,24 @@
   };
 
   window.cerrarEleccion = async function cerrarEleccion(idEleccion) {
-    if (!confirm('¿Está seguro de cerrar esta elección?')) return;
+    if (!confirm('Esta seguro de cerrar esta eleccion?')) return;
     try {
       await requestJson(`/api/elecciones/${idEleccion}/cerrar`, { method: 'PUT' });
-      showToast('Elección cerrada correctamente', 'success');
+      showToast('Eleccion cerrada correctamente', 'success');
       await Promise.all([loadElecciones(), loadStats()]);
     } catch (error) {
-      showToast('Error al cerrar la elección', 'error');
+      showToast('Error al cerrar la eleccion', 'error');
     }
   };
 
   window.eliminarEleccion = async function eliminarEleccion(idEleccion) {
-    if (!confirm('¿Eliminar esta elección?')) return;
+    if (!confirm('Eliminar esta eleccion?')) return;
     try {
       await requestJson(`/api/elecciones/${idEleccion}`, { method: 'DELETE' });
-      showToast('Elección eliminada', 'success');
+      showToast('Eleccion eliminada', 'success');
       await Promise.all([loadElecciones(), loadStats()]);
     } catch (error) {
-      showToast('No se pudo eliminar la elección', 'error');
+      showToast('No se pudo eliminar la eleccion', 'error');
     }
   };
 
@@ -634,7 +678,7 @@
       return `
         <button type="button" onclick="verCandidatos(${id})">Ver candidatos</button>
         <button type="button" onclick="verElegibilidad(${id})">Ver elegibilidad</button>
-        <button type="button" class="danger" onclick="cerrarEleccion(${id})">Cerrar elección</button>
+        <button type="button" class="danger" onclick="cerrarEleccion(${id})">Cerrar eleccion</button>
       `;
     }
     if (estado === 'FINALIZADA') {
@@ -677,6 +721,50 @@
     state.pagina = 1;
     renderEleccionesTable();
   });
+
+  const filtrosBtn = document.getElementById('filtros-btn');
+  const filtrosDropdown = document.getElementById('filtros-dropdown');
+  if (filtrosBtn && filtrosDropdown) {
+    filtrosBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      filtrosDropdown.classList.toggle('open');
+    });
+    document.getElementById('filtros-close')?.addEventListener('click', () => filtrosDropdown.classList.remove('open'));
+    document.addEventListener('click', (e) => {
+      if (!filtrosDropdown.contains(e.target)) filtrosDropdown.classList.remove('open');
+    });
+    document.getElementById('filtros-aplicar')?.addEventListener('click', () => {
+      const estado = document.getElementById('filtro-estado')?.value || '';
+      const desde = document.getElementById('filtro-desde')?.value || '';
+      const hasta = document.getElementById('filtro-hasta')?.value || '';
+      state.filtradas = state.elecciones.filter((e) => {
+        if (estado && normalizarEstado(e.estado) !== estado) return false;
+        if (desde) {
+          const d = new Date(desde);
+          const fi = new Date(e.fechaHoraInicio);
+          if (fi < d) return false;
+        }
+        if (hasta) {
+          const h = new Date(hasta + 'T23:59:59');
+          const fi = new Date(e.fechaHoraInicio);
+          if (fi > h) return false;
+        }
+        return true;
+      });
+      state.pagina = 1;
+      renderEleccionesTable();
+      filtrosDropdown.classList.remove('open');
+    });
+    document.getElementById('filtros-limpiar')?.addEventListener('click', () => {
+      document.getElementById('filtro-estado').value = '';
+      document.getElementById('filtro-desde').value = '';
+      document.getElementById('filtro-hasta').value = '';
+      state.filtradas = state.elecciones;
+      state.pagina = 1;
+      renderEleccionesTable();
+      filtrosDropdown.classList.remove('open');
+    });
+  }
 
   window.loadElecciones = loadElecciones;
   window.renderEleccionesTable = renderEleccionesTable;

@@ -96,11 +96,39 @@
             <input id="buscar-eleccion" type="search" placeholder="Buscar elección...">
             <span class="material-symbols-outlined text-[18px] text-[#8A94A6]">search</span>
           </label>
-          <button type="button" class="filter-button">
+          <button type="button" class="filter-button" id="filtros-btn">
             <span class="material-symbols-outlined text-[18px]">filter_alt</span>
             Filtros
             <span class="material-symbols-outlined text-[16px]">expand_more</span>
           </button>
+          <div class="filter-dropdown" id="filtros-dropdown">
+            <div class="filter-dropdown-header">
+              <span class="filter-dropdown-title">Filtrar procesos</span>
+              <button class="filter-dropdown-close" id="filtros-close">&times;</button>
+            </div>
+            <div class="filter-field">
+              <label>Estado</label>
+              <select id="filtro-estado">
+                <option value="">Todos</option>
+                <option value="PROGRAMADA">Programada</option>
+                <option value="EN_CURSO">En curso</option>
+                <option value="FINALIZADA">Finalizada</option>
+                <option value="CANCELADA">Cancelada</option>
+              </select>
+            </div>
+            <div class="filter-field">
+              <label>Desde fecha</label>
+              <input type="date" id="filtro-desde">
+            </div>
+            <div class="filter-field">
+              <label>Hasta fecha</label>
+              <input type="date" id="filtro-hasta">
+            </div>
+            <div class="filter-dropdown-actions">
+              <button class="filter-clear-btn" id="filtros-limpiar">Limpiar</button>
+              <button class="filter-apply-btn" id="filtros-aplicar">Aplicar</button>
+            </div>
+          </div>
           <button type="button" class="new-election-button" onclick="abrirModalNuevaEleccion()">
             <span class="material-symbols-outlined text-[18px]">add</span>
             Nueva Elección
