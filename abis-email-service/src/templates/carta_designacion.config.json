@@ -1,0 +1,16 @@
+{
+  "zonas": {
+    "encabezado": {
+      "texto": "Carta de Designacion — Jurado Electoral",
+      "color_borde": "#1a6b3c",
+      "color_texto": "#145332",
+      "tamanio_fuente": "20px"
+    },
+    "cuerpo": {
+      "texto": "Por medio de la presente, la Universidad Popular del Cesar designa a {{nombre_jurado}} (Identificacion: {{identificacion}}) como {{cargo_jurado}} de la {{nombre_mesa}} para la eleccion {{nombre_eleccion}}. Sus funciones incluyen verificar la identidad de los votantes, garantizar el anonimato del sufragio y velar por la transparencia del proceso."
+    },
+    "pie": {
+      "texto": "Universidad Popular del Cesar — ABIS-UPC © {{anio}}. Designacion de caracter obligatorio segun reglamento electoral."
+    }
+  }
+}

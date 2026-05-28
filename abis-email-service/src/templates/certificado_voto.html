@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Certificado de Participacion Electoral ABIS-UPC</title>
+  <style>
+    @page { size: A4 landscape; margin: 15mm 20mm; }
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .cert-doc { font-family: Georgia, serif; color: #1a3a2a; }
+    img { max-width: 100%; display: block; }
+    .certificate { position: relative; width: 100%; padding: 32px 42px; }
+    .border-inner { position: absolute; top: 16px; left: 16px; right: 16px; bottom: 16px; border: 2px solid #075521; border-radius: 4px; pointer-events: none; }
+    .name { font-size: 28px; font-weight: 800; text-align: center; color: #1a3a2a; margin-bottom: 4px; letter-spacing: 1px; }
+    .id { font-size: 12px; text-align: center; color: #888; margin-bottom: 16px; }
+    .badge { text-align: center; display: block; margin: 0 auto 18px; background: #075521; color: #fff; border-radius: 20px; padding: 6px 20px; font-size: 11px; font-weight: 700; width: fit-content; text-transform: uppercase; letter-spacing: 1px; }
+    .facts { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-bottom: 16px; }
+    .fact { background: #f8faf9; border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 16px; text-align: center; min-width: 140px; }
+    .fact-label { font-size: 9px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
+    .fact-value { font-size: 12px; color: #1a3a2a; font-weight: 600; }
+    .qr-section { text-align: center; margin: 12px 0; }
+    .qr-section img { margin: 0 auto 4px; display: block; }
+    .qr-label { font-size: 10px; color: #075521; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+    .qr-url { font-size: 9px; color: #888; font-family: monospace; }
+    .firmas-footer { display: flex; justify-content: center; gap: 64px; border-top: 1px solid #e5e7eb; padding-top: 16px; margin-top: 16px; }
+    .firma { text-align: center; width: 180px; }
+    .firma-line { border-top: 1px solid #075521; margin: 0 auto 8px; }
+    .firma strong { display: block; color: #075521; font-size: 13px; margin-bottom: 2px; }
+    .firma span { color: #6b7280; font-size: 11px; }
+    .zona-encabezado { font-weight: 800; letter-spacing: 2px; margin-bottom: 6px; }
+    .zona-titulo { font-weight: 400; margin-bottom: 20px; }
+    .zona-cuerpo { font-size: 13px; text-align: center; color: #444; max-width: 500px; margin: 0 auto 16px; line-height: 1.5; }
+    .zona-pie { font-size: 11px; text-align: center; padding: 12px 24px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="cert-doc">
+  {{watermarks}}
+  <main class="certificate">
+    <div class="border-inner"></div>
+
+    <h1 class="zona-encabezado" data-zona="encabezado" style="{{estilo_encabezado}}">{{texto_encabezado}}</h1>
+    <h2 class="zona-titulo" data-zona="titulo" style="{{estilo_titulo}}">{{texto_titulo}}</h2>
+
+    <p class="name">{{nombre_votante}}</p>
+    <p class="id">Identificacion: {{identificacion}}</p>
+
+    <p class="zona-cuerpo" data-zona="cuerpo">{{texto_cuerpo}}</p>
+
+    <div class="badge">Participacion certificada</div>
+
+    <section class="facts">
+      <article class="fact">
+        <p class="fact-label">Puesto de votacion</p>
+        <p class="fact-value">{{puesto_votacion}}<br>{{sede}}<br>{{ciudad}}</p>
+      </article>
+      <article class="fact">
+        <p class="fact-label">Fecha de votacion</p>
+        <p class="fact-value">{{fecha}}</p>
+      </article>
+      <article class="fact">
+        <p class="fact-label">Hora de votacion</p>
+        <p class="fact-value">{{hora}}</p>
+      </article>
+      <article class="fact">
+        <p class="fact-label">Codigo de certificado</p>
+        <p class="fact-value">{{codigo_verificacion}}</p>
+      </article>
+    </section>
+
+    <section class="qr-section">
+      {{qr_code_img}}
+      <p class="qr-label">Escanea para verificar</p>
+      <p class="qr-url">abis-upc.vercel.app/verificar/{{codigo_verificacion}}</p>
+    </section>
+
+    <div class="zona-pie" data-zona="pie" style="{{estilo_pie}}">{{texto_pie}}</div>
+
+    <footer class="firmas-footer">
+      <section class="firma">
+        <div class="firma-line"></div>
+        <strong>{{firma1}}</strong>
+        <span>{{cargo1}}</span>
+      </section>
+      <section class="firma">
+        <div class="firma-line"></div>
+        <strong>{{firma2}}</strong>
+        <span>{{cargo2}}</span>
+      </section>
+    </footer>
+  </main>
+  </div>
+</body>
+</html>

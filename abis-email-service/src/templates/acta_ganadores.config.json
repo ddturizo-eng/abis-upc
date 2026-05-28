@@ -1,0 +1,25 @@
+{
+  "zonas": {
+    "encabezado": {
+      "texto": "Acta de Ganadores",
+      "color_borde": "#1a6b3c",
+      "color_texto": "#145332",
+      "tamanio_fuente": "26px",
+      "mostrar_badge": true,
+      "texto_badge": "Documento oficial"
+    },
+    "subtitulo": {
+      "texto": "Eleccion: {{nombre_eleccion}} | Fecha: {{fecha}}"
+    },
+    "cuerpo": {
+      "texto": "{{filas_candidatos}}{{fila_blanco}}",
+      "color_texto": "#145332",
+      "tamanio_fuente": "13px"
+    },
+    "pie": {
+      "texto": "Universidad Popular del Cesar — ABIS-UPC © {{anio}}. Documento generado electronicamente. Este documento es oficial y tiene validez institucional.",
+      "color_fondo": "#f8faf9",
+      "color_texto": "#9ca3af"
+    }
+  }
+}

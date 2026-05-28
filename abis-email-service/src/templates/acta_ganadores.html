@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Acta de Ganadores</title>
+  <style>
+    @page { size: A4; margin: 20mm 25mm; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; box-sizing: border-box; }
+    .acta-doc { font-family: 'Times New Roman', 'Georgia', serif; font-size: 11pt; color: #000; line-height: 1.5; }
+
+    .header { display: flex; align-items: center; gap: 16px; border-bottom: 2px solid #1a5c38; padding-bottom: 12px; margin-bottom: 16px; }
+    .header img { width: 56px; height: auto; }
+    .header-text { flex: 1; text-align: center; }
+    .header-text h1 { font-size: 13pt; font-weight: bold; margin: 0; color: #1a5c38; text-transform: uppercase; letter-spacing: 0.5px; }
+    .header-text p { font-size: 9pt; margin: 2px 0; color: #555; }
+    .header-text .sub { font-size: 8.5pt; color: #777; }
+
+    .watermark { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; opacity: 0.04; z-index: 0; pointer-events: none; }
+
+    .content { position: relative; z-index: 1; }
+
+    h2 { font-size: 12pt; text-align: center; font-weight: bold; margin: 16px 0 6px; }
+    .meta { font-size: 10pt; margin: 3px 0; }
+    .meta strong { color: #1a5c38; }
+
+    hr { border: none; border-top: 0.5px solid #ccc; margin: 12px 0; }
+
+    p { text-align: justify; font-size: 10.5pt; line-height: 1.5; margin: 6px 0; }
+
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 10pt; }
+    th { background: #1a5c38; color: #fff; padding: 6px 8px; text-align: left; font-weight: bold; font-size: 9pt; text-transform: uppercase; letter-spacing: 0.5px; }
+    td { padding: 5px 8px; border-bottom: 0.5px solid #ddd; vertical-align: top; }
+    tr:nth-child(even) td { background: #f5faf7; }
+    tr.winner td { font-weight: bold; color: #1a5c38; }
+
+    .totales { margin: 12px 0; padding: 8px 12px; background: #f5faf7; border: 0.5px solid #d4e8d4; font-size: 10pt; }
+    .totales p { margin: 2px 0; text-align: left; }
+
+    .firmas { display: flex; justify-content: space-around; margin-top: 36px; page-break-inside: avoid; gap: 40px; }
+    .firma { text-align: center; width: 200px; }
+    .firma-linea { border-top: 1px solid #000; margin: 0 auto 8px; width: 100%; }
+    .firma p { font-size: 10pt; margin: 2px 0; text-align: center; }
+    .firma .nombre { font-weight: bold; }
+    .firma .cargo { font-size: 8.5pt; color: #555; }
+
+    .footer { margin-top: 24px; padding-top: 12px; border-top: 0.5px solid #ccc; text-align: center; font-size: 8pt; color: #888; }
+  </style>
+</head>
+<body>
+
+<div class="acta-doc">
+<img class="watermark" src="{{watermark_url}}">
+
+<div class="content">
+  <div class="header">
+    <img src="{{logo_upc_url}}" alt="Logo UPC">
+    <div class="header-text">
+      <h1>Acta de Ganadores</h1>
+      <p>Universidad Popular del Cesar — ABIS UPC</p>
+      <p class="sub">Sistema Electoral Universitario — Comite Electoral</p>
+    </div>
+    <img src="{{logo_abis_url}}" alt="Logo ABIS">
+  </div>
+
+  <p class="meta"><strong>Eleccion:</strong> {{nombre_eleccion}}</p>
+  <p class="meta"><strong>Fecha:</strong> {{fecha_eleccion}} &nbsp;&nbsp; <strong>Sede:</strong> {{sede}} &nbsp;&nbsp; <strong>Ciudad:</strong> {{ciudad}}</p>
+  <p class="meta"><strong>Total votos ponderados:</strong> {{total_votos}} &nbsp;&nbsp; <strong>Participacion:</strong> {{porcentaje_participacion}}%</p>
+
+  <hr>
+
+  <p>En cumplimiento del reglamento electoral de la Universidad Popular del Cesar y habiendo concluido el proceso de votacion electronica mediante la plataforma ABIS-UPC, el Comite Electoral certifica los siguientes resultados oficiales:</p>
+
+  <h2>Resultados por cargo</h2>
+
+  {{tabla_resultados}}
+
+  <div class="totales">
+    <p><strong>Candidatos participantes:</strong> {{total_candidatos}}</p>
+    <p><strong>Total votos ponderados:</strong> {{total_votos}}</p>
+    <p><strong>Votos en blanco:</strong> {{votos_blanco}}</p>
+  </div>
+
+  {{firmas_html}}
+
+  <div class="footer">
+    Documento generado electronicamente por ABIS-UPC el {{fecha_emision}}.<br>
+    Codigo de verificacion: {{codigo_verificacion}}
+  </div>
+</div>
+
+</div>
+</body>
+</html>

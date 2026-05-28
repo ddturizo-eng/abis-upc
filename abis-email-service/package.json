@@ -10,10 +10,12 @@
     "check": "node --check server.js"
   },
   "dependencies": {
+    "cors": "^2.8.6",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "fs-extra": "^11.2.0",
     "puppeteer": "^24.1.1",
+    "qrcode": "^1.5.4",
     "resend": "^4.1.2",
     "uuid": "^11.0.5"
   }

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Carta de Designacion — Jurado Electoral ABIS-UPC</title>
+  <style>
+    @page { size: letter; margin: 0; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .carta-doc { font-family: Georgia, serif; color: #145332; max-width: 640px; margin: 40px auto; padding: 0 24px; }
+    .info-box { background: #f8faf9; border: 1px solid #d4e8d4; border-radius: 10px; padding: 16px 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; padding: 4px 0; font-size: 12px; }
+    .info-row strong { color: #145332; }
+    .firmas { display: flex; justify-content: center; gap: 48px; margin-top: 40px; padding-top: 20px; border-top: 1px solid #e5e7eb; }
+    .firma-box { text-align: center; width: 180px; }
+    .firma-line { border-top: 1px solid #145332; margin: 0 auto 8px; }
+    .firma-box strong { display: block; color: #145332; font-size: 12px; margin-bottom: 2px; }
+    .firma-box span { color: #6b7280; font-size: 10px; }
+    .zona-encabezado { text-align: center; padding-bottom: 16px; margin-bottom: 24px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
+    .zona-cuerpo { font-size: 13px; line-height: 1.7; }
+    .zona-cuerpo p { margin-bottom: 10px; }
+    .zona-pie { text-align: center; margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; }
+    .nombre-jurado { font-size: 18px; font-weight: 800; text-align: center; margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="carta-doc">
+  <h1 class="zona-encabezado" data-zona="encabezado" style="{{estilo_encabezado}};border-bottom:3px solid {{estilo_color_borde_encabezado}}">
+    {{texto_encabezado}}
+  </h1>
+
+  <div class="zona-cuerpo" data-zona="cuerpo">
+    {{texto_cuerpo}}
+  </div>
+
+  <p class="nombre-jurado">{{nombre_jurado}}</p>
+  <p style="color:#888;text-align:center">Identificacion: {{identificacion}}</p>
+  <p style="text-align:center;margin:8px 0">Cargo: <strong>{{cargo_jurado}}</strong> | Mesa: <strong>{{nombre_mesa}}</strong></p>
+  <p style="text-align:center;color:#6b7280;font-size:13px">{{nombre_eleccion}}</p>
+
+  <div class="info-box">
+    <div class="info-row"><span>Fecha de designacion:</span> <strong>{{fecha}}</strong></div>
+    <div class="info-row"><span>Sede:</span> <strong>{{sede}}</strong></div>
+    <div class="info-row"><span>Ciudad:</span> <strong>{{ciudad}}</strong></div>
+  </div>
+
+  <div class="firmas">
+    <div class="firma-box">
+      <div class="firma-line"></div>
+      <strong>{{firma1}}</strong>
+      <span>{{cargo1}}</span>
+    </div>
+    <div class="firma-box">
+      <div class="firma-line"></div>
+      <strong>{{firma2}}</strong>
+      <span>{{cargo2}}</span>
+    </div>
+  </div>
+
+  <div class="zona-pie" data-zona="pie" style="{{estilo_pie}}">{{texto_pie}}</div>
+  </div>
+</body>
+</html>

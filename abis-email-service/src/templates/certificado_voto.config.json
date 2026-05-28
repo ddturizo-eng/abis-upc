@@ -1,0 +1,28 @@
+{
+  "zonas": {
+    "encabezado": {
+      "texto": "ABIS-UPC — Sistema Electoral Universitario",
+      "color_fondo": "#145332",
+      "color_texto": "#ffffff",
+      "alineacion": "center",
+      "tamanio_fuente": "22px",
+      "padding": "16px 24px"
+    },
+    "titulo": {
+      "texto": "Certificado de Voto",
+      "color_texto": "#075521",
+      "tamanio_fuente": "26px",
+      "alineacion": "center",
+      "mayusculas": true
+    },
+    "cuerpo": {
+      "texto": "Estimado(a) {{nombre_votante}}, su voto fue registrado el {{fecha}} a las {{hora}} en el puesto {{puesto_votacion}} ({{sede}}, {{ciudad}}). Codigo de verificacion: {{codigo_verificacion}}"
+    },
+    "pie": {
+      "texto": "Universidad Popular del Cesar — ABIS-UPC. Documento generado electronicamente. Este certificado confirma participacion y no contiene informacion sobre la seleccion realizada.",
+      "color_fondo": "#f8faf9",
+      "color_texto": "#6b7280",
+      "tamanio_fuente": "11px"
+    }
+  }
+}
