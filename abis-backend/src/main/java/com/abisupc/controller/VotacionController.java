@@ -15,11 +15,23 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Endpoints del proceso de votacion electronica y estadisticas de jornada.
+ *
+ * <p>Expone el tarjeton activo, registra votos de forma atomica y consulta
+ * la elegibilidad del votante. Tambien genera metricas en tiempo real por
+ * candidato, rol, puesto y ciudad para el panel de jornada.
+ */
 public class VotacionController {
 
     private static final VotacionService votacionService = new VotacionService();
     private static final EleccionLifecycleService lifecycleService = new EleccionLifecycleService();
 
+    /**
+     * Retorna la eleccion activa con el tarjeton de votacion agrupado por cargo.
+     *
+     * @param ctx contexto HTTP
+     */
     public static void activa(Context ctx) {
         lifecycleService.sincronizarEstados();
         try (Connection conn = AppConfig.getConnection()) {
@@ -39,6 +51,15 @@ public class VotacionController {
         }
     }
 
+    /**
+     * Registra un voto de forma atomica via stored procedure.
+     *
+     * <p>Valida que el votante pueda votar, que la eleccion este en curso y que
+     * no haya votado antes. El stored procedure separa identidad y candidato
+     * para garantizar anonimato.
+     *
+     * @param ctx contexto HTTP con body {@code identificacion}, {@code idEleccion}, {@code idCandidato}
+     */
     public static void registrar(Context ctx) {
         lifecycleService.sincronizarEstados();
         Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -78,6 +99,11 @@ public class VotacionController {
         }
     }
 
+    /**
+     * Valida si un votante puede votar en una eleccion.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y query param {@code idEleccion}
+     */
     public static void puedeVotar(Context ctx) {
         String identificacion = ctx.pathParam("id");
         Long idEleccion = number(ctx.queryParam("idEleccion"));
@@ -93,6 +119,11 @@ public class VotacionController {
         }
     }
 
+    /**
+     * Consulta los datos de un votante y si ya voto en la eleccion activa.
+     *
+     * @param ctx contexto HTTP con query param {@code identificacion}
+     */
     public static void votante(Context ctx) {
         lifecycleService.sincronizarEstados();
         String identificacion = ctx.queryParam("identificacion");
@@ -115,6 +146,12 @@ public class VotacionController {
         }
     }
 
+    /**
+     * Genera estadisticas completas de la jornada: participacion, resultados por candidato,
+     * rol, puesto y ciudad.
+     *
+     * @param ctx contexto HTTP con query param opcional {@code idEleccion}
+     */
     public static void jornadaEstadisticas(Context ctx) {
         lifecycleService.sincronizarEstados();
         try (Connection conn = AppConfig.getConnection()) {
