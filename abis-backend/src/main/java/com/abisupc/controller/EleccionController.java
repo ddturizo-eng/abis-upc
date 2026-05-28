@@ -24,6 +24,15 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Endpoints para la gestion de elecciones y resultados.
+ *
+ * <p>Permite crear, editar, iniciar, cerrar y eliminar elecciones. Expone
+ * estadisticas de preparacion, configuracion de roles con peso de voto,
+ * panel de elegibilidad por rol, resultados en vivo y generacion de acta
+ * de ganadores en HTML imprimible. Sincroniza estados automaticamente
+ * antes de cada operacion.
+ */
 public class EleccionController {
 
     private static final EleccionRepository eleccionRepo = new EleccionRepository();
@@ -33,6 +42,11 @@ public class EleccionController {
     private static final ResultadosService resultadosService = new ResultadosService();
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Lista todas las elecciones con filtros opcionales por estado.
+     *
+     * @param ctx contexto HTTP con query param opcional {@code estado}
+     */
     public static void getAll(Context ctx) {
         try {
             lifecycleService.sincronizarEstados();
@@ -52,6 +66,14 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Crea una nueva eleccion con fechas de inicio y fin.
+     *
+     * <p>La eleccion se crea en estado PROGRAMADA. Opcionalmente configura
+     * pesos de voto por rol si se incluyen en el body.
+     *
+     * @param ctx contexto HTTP con body {@code nombre}, {@code fechaHoraInicio}, {@code fechaHoraFin}
+     */
     public static void crear(Context ctx) {
         try {
             JsonNode body = mapper.readTree(ctx.body());
@@ -66,6 +88,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Retorna estadisticas generales de elecciones: totales por estado y electores habilitados.
+     *
+     * @param ctx contexto HTTP
+     */
     public static void stats(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             lifecycleService.sincronizarEstados();
@@ -84,6 +111,12 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Retorna el estado de preparacion de una eleccion: candidatos definidos,
+     * jurados asignados, puestos configurados y porcentaje de avance.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void preparacion(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -102,6 +135,13 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Edita los datos de una eleccion existente.
+     *
+     * <p>Solo permite ediciones mientras la eleccion este en estado PROGRAMADA.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y body de la eleccion
+     */
     public static void editar(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -120,6 +160,13 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Inicia una eleccion cambiando su estado a EN_CURSO.
+     *
+     * <p>Rechaza si ya existe otra eleccion en curso o si la eleccion no esta PROGRAMADA.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void iniciar(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -152,6 +199,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Cierra una eleccion en curso desde el kiosco de votacion.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void cerrar(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -168,6 +220,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Cierra una eleccion desde el panel de administracion con auditoria.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y atributo {@code idAdmin}
+     */
     public static void cerrarAdmin(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -184,6 +241,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Retorna los resultados oficiales de una eleccion con votos ponderados.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void resultados(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -198,6 +260,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Retorna resultados directos de candidatos sin ponderacion.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void resultadosDirectos(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
@@ -231,6 +298,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Elimina una eleccion si no tiene votos asociados.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void eliminar(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -246,6 +318,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Lista los roles configurados con peso de voto para una eleccion.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void getRoles(Context ctx) {
         try {
             lifecycleService.sincronizarEstados();
@@ -256,6 +333,13 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Configura el peso de voto de un rol para una eleccion.
+     *
+     * <p>Solo permitido mientras la eleccion este en estado PROGRAMADA.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y body {@code idRol}, {@code pesoVoto}
+     */
     public static void configurarRol(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
@@ -281,6 +365,11 @@ public class EleccionController {
         }
     }
 
+    /**
+     * Panel de elegibilidad: conteo de votantes por rol (total, pendientes, ejercido).
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void elegibilidad(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
@@ -444,6 +533,11 @@ public class EleccionController {
         }).orElse(false);
     }
 
+    /**
+     * Genera el acta de ganadores en HTML imprimible para una eleccion.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void actaPDF(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
