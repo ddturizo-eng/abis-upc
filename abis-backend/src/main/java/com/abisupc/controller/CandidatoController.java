@@ -16,12 +16,24 @@ import java.nio.file.Paths;
 import java.util.Locale;
 import java.util.UUID;
 
+/**
+ * Endpoints para la gestion de candidatos por eleccion.
+ *
+ * <p>Permite crear, editar, eliminar y consultar candidatos asociados a una
+ * eleccion, incluyendo carga de foto y numero de campana. Valida que no se
+ * eliminen candidatos con votos registrados.
+ */
 public class CandidatoController {
 
     private static final CandidatoRepository candidatoRepo = new CandidatoRepository();
     private static final ObjectMapper mapper = new ObjectMapper();
     private static final String FOTOS_CANDIDATOS_DIR = "C:/PROYECTOS P3/abis-upc/abis-backend/src/main/resources/assets/fotos/candidatos/";
 
+    /**
+     * Lista candidatos de una eleccion agrupados por cargo.
+     *
+     * @param ctx contexto HTTP con path param {@code id} (id eleccion)
+     */
     public static void getByEleccion(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -31,6 +43,14 @@ public class CandidatoController {
         }
     }
 
+    /**
+     * Crea un nuevo candidato para una eleccion con foto opcional.
+     *
+     * <p>Acepta JSON o multipart/form-data. Guarda la foto en el sistema de archivos
+     * y registra la postulacion con numero de campana y cargo.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y body del candidato
+     */
     public static void agregar(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("id"));
@@ -54,6 +74,11 @@ public class CandidatoController {
         }
     }
 
+    /**
+     * Edita los datos de un candidato existente.
+     *
+     * @param ctx contexto HTTP con path params {@code idEleccion}, {@code idCandidato} y body
+     */
     public static void editar(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("idEleccion"));
@@ -79,6 +104,13 @@ public class CandidatoController {
         }
     }
 
+    /**
+     * Elimina la postulacion de un candidato de una eleccion.
+     *
+     * <p>Rechaza la eliminacion si el candidato tiene votos asociados.
+     *
+     * @param ctx contexto HTTP con path params {@code idEleccion}, {@code idCandidato}
+     */
     public static void eliminar(Context ctx) {
         try {
             Long idEleccion = Long.parseLong(ctx.pathParam("idEleccion"));
