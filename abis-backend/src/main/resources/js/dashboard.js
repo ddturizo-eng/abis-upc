@@ -89,10 +89,18 @@
       );
       const election = elecciones[0];
 
+      const gridMid = document.querySelector('.dashboard-grid-mid');
+      const nextCard = document.querySelector('.next-election-card');
+      const quickCard = document.querySelector('.quick-actions-card');
+
       if (!election) {
+        if (gridMid) gridMid.classList.add('election-empty');
+        if (nextCard) nextCard.classList.add('compact-banner');
+        if (quickCard) quickCard.classList.add('expanded');
+
         setText('eleccion-nombre', 'Sin elecciones programadas');
-        setText('eleccion-fecha', 'No hay fecha asignada');
-        setText('eleccion-descripcion', 'Crea o programa una elección para iniciar la gestión.');
+        setText('eleccion-fecha', '');
+        setText('eleccion-descripcion', '');
         const badge = document.getElementById('eleccion-estado');
         if (badge) {
           badge.textContent = 'Sin agenda';
@@ -100,6 +108,10 @@
         }
         return;
       }
+
+      if (gridMid) gridMid.classList.remove('election-empty');
+      if (nextCard) nextCard.classList.remove('compact-banner');
+      if (quickCard) quickCard.classList.remove('expanded');
 
       const estado = election.estado || 'PROGRAMADA';
       const fecha = election.fechaHoraInicio || election.fecha_hora_inicio;
