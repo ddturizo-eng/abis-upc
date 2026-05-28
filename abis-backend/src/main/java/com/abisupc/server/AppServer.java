@@ -134,8 +134,12 @@ public class AppServer {
         AuthMiddleware auth = new AuthMiddleware();
         app.before("/api/admin/*", auth);
         app.before("/api/auditoria/*", auth);
-        app.before("/api/jurados", auth);
-        app.before("/api/jurados/*", auth);
+        app.before("/api/jurados", ctx -> {
+            if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
+        });
+        app.before("/api/jurados/*", ctx -> {
+            if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
+        });
         app.before("/api/biometria/enrolar", auth);
         app.before("/api/certificados", auth);
         app.before("/api/certificados/*", auth);
@@ -159,10 +163,18 @@ public class AppServer {
         app.before("/api/contingencia/tokens/*", auth);
         app.before("/api/votantes/{id}/inhabilitar", auth);
         app.before("/api/votantes/{id}/habilitar", auth);
-        app.before("/api/elecciones", auth);
-        app.before("/api/elecciones/*", auth);
-        app.before("/api/elecciones/{id}/candidatos", auth);
-        app.before("/api/elecciones/{id}/candidatos/*", auth);
+        app.before("/api/elecciones", ctx -> {
+            if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
+        });
+        app.before("/api/elecciones/*", ctx -> {
+            if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
+        });
+        app.before("/api/elecciones/{id}/candidatos", ctx -> {
+            if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
+        });
+        app.before("/api/elecciones/{id}/candidatos/*", ctx -> {
+            if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
+        });
         app.before("/api/puestos", ctx -> {
             if (!"GET".equalsIgnoreCase(ctx.req().getMethod())) auth.handle(ctx);
         });
