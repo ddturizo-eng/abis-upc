@@ -22,12 +22,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Endpoints de administracion: autenticacion, dashboard y estadisticas.
+ *
+ * <p>Gestiona el login/logout de administradores con tokens de sesion,
+ * expone metricas del censo electoral, participacion y auditoria reciente
+ * para el panel de control principal.
+ */
 public class AdminController {
 
     private static final AdminService service = new AdminService();
     private static final AuditoriaVotanteRepository auditoriaRepo = new AuditoriaVotanteRepository();
     private static final ObjectMapper mapper = new ObjectMapper();
 
+    /**
+     * Autentica un administrador con usuario y contrasena.
+     *
+     * <p>Retorna un token de sesion si las credenciales son validas.
+     * El token se reutiliza si ya existe una sesion activa.
+     *
+     * @param ctx contexto HTTP con body {@code usuario} y {@code password}
+     */
     public static void login(Context ctx) {
         try {
             ObjectNode body = mapper.readValue(ctx.body(), ObjectNode.class);
@@ -59,6 +74,13 @@ public class AdminController {
         }
     }
 
+    /**
+     * Cierra la sesion de un administrador invalidando su token.
+     *
+     * <p>El token puede enviarse en el header {@code Authorization} o en el body.
+     *
+     * @param ctx contexto HTTP con token en header o body
+     */
     public static void logout(Context ctx) {
         try {
             String token = ctx.header("Authorization");
@@ -93,6 +115,11 @@ public class AdminController {
         }
     }
 
+    /**
+     * Retorna los datos del dashboard: info del admin, censo, eleccion activa y votos emitidos.
+     *
+     * @param ctx contexto HTTP con token de sesion en atributos
+     */
     public static void dashboard(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Long idAdmin = ctx.attribute("idAdmin");
@@ -116,6 +143,11 @@ public class AdminController {
         }
     }
 
+    /**
+     * Lista las auditorias recientes de modificaciones a votantes.
+     *
+     * @param ctx contexto HTTP con query param opcional {@code limit} (max 50, default 10)
+     */
     public static void auditoriaReciente(Context ctx) {
         int limite = 10;
         try {
@@ -138,6 +170,11 @@ public class AdminController {
         }
     }
 
+    /**
+     * Retorna estadisticas generales de votantes: total, ejercidos, pendientes e inhabilitados.
+     *
+     * @param ctx contexto HTTP
+     */
     public static void estadisticasVotantes(Context ctx) {
         String sql = """
                 SELECT
