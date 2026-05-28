@@ -1,22 +1,32 @@
+"""Router de FastAPI para el proceso de enrolamiento biométrico de ABIS-UPC.
+
+Este módulo expone los endpoints que orquestan la captura secuencial o en vivo
+de minucias dactilares mediante el lector DigitalPersona, gestionando máquinas
+de estado de progreso en tiempo real y persistiendo las plantillas resultantes.
+"""
+
+import hashlib
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
+
+from .. import main as app_state
+from ..db.database import get_user_by_id, save_template
 from ..services.native_client import (
     capture_fingerprint,
     enroll_fingerprint,
     enroll_fingerprint_live,
     report_enroll_progress,
 )
-from ..db.database import save_template, get_user_by_id
-import hashlib
-from .. import main as app_state
 
 router = APIRouter()
 
-
-TOTAL_SAMPLES = 4
+TOTAL_SAMPLES: int = 4
 
 
 class EnrollRequest(BaseModel):
+    """Esquema de validación para las solicitudes de enrolamiento dactilar."""
     identificacion: str
     re_enroll: bool = False
 
@@ -28,6 +38,15 @@ def set_progress(
     current_sample: int = 0,
     error: str | None = None,
 ) -> None:
+    """Actualiza la máquina de estados local para el mecanismo de polling.
+
+    Args:
+        state: Estado de la transacción (ej. 'capturing', 'processing', 'error').
+        step: Paso numérico actual del flujo general de enrolamiento.
+        message: Descripción en lenguaje humano del evento para la interfaz.
+        current_sample: Índice de la muestra dactilar que se está procesando.
+        error: Mensaje técnico detallado si el proceso experimenta una falla.
+    """
     app_state.enroll_progress_state.update(
         {
             "state": state,
@@ -49,6 +68,17 @@ async def set_live_progress(
     current_sample: int = 0,
     error: str | None = None,
 ) -> None:
+    """Sincroniza el estado local y despacha eventos en tiempo real hacia el core.
+
+    Args:
+        identificacion: Documento de identidad del sufragante en proceso.
+        state: Identificador del estado en la máquina local.
+        step: Incremento secuencial de control.
+        message: Mensaje informativo textual para renderizado de UI.
+        estado: Cadena de control del ciclo de vida del estado remoto.
+        current_sample: Conteo exacto de muestras biometrizadas.
+        error: Traza o descripción del error encontrado, si aplica.
+    """
     set_progress(state, step, message, current_sample, error)
     await report_enroll_progress(
         identificacion,
@@ -60,8 +90,29 @@ async def set_live_progress(
     )
 
 
-@router.post("/")
-async def enroll(data: EnrollRequest):
+@router.post("/", summary="Enrolar huella dactilar de votante")
+async def enroll(data: EnrollRequest) -> dict[str, Any]:
+    """Orquesta el enrolamiento dactilar validando censo y controlando duplicados.
+
+    El flujo intenta primero una captura en vivo ('live') interactuando directamente
+    con el SDK nativo. Si el canal síncrono no está disponible, conmuta de forma 
+    automática a un modo de contingencia ('legacy') basado en bucles de polling.
+
+    Args:
+        data: Objeto de petición con la cédula y bandera opcional de re-enrolamiento.
+
+    Returns:
+        Un diccionario indicando el éxito de la operación, persistencia en Oracle
+        y el nombre completo formateado del ciudadano enrolado.
+
+    Raises:
+        HTTPException: 404 si el ciudadano no existe en el censo.
+        HTTPException: 409 si el sufragio ya fue ejercido o si ya posee biometría
+            activa sin haber explícitamente forzado 're_enroll'.
+        HTTPException: 500 si ocurre una falla al escribir en Oracle DB o al
+            procesar las firmas criptográficas.
+        HTTPException: 503 si el hardware de captura DigitalPersona falla.
+    """
     votante = get_user_by_id(data.identificacion)
 
     if not votante:
@@ -85,6 +136,8 @@ async def enroll(data: EnrollRequest):
         "Preparando lector biometrico",
         "INICIANDO",
     )
+    
+    # Se remueven espacios colaterales si el ciudadano carece de segundo nombre o apellido
     nombre_completo = (
         f"{votante['primer_nombre']} {votante['segundo_nombre']} "
         f"{votante['primer_apellido']} {votante['segundo_apellido']}"
@@ -140,6 +193,7 @@ async def enroll(data: EnrollRequest):
         )
         raise HTTPException(status_code=503, detail=detail)
 
+    # Caída controlada al flujo clásico por descarte cuando el hardware no soporta streaming directo
     print("[Enroll] /enroll-live no disponible. Usando flujo legacy con polling.")
     samples = []
     for i in range(TOTAL_SAMPLES):
