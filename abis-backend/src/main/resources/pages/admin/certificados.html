@@ -73,6 +73,7 @@
             <table>
               <thead>
                 <tr>
+                  <th style="width:40px"><input type="checkbox" id="cert-select-all" onchange="document.querySelectorAll('.cert-check').forEach(function(c){c.checked=this.checked;window._certToggle(c)})" title="Seleccionar todos"></th>
                   <th>Votante</th>
                   <th>Eleccion</th>
                   <th>Estado</th>

@@ -4,7 +4,8 @@
     filtrados: [],
     selectedKey: null,
     enviando: false,
-    actividad: []
+    actividad: [],
+    seleccionados: new Set()
   };
 
   const els = {};
@@ -113,41 +114,60 @@
 
   function renderTabla() {
     if (!state.filtrados.length) {
-      els.table.innerHTML = '<tr><td colspan="6" class="cert-empty">No hay certificados para mostrar.</td></tr>';
+      els.table.innerHTML = '<tr><td colspan="7" class="cert-empty">No hay certificados para mostrar.</td></tr>';
       els.pageInfo.textContent = '0 registros';
       return;
     }
     els.pageInfo.textContent = `${state.filtrados.length} de ${state.certificados.length} registros`;
+    state.seleccionados.clear();
 
-    els.table.innerHTML = state.filtrados.map(cert => {
-      return `
-        <tr>
-          <td>
-            <div style="font-weight:600;color:#1a3a2a">${escapeHtml(cert.nombre || 'Votante')}</div>
-            <div style="font-size:0.72rem;color:#6b7280">${escapeHtml(cert.identificacion || '--')}</div>
-            <div style="font-size:0.7rem;color:#9ca3af">${escapeHtml(cert.correo || '--')}</div>
-          </td>
-          <td><div style="font-weight:500">${escapeHtml(cert.eleccion || `Eleccion ${cert.idEleccion || '--'}`)}</div></td>
-          <td>${estadoBadge(cert.estado)}</td>
-          <td style="font-family:monospace;font-size:0.7rem">${escapeHtml(cert.codigoCertificado || '--')}</td>
-          <td style="font-size:0.78rem">${fecha(cert.fechaEnvio || cert.fechaSolicitud)}</td>
-          <td>
-            <div style="display:flex;gap:4px">
-              <button class="cert-btn cert-btn-ghost" style="padding:0 10px;min-height:32px;font-size:0.72rem" onclick="window._certReenviar ? window._certReenviar('${escapeHtml(itemKey(cert))}') : null" title="Reenviar">
-                <span class="material-symbols-outlined" style="font-size:16px">outgoing_mail</span>
-              </button>
-            </div>
-          </td>
-        </tr>
-      `;
+    els.table.innerHTML = state.filtrados.map(function(cert) {
+      var key = itemKey(cert);
+      return '<tr>'
+        + '<td style="width:40px"><input type="checkbox" class="cert-check" data-key="' + key + '" onchange="window._certToggle(this)"></td>'
+        + '<td>'
+        + '<div style="font-weight:600;color:#1a3a2a">' + escapeHtml(cert.nombre || 'Votante') + '</div>'
+        + '<div style="font-size:0.72rem;color:#6b7280">' + escapeHtml(cert.identificacion || '--') + '</div>'
+        + '<div style="font-size:0.7rem;color:#9ca3af">' + escapeHtml(cert.correo || '--') + '</div>'
+        + '</td>'
+        + '<td><div style="font-weight:500">' + escapeHtml(cert.eleccion || 'Eleccion ' + (cert.idEleccion || '--')) + '</div></td>'
+        + '<td>' + estadoBadge(cert.estado) + '</td>'
+        + '<td style="font-family:monospace;font-size:0.7rem">' + escapeHtml(cert.codigoCertificado || '--') + '</td>'
+        + '<td style="font-size:0.78rem">' + fecha(cert.fechaEnvio || cert.fechaSolicitud) + '</td>'
+        + '<td><div style="display:flex;gap:4px">'
+        + '<button class="cert-btn cert-btn-ghost" style="padding:0 10px;min-height:32px;font-size:0.72rem" onclick="window._certReenviarOne(\'' + key + '\')" title="Reenviar certificado"><span class="material-symbols-outlined" style="font-size:16px">outgoing_mail</span></button>'
+        + '</div></td></tr>';
     }).join('');
 
-    els.table.querySelectorAll('button[title="Reenviar"]').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const cert = state.filtrados.find(c => itemKey(c) === btn.dataset?.key);
-        if (cert) await reenviar(cert);
-      });
-    });
+    window._certToggle = function(cb) {
+      var k = cb.dataset.key;
+      if (cb.checked) state.seleccionados.add(k);
+      else state.seleccionados.delete(k);
+      actualizarBotonSeleccion();
+    };
+
+    window._certReenviarOne = function(key) {
+      var cert = state.filtrados.find(function(c) { return itemKey(c) === key; });
+      if (!cert) return;
+      var email = cert.correo || 'sin correo registrado';
+      if (!confirm('Reenviar certificado a ' + escapeHtml(cert.nombre || 'Votante') + ' (' + email + ')?')) return;
+      reenviar(cert);
+    };
+  }
+
+  function actualizarBotonSeleccion() {
+    var n = state.seleccionados.size;
+    var btn = els.enviarPendientes;
+    if (!btn) return;
+    if (n > 0) {
+      btn.textContent = 'Enviar seleccionados (' + n + ')';
+      btn.disabled = false;
+      btn.style.background = '#1a5c38';
+    } else {
+      btn.textContent = 'Enviar pendientes';
+      btn.disabled = !(els.enviados && els.pendientes);
+      btn.style.background = '';
+    }
   }
 
   async function reenviar(cert) {
