@@ -1,12 +1,39 @@
+"""Router de FastAPI para la verificación e identificación biométrica en ABIS-UPC.
+
+Este módulo expone el endpoint crítico de autenticación dactilar un-contra-muchos (1:N).
+Captura las minucias en vivo desde el sensor DigitalPersona, extrae el censo biométrico
+activo mapeado en Oracle y delega al SDK nativo la comparación vectorial para
+convalidar la identidad jurídica del sufragante.
+"""
+
+from typing import Any
+
 from fastapi import APIRouter, HTTPException
-from ..services.native_client import capture_fingerprint, identify_fingerprint
+
 from ..db.database import get_all_templates, get_votante_completo
+from ..services.native_client import capture_fingerprint, identify_fingerprint
 
 router = APIRouter()
 
 
-@router.post("/")
-async def verify():
+@router.post("/", summary="Verificar identidad de votante por huella dactilar")
+async def verify() -> dict[str, Any]:
+    """Ejecuta la identificación biométrica 1:N contra el censo electoral activo.
+
+    Captura una muestra viva del dedo, descarga todas las plantillas biometrizadas de
+    Oracle que tengan derecho al voto pendiente y efectúa la búsqueda secuencial. Si
+    existe concordancia espacial por encima del umbral operativo, consolida el expediente.
+
+    Returns:
+        Un diccionario indicando si se halló coincidencia (matched=True) junto al perfil
+        completo demográfico y de mesa del sufragante, o matched=False si no hay coincidencia.
+
+    Raises:
+        HTTPException: 404 si el censo carece de ciudadanos enrolados con biometría activa.
+        HTTPException: 500 si el ciudadano es autenticado por el SDK biométrico pero su
+            registro maestro fue purgado o no coincide de manera consistente en Oracle.
+        HTTPException: 503 si ocurre una falla en el canal del hardware DigitalPersona.
+    """
     print("[Verify] Capturando huella...")
     capture = await capture_fingerprint()
 
@@ -24,6 +51,8 @@ async def verify():
         )
 
     print(f"[Verify] Comparando contra {len(usuarios)} votantes...")
+    
+    # Se disocian las estructuras matriciales en listas paralelas planas para maximizar la velocidad de mapeo del SDK C++ subyacente
     user_ids = [u["identificacion"] for u in usuarios]
     templates = [u["template_b64"] for u in usuarios]
 
@@ -32,6 +61,8 @@ async def verify():
     if result.get("matched"):
         matched_id = result["user_id"]
         votante = get_votante_completo(matched_id)
+        
+        # Salvaguarda de integridad relacional: evita fugas o inconsistencias entre el motor ABIS y las tablas maestras
         if not votante:
             raise HTTPException(
                 status_code=500,
