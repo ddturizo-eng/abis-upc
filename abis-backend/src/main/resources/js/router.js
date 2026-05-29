@@ -4,10 +4,10 @@ const Router = {
   paso2Completo: false,
   paso3Completo: false,
   paso4Confirmado: false,
-  fragmentos: {
+    fragmentos: {
     0: 'consent-modal.html',
     1: 'paso1-documento.html',
-    2: 'paso2-rostro.html',
+    2: 'paso2-biometria.html',
     3: 'fingerprint-step.html',
     4: 'paso3-verificacion.html',
     5: 'paso4-completado.html'
@@ -35,6 +35,14 @@ const Router = {
       destino = 4;
     }
 
+    const cleanups = {
+      2: function () { if (window.FaceCapture && FaceCapture.destroy) FaceCapture.destroy(); }
+    };
+
+    if (cleanups[Router.pasoActual]) {
+      cleanups[Router.pasoActual]();
+    }
+
     const response = await fetch(Router.fragmentos[destino], { cache: 'no-store' });
     if (!response.ok) {
       throw new Error('No se pudo cargar el paso ' + destino);
@@ -46,10 +54,10 @@ const Router = {
     Router.actualizarSidebar(destino);
 
     const inits = {
-      0: () => ConsentStep.init(),
+      0: function () { ConsentStep.init(); },
       1: initPaso1,
-      2: () => FaceCapture.init(),
-      3: () => FingerprintUI.init(),
+      2: function () { FaceCapture.init(); },
+      3: function () { FingerprintUI.init(); },
       4: initPaso3,
       5: initPaso4
     };
@@ -791,6 +799,29 @@ function hydratePaso1FromSession() {
 }
 
 async function enviarPreRegistro() {
+  const form = document.getElementById('paso1-form') || document.querySelector('#step-content form');
+  const fields = form ? form.querySelectorAll('[data-validate]') : [];
+
+  let valid = true;
+  fields.forEach((field) => {
+    const rules = (field.dataset.validate || '').split('|').filter(Boolean);
+    if (!rules.length) return;
+    let value = field.type === 'checkbox' ? field.checked : field.value;
+    for (const rule of rules) {
+      const [ruleName, param] = rule.split(':');
+      const v = FormValidator?.rules?.[ruleName];
+      if (!v) continue;
+      let check = v.validate(value, param);
+      if (ruleName === 'required' && field.type === 'checkbox') check = v.validate(field.checked);
+      if (!check) { valid = false; break; }
+    }
+  });
+
+  if (!valid) {
+    showPaso1Error('Corrija los errores en los campos antes de continuar.');
+    return;
+  }
+
   const data = {
     identificacion: document.getElementById('f-identificacion').value.trim(),
     primerNombre: document.getElementById('f-primernombre').value.trim(),
@@ -806,11 +837,6 @@ async function enviarPreRegistro() {
 
   if (!data.identificacion || !data.primerNombre || !data.primerApellido || !data.correo || !data.idRol || !data.idPuesto) {
     showPaso1Error('Por favor complete todos los campos obligatorios.');
-    return;
-  }
-
-  if (!data.correo.includes('@') || data.correo.split('@').length !== 2 || !data.correo.split('@')[1].includes('.')) {
-    showPaso1Error('Ingrese un correo electronico valido (debe contener @ y un dominio).');
     return;
   }
 
@@ -844,6 +870,38 @@ function initPaso1() {
   Paso1State.currentFile = null;
   stopCamera();
   hidePaso1Error();
+
+  const paso1Form = document.getElementById('paso1-form') || document.querySelector('#step-content form');
+  if (paso1Form && typeof FormValidator !== 'undefined') {
+    FormValidator.setupForm(paso1Form, { validateOn: 'blur' });
+  }
+
+  // Filtro: identificación solo números
+  const idInput = document.getElementById('f-identificacion');
+  if (idInput) {
+    idInput.addEventListener('input', () => {
+      idInput.value = idInput.value.replace(/\D/g, '').slice(0, 12);
+    });
+    idInput.addEventListener('keypress', (e) => {
+      if (!/[\d]/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+        e.preventDefault();
+      }
+    });
+  }
+
+  // Filtro: nombres y apellidos solo letras y espacios
+  ['f-primernombre','f-segundonombre','f-primerapellido','f-segundoapellido'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener('input', () => {
+      el.value = el.value.replace(/[^a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/g, '');
+    });
+    el.addEventListener('keypress', (e) => {
+      if (!/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]$/.test(e.key) && e.key !== 'Backspace' && e.key !== 'Delete' && e.key !== 'Tab') {
+        e.preventDefault();
+      }
+    });
+  });
 
   const dropZone = document.getElementById('dropZone');
   const fileInput = document.getElementById('fileInput');
@@ -900,235 +958,15 @@ const file = fileInput.files[0];
   cargarPuestos().then(hydratePaso1FromSession);
 }
 
-function setPaso2State(message, tone) {
-  const status = document.getElementById('bio-status');
-  const dot = document.getElementById('bio-status-dot');
-  status.textContent = message;
-  dot.className = 'w-2.5 h-2.5 rounded-full';
-  if (tone === 'success') {
-    dot.classList.add('bg-green-500');
-  } else if (tone === 'error') {
-    dot.classList.add('bg-red-500');
-  } else {
-    dot.classList.add('bg-amber-400', 'animate-pulse');
-  }
-}
-
-let fotoStream = null;
-let fotoCapturada = false;
-let fotoBlob = null;
-
-async function abrirCamaraFoto() {
-  const video = document.getElementById('foto-video');
-  const guide = document.getElementById('foto-guide');
-  try {
-    fotoStream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480, facingMode: 'user' }
-    });
-    video.srcObject = fotoStream;
-    video.classList.remove('hidden');
-    document.getElementById('foto-preview').classList.add('hidden');
-    document.getElementById('foto-placeholder').classList.add('hidden');
-    document.getElementById('foto-guide').classList.remove('hidden');
-    document.getElementById('btn-abrir-camara').classList.add('hidden');
-    document.getElementById('btn-capturar-foto').classList.remove('hidden');
-    document.getElementById('btn-repetir-foto').classList.add('hidden');
-  } catch (e) {
-    window.showToast('No se pudo acceder a la camara: ' + e.message, 'error');
-  }
-}
-
-function capturarFoto() {
-  const video = document.getElementById('foto-video');
-  const canvas = document.getElementById('foto-canvas');
-  const preview = document.getElementById('foto-preview');
-  const guide = document.getElementById('foto-guide');
-
-  if (video.videoWidth === 0 || video.videoHeight === 0) {
-    window.showToast('La camara no esta lista. Por favor abre la camara primero.', 'error');
-    return;
-  }
-
-  canvas.width = video.videoWidth;
-  canvas.height = video.videoHeight;
-  canvas.getContext('2d').drawImage(video, 0, 0);
-
-  canvas.toBlob(blob => {
-    fotoBlob = blob;
-    fotoCapturada = true;
-
-    if (fotoStream) {
-      fotoStream.getTracks().forEach(t => t.stop());
-      fotoStream = null;
-    }
-
-    const fotoUrl = URL.createObjectURL(blob);
-    preview.src = fotoUrl;
-    preview.classList.remove('hidden');
-    video.classList.add('hidden');
-    guide.classList.add('hidden');
-
-    const data = VotanteSession.getDatosRegistro();
-    if (data) {
-      data.fotoPreview = fotoUrl;
-      VotanteSession.setDatosRegistro(data);
-    }
-
-    setTimeout(() => {
-      try {
-        actualizarEstadoBiometria('completado', 'estado-foto-capturada');
-      } catch(e) { console.warn('Estado foto:', e.message); }
-      
-      const fotoReview = document.getElementById('foto-review');
-      if (fotoReview) fotoReview.classList.remove('hidden');
-
-      const btnCapturar = document.getElementById('btn-capturar-foto');
-      if (btnCapturar) btnCapturar.classList.add('hidden');
-      
-      const btnRepetir = document.getElementById('btn-repetir-foto');
-      if (btnRepetir) btnRepetir.classList.remove('hidden');
-
-      const warning = document.getElementById('foto-required-warning');
-      if (warning) warning.classList.add('hidden');
-
-      const btnEnroll = document.getElementById('btn-enroll');
-      if (btnEnroll) {
-        btnEnroll.disabled = false;
-        btnEnroll.classList.remove('opacity-50', 'cursor-not-allowed');
-      }
-    }, 50);
-  }, 'image/jpeg', 0.92);
-}
-
-function repetirFoto() {
-  fotoCapturada = false;
-  fotoBlob = null;
-  document.getElementById('foto-preview').classList.add('hidden');
-  document.getElementById('foto-placeholder').classList.remove('hidden');
-  document.getElementById('btn-repetir-foto').classList.add('hidden');
-  document.getElementById('btn-abrir-camara').classList.remove('hidden');
-  document.getElementById('btn-capturar-foto').classList.add('hidden');
-  document.getElementById('foto-required-warning').classList.remove('hidden');
-  document.getElementById('btn-enroll').disabled = true;
-  document.getElementById('btn-enroll').classList.add('opacity-50', 'cursor-not-allowed');
-  document.getElementById('foto-status-badge').style.display = 'none';
-  document.getElementById('foto-guide').classList.add('hidden');
-  abrirCamaraFoto();
-}
-
 function initPaso2() {
-  const data = VotanteSession.getDatosRegistro();
-  const id = VotanteSession.getIdentificacion();
+  var data = VotanteSession.getDatosRegistro();
+  var id = VotanteSession.getIdentificacion();
   if (!data || !id) {
     Router.irA(1);
     return;
   }
 
-  fotoStream = null;
-  fotoCapturada = false;
-  fotoBlob = null;
-
-  document.getElementById('bio-voter-name').textContent = [data.primerNombre, data.segundoNombre, data.primerApellido, data.segundoApellido].filter(Boolean).join(' ');
-  document.getElementById('bio-voter-id').textContent = 'ID: ' + id;
-  document.getElementById('bio-voter-role').textContent = data.idRol ? 'ROL ' + data.idRol : 'ROL PENDIENTE';
-  document.getElementById('bio-progress-copy').textContent = 'Listo para iniciar enrolamiento';
-
-  document.getElementById('btn-abrir-camara').addEventListener('click', abrirCamaraFoto);
-  document.getElementById('btn-capturar-foto').addEventListener('click', capturarFoto);
-  document.getElementById('btn-repetir-foto').addEventListener('click', repetirFoto);
-
-  document.getElementById('btn-enroll').addEventListener('click', async () => {
-    const button = document.getElementById('btn-enroll');
-    button.disabled = true;
-
-    const progressItems = [
-      document.getElementById('bio-step-capture'),
-      document.getElementById('bio-step-process'),
-      document.getElementById('bio-step-confirm')
-    ];
-
-    const markProgress = (index, text) => {
-      progressItems.forEach((item, current) => {
-        const badge = item.querySelector('[data-progress-badge]');
-        const label = item.querySelector('[data-progress-label]');
-        if (current < index) {
-          badge.innerHTML = '<span class="material-symbols-outlined text-[14px]">check</span>';
-          badge.className = 'w-8 h-8 rounded-full bg-[#4CAF7D] text-white flex items-center justify-center text-[11px] font-bold';
-          label.className = 'text-sm font-bold text-[#4CAF7D]';
-        } else if (current === index) {
-          badge.textContent = String(current + 1);
-          badge.className = 'w-8 h-8 rounded-full bg-[#004D33] text-white flex items-center justify-center text-[11px] font-bold';
-          label.className = 'text-sm font-bold text-[#004D33]';
-        }
-      });
-      document.getElementById('bio-progress-copy').textContent = text;
-    };
-
-try {
-      actualizarEstadoBiometria('completado', 'estado-documento');
-
-      setPaso2State('Subiendo foto del rostro...', 'pending');
-      markProgress(0, 'Subiendo foto del rostro...');
-      await new Promise((resolve) => setTimeout(resolve, 300));
-
-      const formData = new FormData();
-      formData.append('foto', fotoBlob, 'rostro.jpg');
-      formData.append('identificacion', id);
-
-      const fotoRes = await fetch('http://localhost:7000/api/votantes/foto', {
-        method: 'POST',
-        body: formData
-      });
-      if (!fotoRes.ok) {
-        throw new Error('Error subiendo foto del rostro');
-      }
-
-      actualizarEstadoBiometria('completado', 'estado-foto-guardada');
-
-      setPaso2State('Capturando huellas biometria...', 'pending');
-      markProgress(1, 'Capturando huellas biometria...');
-      
-      actualizarEstadoBiometria('actual', 'estado-huella');
-      await new Promise((resolve) => setTimeout(resolve, 500));
-
-      setPaso2State('Procesando plantillas...', 'pending');
-      markProgress(2, 'Procesando plantillas...');
-      await ApiEnrollment.enroll(id, false);
-
-      actualizarEstadoBiometria('completado', 'estado-huella');
-
-      setPaso2State('Enrolamiento confirmado', 'success');
-      markProgress(3, 'Enrolamiento confirmado');
-      progressItems.forEach((item) => {
-        const badge = item.querySelector('[data-progress-badge]');
-        const label = item.querySelector('[data-progress-label]');
-        badge.innerHTML = '<span class="material-symbols-outlined text-[14px]">check</span>';
-        badge.className = 'w-8 h-8 rounded-full bg-[#4CAF7D] text-white flex items-center justify-center text-[11px] font-bold';
-        label.className = 'text-sm font-bold text-[#4CAF7D]';
-      });
-
-      document.getElementById('estado-guardando').classList.remove('hidden');
-      await new Promise((resolve) => setTimeout(resolve, 800));
-      document.getElementById('estado-guardando').classList.add('hidden');
-      document.getElementById('estado-completo').classList.remove('hidden');
-
-      document.getElementById('btn-enroll').classList.add('hidden');
-      document.getElementById('btn-revisar-confirmar').classList.remove('hidden');
-
-      Router.paso2Completo = true;
-    } catch (error) {
-      setPaso2State('Error en enrolamiento', 'error');
-      errorBox.textContent = 'No fue posible completar el enrolamiento: ' + error.message;
-      errorBox.classList.remove('hidden');
-      button.disabled = false;
-    }
-  });
-
-document.getElementById('btn-back-step1').addEventListener('click', () => Router.irA(1));
-
-  document.getElementById('btn-revisar-confirmar').addEventListener('click', () => {
-    Router.irA(3);
-  });
+  FaceCapture.init();
 }
 
 function initPaso3() {
@@ -1146,8 +984,10 @@ document.getElementById('summary-fullname').textContent = [data.primerNombre, da
   document.getElementById('summary-puesto').textContent = data.idPuesto ? String(data.idPuesto) : '--';
   const fotoPreview = document.getElementById('summary-foto');
   const fotoPlaceholder = document.getElementById('summary-foto-placeholder');
-  if (data.fotoPreview) {
-    fotoPreview.src = data.fotoPreview;
+  var fotoSrc = data.fotoUrl || data.fotoPreview;
+
+  if (fotoSrc) {
+    fotoPreview.src = fotoSrc;
     fotoPreview.classList.remove('hidden');
     fotoPlaceholder.classList.add('hidden');
   } else {
