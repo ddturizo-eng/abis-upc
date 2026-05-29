@@ -1,5 +1,5 @@
 (function initCandidatosPage() {
-  const CARGOS_BASE = ['Rector', 'Personero', 'Contralor', 'Representante Estudiantil'];
+  const CARGOS_BASE = ['Representante estudiantil CSU', 'Representante egresados CSU', 'Representante docente CSU', 'Representante estudiantil Consejo Académico', 'Representante egresados Consejo Académico', 'Representante docente Consejo Académico', 'Representante Facultad de Derecho', 'Representante Facultad de Salud', 'Representante Facultad de Ingeniería', 'Representante Facultad de Educación', 'Representante Consejo de Programa'];
 
   const state = {
     elecciones: [],
@@ -9,7 +9,8 @@
     filtrados: [],
     gruposColapsados: new Set(),
     editandoId: null,
-    auditoria: []
+    auditoria: [],
+    cargos: []
   };
 
   const dom = {
@@ -32,7 +33,14 @@
     modalDeleteContent: document.getElementById('modalEliminarContenido'),
     cargoForm: document.getElementById('cargoCandidato'),
     photoInput: document.getElementById('fotoCandidato'),
-    photoPreview: document.getElementById('fotoPreview')
+    photoPreview: document.getElementById('fotoPreview'),
+    modalCargos: document.getElementById('modalCargos'),
+    cargosList: document.getElementById('cargos-list'),
+    cargoNuevoInput: document.getElementById('cargo-nuevo-nombre'),
+    btnAgregarCargo: document.getElementById('btn-agregar-cargo'),
+    btnGestionCargos: document.getElementById('btn-gestion-cargos'),
+    btnCerrarModalCargos: document.getElementById('btnCerrarModalCargos'),
+    btnCerrarModalCargos2: document.getElementById('btnCerrarModalCargos2')
   };
 
   function escapeHtml(value) {
@@ -169,6 +177,7 @@
   async function cargarCandidatosPorEleccion(eleccionIdValue) {
     clearError();
     state.eleccionId = String(eleccionIdValue || '');
+    cargarCargosDesdeStorage();
     actualizarEstadoEleccion();
     dom.content.classList.add('is-loading');
     if (!state.eleccionId) {
@@ -237,13 +246,142 @@
   }
 
   function poblarFiltrosCargo() {
-    const cargos = [...new Set([...CARGOS_BASE, ...state.candidatos.map((item) => item.cargo).filter(Boolean)])].sort();
-    dom.filtroCargo.innerHTML = '<option value="">Todos</option>' + cargos.map((cargo) =>
+    const cargosUnicos = [...new Set([
+      ...CARGOS_BASE,
+      ...state.candidatos.map((item) => item.cargo).filter(Boolean),
+      ...state.cargos
+    ])].sort();
+    dom.filtroCargo.innerHTML = '<option value="">Todos</option>' + cargosUnicos.map((cargo) =>
       `<option value="${escapeHtml(cargo)}">${escapeHtml(cargo)}</option>`
     ).join('');
-    dom.cargoForm.innerHTML = cargos.map((cargo) =>
+    dom.cargoForm.innerHTML = cargosUnicos.map((cargo) =>
       `<option value="${escapeHtml(cargo)}">${escapeHtml(cargo)}</option>`
     ).join('');
+  }
+
+  /* ── CARGOS CRUD ── */
+  function cargarCargosDesdeStorage() {
+    const key = `abis_cargos_${state.eleccionId}`;
+    try {
+      const stored = localStorage.getItem(key);
+      state.cargos = stored ? JSON.parse(stored) : [];
+    } catch {
+      state.cargos = [];
+    }
+    if (!state.cargos.length) {
+      state.cargos = [...CARGOS_BASE];
+      guardarCargosEnStorage();
+    }
+  }
+
+  function guardarCargosEnStorage() {
+    const key = `abis_cargos_${state.eleccionId}`;
+    localStorage.setItem(key, JSON.stringify(state.cargos));
+  }
+
+  function abrirModalCargos() {
+    dom.modalCargos.classList.add('open');
+    dom.modalCargos.setAttribute('aria-hidden', 'false');
+    renderizarListaCargos();
+    dom.cargoNuevoInput.value = '';
+  }
+
+  function cerrarModalCargos() {
+    dom.modalCargos.classList.remove('open');
+    dom.modalCargos.setAttribute('aria-hidden', 'true');
+  }
+
+  function renderizarListaCargos() {
+    const todos = [...new Set([...CARGOS_BASE, ...state.cargos])].sort();
+    if (!todos.length) {
+      dom.cargosList.innerHTML = '<div class="cargos-empty-msg">No hay cargos configurados.</div>';
+      return;
+    }
+    dom.cargosList.innerHTML = todos.map((cargo) => {
+      const isBase = CARGOS_BASE.includes(cargo);
+      const isCustom = state.cargos.includes(cargo) && !isBase;
+      return `
+        <div class="cargo-item" data-cargo="${escapeHtml(cargo)}">
+          <span class="cargo-item-name">${escapeHtml(cargo)}</span>
+          <div class="cargo-item-actions">
+            ${!isBase && isCustom ? `
+              <button class="cargo-item-btn edit-btn" onclick="window._editCargo('${escapeHtml(cargo).replace(/'/g, "\\'")}')" title="Editar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              </button>
+              <button class="cargo-item-btn delete-btn" onclick="window._deleteCargo('${escapeHtml(cargo).replace(/'/g, "\\'")}')" title="Eliminar">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+              </button>
+            ` : '<span style="font-size:0.68rem;color:var(--gray-300);padding:0 4px;">base</span>'}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  window._editCargo = function(cargo) {
+    const item = dom.cargosList.querySelector(`[data-cargo="${cargo.replace(/\\/g, '\\\\')}"]`);
+    if (!item) return;
+    const nameEl = item.querySelector('.cargo-item-name');
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = cargo;
+    input.className = 'cargo-item-input';
+    input.maxLength = 100;
+    nameEl.replaceWith(input);
+    input.focus();
+    input.select();
+
+    const save = () => {
+      const nuevo = input.value.trim();
+      if (!nuevo || nuevo === cargo) { renderizarListaCargos(); return; }
+      if (state.cargos.includes(cargo)) {
+        state.cargos = state.cargos.map((c) => c === cargo ? nuevo : c);
+      }
+      guardarCargosEnStorage();
+      renderizarListaCargos();
+      poblarFiltrosCargo();
+    };
+
+    input.addEventListener('blur', save);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { renderizarListaCargos(); }
+    });
+  };
+
+  window._deleteCargo = function(cargo) {
+    if (!state.cargos.includes(cargo)) return;
+    if (!confirm(`¿Eliminar el cargo "${cargo}"?`)) return;
+    state.cargos = state.cargos.filter((c) => c !== cargo);
+    guardarCargosEnStorage();
+    renderizarListaCargos();
+    poblarFiltrosCargo();
+  };
+
+  function agregarCargo() {
+    const nombre = dom.cargoNuevoInput.value.trim();
+    if (!nombre) return;
+    if ([...CARGOS_BASE, ...state.cargos].includes(nombre)) {
+      alert('Este cargo ya existe.');
+      return;
+    }
+    state.cargos.push(nombre);
+    guardarCargosEnStorage();
+    dom.cargoNuevoInput.value = '';
+    renderizarListaCargos();
+    poblarFiltrosCargo();
+  }
+
+  function initCargosPanel() {
+    if (dom.btnGestionCargos) dom.btnGestionCargos.addEventListener('click', abrirModalCargos);
+    if (dom.btnCerrarModalCargos) dom.btnCerrarModalCargos.addEventListener('click', cerrarModalCargos);
+    if (dom.btnCerrarModalCargos2) dom.btnCerrarModalCargos2.addEventListener('click', cerrarModalCargos);
+    if (dom.btnAgregarCargo) dom.btnAgregarCargo.addEventListener('click', agregarCargo);
+    if (dom.cargoNuevoInput) {
+      dom.cargoNuevoInput.addEventListener('keydown', (e) => { if (e.key === 'Enter') { e.preventDefault(); agregarCargo(); } });
+    }
+    if (dom.modalCargos) {
+      dom.modalCargos.addEventListener('click', (e) => { if (e.target === dom.modalCargos) cerrarModalCargos(); });
+    }
   }
 
   function agruparPorCargo(candidatos) {
@@ -917,5 +1055,6 @@
   window.cargarAuditoria = cargarAuditoria;
 
   iniciarActualizacionEnVivo();
+  initCargosPanel();
   cargarElecciones();
 })();
