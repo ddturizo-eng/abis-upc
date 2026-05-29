@@ -194,31 +194,33 @@
           <label>Nombre del puesto <span class="required">*</span></label>
           <div class="input-icon">
             <span class="material-symbols-outlined">edit</span>
-            <input id="puestoNombre" type="text" required placeholder="Bloque A — Salon 201">
+            <input id="puestoNombre" type="text" required placeholder="Bloque A — Salon 201" data-validate="required|alphanumeric|noSpecialChars" maxlength="100">
+            <small style="display:block;font-size:0.72rem;color:#dc2626;font-weight:600;margin-top:4px;min-height:18px;"></small>
           </div>
         </div>
-        <div class="grid-2">
-          <div class="field">
-            <label>Ciudad <span class="required">*</span></label>
-            <select id="puestoCiudad">
-              <option value="">Seleccionar ciudad</option>
-              <option value="Valledupar">Valledupar</option>
-              <option value="Aguachica">Aguachica</option>
-              <option value="Bogota">Bogota</option>
-              <option value="OTRA">OTRA</option>
-            </select>
-          </div>
-          <div class="field">
-            <label>Sede <span class="required">*</span></label>
-            <select id="puestoSede">
-              <option value="SEDE CENTRAL">SEDE CENTRAL</option>
-              <option value="SEDE RIO">SEDE RIO</option>
-              <option value="SEDE BELLAS ARTES">BELLAS ARTAS</option>
-              <option value="SEDE AGUACHICA">SEDE AGUACHICA</option>
-              <option value="OTRA">OTRA</option>
-            </select>
-          </div>
-        </div>
+<div class="grid-2">
+           <div class="field">
+             <label>Ciudad <span class="required">*</span></label>
+             <select id="puestoCiudad" data-validate="required">
+               <option value="">Seleccionar ciudad</option>
+               <option value="Valledupar">Valledupar</option>
+               <option value="Aguachica">Aguachica</option>
+               <option value="Bogota">Bogota</option>
+               <option value="OTRA">OTRA</option>
+             </select>
+             <small style="display:block;font-size:0.72rem;color:#dc2626;font-weight:600;margin-top:4px;min-height:18px;"></small>
+           </div>
+           <div class="field">
+             <label>Sede <span class="required">*</span></label>
+             <select id="puestoSede" data-validate="required">
+               <option value="SEDE CENTRAL">SEDE CENTRAL</option>
+               <option value="SEDE RIO">SEDE RIO</option>
+               <option value="SEDE BELLAS ARTES">BELLAS ARTAS</option>
+               <option value="SEDE AGUACHICA">SEDE AGUACHICA</option>
+               <option value="OTRA">OTRA</option>
+             </select>
+           </div>
+         </div>
         <div class="grid-2">
           <div class="field">
             <label>Hora de inicio <span class="required">*</span></label>
@@ -263,14 +265,14 @@
             <label>Usuario <span class="required">*</span></label>
             <div class="input-icon">
               <span class="material-symbols-outlined">badge</span>
-              <input id="adminUsuario" type="text" required placeholder="abisadmin" autocomplete="off">
+              <input id="adminUsuario" type="text" required placeholder="abisadmin" autocomplete="off" data-validate="required|username">
             </div>
           </div>
           <div class="field">
             <label>Nombre completo <span class="required">*</span></label>
             <div class="input-icon">
               <span class="material-symbols-outlined">person</span>
-              <input id="adminNombre" type="text" required placeholder="Admin Principal" autocomplete="off">
+              <input id="adminNombre" type="text" required placeholder="Admin Principal" autocomplete="off" data-validate="required|lettersOnly|noSpecialChars">
             </div>
           </div>
         </div>
@@ -278,14 +280,14 @@
           <label>Correo electronico</label>
           <div class="input-icon">
             <span class="material-symbols-outlined">mail</span>
-            <input id="adminCorreo" type="email" placeholder="admin@unicesar.edu.co" autocomplete="off">
+            <input id="adminCorreo" type="email" placeholder="admin@unicesar.edu.co" autocomplete="off" data-validate="emailStrict">
           </div>
         </div>
         <div class="field full">
           <label id="adminPasswordLabel">Contrasena <span class="required">*</span></label>
           <div class="input-icon">
             <span class="material-symbols-outlined">lock</span>
-            <input id="adminPassword" type="password" placeholder="Minimo 4 caracteres" autocomplete="off">
+            <input id="adminPassword" type="password" placeholder="Minimo 4 caracteres, maximo 25" autocomplete="off" maxlength="25" data-validate="required|password|noSpecialChars">
           </div>
         </div>
         <div class="field full">
@@ -311,8 +313,37 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="../../js/api.js"></script>
   <script src="../../js/toast.js"></script>
+  <script src="../../js/form-validation.js"></script>
   <script src="../../js/admin-router.js"></script>
   <script src="../../js/admin-shell.js"></script>
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const formAdmin = document.getElementById('formAdmin');
+      const formPuesto = document.getElementById('formPuesto');
+      if (formAdmin) {
+        FormValidator.setupForm(formAdmin, {
+          validateOn: 'blur',
+          onSubmit: (e) => {
+            if (typeof AdministradoresAdmin?.guardar === 'function') {
+              AdministradoresAdmin.guardar();
+            }
+            return false;
+          }
+        });
+      }
+      if (formPuesto) {
+        FormValidator.setupForm(formPuesto, {
+          validateOn: 'blur',
+          onSubmit: (e) => {
+            if (typeof PuestosAdmin?.guardar === 'function') {
+              PuestosAdmin.guardar();
+            }
+            return false;
+          }
+        });
+      }
+    });
+  </script>
 </body>
 </html>
 

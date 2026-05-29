@@ -230,15 +230,18 @@
       <div id="modal-eleccion-error" class="modal-error"></div>
       <label>
         <span class="form-label">Nombre de la elección *</span>
-        <input id="eleccion-nombre" class="election-field" type="text" autocomplete="off">
+        <input id="eleccion-nombre" class="election-field" type="text" autocomplete="off" data-validate="required|noSpecialChars" maxlength="100">
+        <small style="display:block;font-size:0.72rem;color:#dc2626;font-weight:600;margin-top:4px;min-height:18px;"></small>
       </label>
       <label>
         <span class="form-label">Fecha y hora de inicio *</span>
-        <input id="eleccion-inicio" class="election-field" type="datetime-local">
+        <input id="eleccion-inicio" class="election-field" type="datetime-local" data-validate="required">
+        <small style="display:block;font-size:0.72rem;color:#dc2626;font-weight:600;margin-top:4px;min-height:18px;"></small>
       </label>
       <label>
         <span class="form-label">Fecha y hora de fin *</span>
-        <input id="eleccion-fin" class="election-field" type="datetime-local">
+        <input id="eleccion-fin" class="election-field" type="datetime-local" data-validate="required">
+        <small style="display:block;font-size:0.72rem;color:#dc2626;font-weight:600;margin-top:4px;min-height:18px;"></small>
       </label>
       <div class="role-weight-box">
         <p class="dashboard-label">Roles habilitados para esta elección</p>
@@ -257,4 +260,19 @@
 
 <div id="dropdown-elecciones" class="dropdown-menu hidden"></div>
 <div id="toast-container" class="toast-container"></div>
+<script src="../../js/form-validation.js"></script>
 <script src="../../js/elecciones.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('form-eleccion');
+    if (form) {
+      FormValidator.setupForm(form, {
+        validateOn: 'blur',
+        onSubmit: () => {
+          if (typeof guardarEleccion === 'function') guardarEleccion();
+          return false;
+        }
+      });
+    }
+  });
+</script>
