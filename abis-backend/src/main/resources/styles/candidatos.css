@@ -1087,7 +1087,169 @@
   }
 }
 
-@media (max-width: 1024px) {
+/* ─── CARGO SELECT WRAP ─── */
+.cargo-select-wrap {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.cargo-select-wrap select {
+  flex: 1;
+  min-width: 0;
+}
+
+.cargo-gestion-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--green-100);
+  border: 1px solid var(--green-700);
+  border-radius: 6px;
+  color: var(--green-800);
+  cursor: pointer;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 700;
+  height: 38px;
+  padding: 0 10px;
+  white-space: nowrap;
+  transition: all 150ms;
+}
+
+.cargo-gestion-btn:hover {
+  background: var(--green-700);
+  color: white;
+}
+
+/* ─── CARGOS PANEL ─── */
+#modalCargos .candidate-modal-panel {
+  max-width: 520px;
+}
+
+.cargos-panel-body {
+  padding: 16px 0 8px;
+}
+
+.cargos-hint {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.cargos-add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.cargos-add-row input {
+  flex: 1;
+  background: var(--white);
+  border: 1px solid var(--gray-200);
+  border-radius: 6px;
+  font-size: 0.85rem;
+  height: 38px;
+  padding: 0 12px;
+  outline: none;
+  font-family: 'DM Sans', sans-serif;
+}
+
+.cargos-add-row input:focus {
+  border-color: var(--green-700);
+  box-shadow: 0 0 0 3px rgba(45,134,83,.12);
+}
+
+.btn-sm {
+  height: 38px;
+  padding: 0 14px;
+  font-size: 0.8rem;
+  border-radius: 6px;
+}
+
+.cargos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.cargo-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--gray-50);
+  border: 1px solid var(--gray-200);
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+
+.cargo-item-name {
+  flex: 1;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.cargo-item-input {
+  flex: 1;
+  background: var(--white);
+  border: 1px solid var(--green-700);
+  border-radius: 4px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  height: 30px;
+  padding: 0 8px;
+  font-family: 'DM Sans', sans-serif;
+  color: var(--gray-900);
+  outline: none;
+}
+
+.cargo-item-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.cargo-item-btn {
+  align-items: center;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  display: flex;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+  transition: background 120ms;
+}
+
+.cargo-item-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.cargo-item-btn.edit-btn { color: var(--green-700); }
+.cargo-item-btn.edit-btn:hover { background: var(--green-100); }
+
+.cargo-item-btn.delete-btn { color: var(--danger); }
+.cargo-item-btn.delete-btn:hover { background: var(--danger-light); }
+
+.cargo-item-btn.save-btn { color: var(--green-700); }
+.cargo-item-btn.save-btn:hover { background: var(--green-100); }
+
+.cargo-item-btn.cancel-btn { color: var(--gray-500); }
+.cargo-item-btn.cancel-btn:hover { background: var(--gray-200); }
+
+.cargos-empty-msg {
+  text-align: center;
+  padding: 20px;
+  color: var(--gray-500);
+  font-size: 0.85rem;
+}
+
+  @media (max-width: 1024px) {
   .candidatos-layout {
     grid-template-columns: 1fr;
   }
