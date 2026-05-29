@@ -21,19 +21,21 @@
                 <span class="form-label">Usuario</span>
                 <span class="input-shell">
                     <span class="material-symbols-outlined">account_circle</span>
-                    <input type="text" id="usuario" placeholder="Ingresa tu usuario" required autocomplete="username">
+                    <input type="text" id="usuario" placeholder="Ingresa tu usuario" required autocomplete="username" maxlength="20" data-validate="required|username" style="width:100%;background:transparent;border:0;font-family:inherit;font-size:16px;font-weight:500;height:56px;min-width:0;outline:none;">
                 </span>
+                <small id="usuario-error" style="display:block;font-size:0.75rem;color:#dc2626;font-weight:600;margin-top:4px;min-height:18px;"></small>
             </label>
 
             <label class="form-group" for="password">
                 <span class="form-label">Contraseña</span>
                 <span class="input-shell">
                     <span class="material-symbols-outlined">lock</span>
-                    <input type="password" id="password" placeholder="Ingresa tu contraseña" required autocomplete="current-password" maxlength="25">
+                    <input type="password" id="password" placeholder="Ingresa tu contraseña" required autocomplete="current-password" maxlength="25" data-validate="required|password" style="width:100%;background:transparent;border:0;font-family:inherit;font-size:16px;font-weight:500;height:56px;min-width:0;outline:none;">
                     <button type="button" id="toggle-password" class="toggle-password" aria-label="Mostrar contraseña">
                         <span class="material-symbols-outlined">visibility</span>
                     </button>
                 </span>
+                <small id="password-error" style="display:block;font-size:0.75rem;color:#dc2626;font-weight:600;margin-top:4px;min-height:18px;"></small>
             </label>
 
             <div class="form-meta">
@@ -63,8 +65,24 @@
 
         <p class="footer-text">ABIS-UPC © Universidad Popular del Cesar</p>
     </main>
+    <script src="../../js/form-validation.js"></script>
     <script src="../../js/toast.js"></script>
     <script src="../../js/login.js"></script>
+    <script>
+      document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('login-form');
+        if (form) {
+          FormValidator.setupForm(form, {
+            validateOn: 'blur',
+            onSubmit: () => {
+              const btn = document.getElementById('btn-submit');
+              if (btn && typeof login === 'function') login();
+              return false;
+            }
+          });
+        }
+      });
+    </script>
 </body>
 </html>
 
