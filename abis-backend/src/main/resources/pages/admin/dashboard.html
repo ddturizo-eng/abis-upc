@@ -1,0 +1,185 @@
+<section class="dashboard-premium" id="dashboard-root">
+  <div class="dashboard-grid-main">
+    <article class="dashboard-card dashboard-hero">
+      <svg class="ballot-illustration" viewBox="0 0 320 230" aria-hidden="true">
+        <path d="M83 84h170l24 44H59l24-44Z" fill="#FFFFFF"/>
+        <path d="M64 128h210v78H64z" fill="none" stroke="#FFFFFF" stroke-width="11"/>
+        <path d="M90 149h157v35H90z" fill="#FFFFFF"/>
+        <path d="M167 29l72 41-41 71-72-41 41-71Z" fill="#FFFFFF"/>
+        <path d="M168 54l44 25" stroke="#004D33" stroke-width="7" stroke-linecap="round"/>
+      </svg>
+      <div class="hero-content">
+        <p class="dashboard-label dashboard-label-green">Bienvenido</p>
+        <h1 class="hero-title">Administrador Principal</h1>
+        <p class="hero-copy">Gestiona el proceso electoral, votantes, jurados y certificados desde un solo lugar.</p>
+      </div>
+      <div class="hero-meta">
+        <div class="hero-meta-item">
+          <span class="material-symbols-outlined">calendar_month</span>
+          <span id="hero-date">Cargando fecha...</span>
+        </div>
+        <span class="hero-meta-divider"></span>
+        <div class="hero-meta-item">
+          <span class="material-symbols-outlined">schedule</span>
+          <span id="live-clock" class="hero-clock font-mono">--:--:--</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="dashboard-card summary-card" id="resumen-electoral">
+      <div class="summary-header">
+        <h2 class="dashboard-title">Resumen Electoral</h2>
+        <button type="button" class="ghost-link" onclick="AdminRouter.irA('votantes')">
+          Ver detalle
+          <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+        </button>
+      </div>
+
+      <div class="summary-total">
+        <span class="metric-icon material-symbols-outlined">group</span>
+        <div>
+          <p class="metric-label">Total habilitados</p>
+          <p id="total-habilitados" class="metric-display dashboard-skeleton">0</p>
+        </div>
+      </div>
+
+      <div class="summary-body">
+        <div class="donut-wrap">
+          <svg class="donut-svg" viewBox="0 0 140 140" aria-label="Participación electoral">
+            <circle class="donut-track" cx="70" cy="70" r="54"></circle>
+            <circle id="donut-fill" class="donut-fill" cx="70" cy="70" r="54"></circle>
+          </svg>
+          <div class="donut-center">
+            <p id="pct-participacion" class="donut-percent">0%</p>
+            <p class="donut-label">Participación<br>actual</p>
+          </div>
+        </div>
+
+        <div class="summary-stats">
+          <div class="stat-row">
+            <span class="stat-icon stat-icon-green material-symbols-outlined">check_circle</span>
+            <div class="stat-copy">
+              <div class="stat-topline">
+                <div>
+                  <p class="stat-title">Han ejercido el voto</p>
+                  <p id="han-votado" class="stat-number">0</p>
+                </div>
+                <p id="pct-votaron" class="stat-percent">0%</p>
+              </div>
+              <div class="stat-track"><div id="bar-votaron" class="stat-fill"></div></div>
+            </div>
+          </div>
+
+          <div class="stat-row">
+            <span class="stat-icon stat-icon-blue material-symbols-outlined">groups</span>
+            <div class="stat-copy">
+              <div class="stat-topline">
+                <div>
+                  <p class="stat-title">Pendientes por votar</p>
+                  <p id="pendientes" class="stat-number">0</p>
+                </div>
+                <p id="pct-pendientes" class="stat-percent text-[#374151]">0%</p>
+              </div>
+              <div class="stat-track"><div id="bar-pendientes" class="stat-fill stat-fill-muted"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="dashboard-grid-mid">
+    <article class="dashboard-card next-election-card">
+      <div class="next-election-layout">
+        <span class="next-election-icon material-symbols-outlined">calendar_month</span>
+        <div>
+          <div class="next-election-header">
+            <p class="dashboard-label">Próxima elección</p>
+            <span id="eleccion-estado" class="status-pill status-programada">Programada</span>
+          </div>
+          <h2 id="eleccion-nombre" class="election-name dashboard-skeleton">Cargando elección...</h2>
+          <p id="eleccion-fecha" class="election-date">
+            <span class="material-symbols-outlined text-[17px]">event</span>
+            <span>Consultando calendario electoral</span>
+          </p>
+          <p id="eleccion-descripcion" class="election-description">Prepárate para gestionar la jornada electoral</p>
+        </div>
+      </div>
+      <button type="button" class="outline-action" onclick="AdminRouter.irA('elecciones')">
+        Gestionar Elecciones
+        <span class="material-symbols-outlined">arrow_forward</span>
+      </button>
+    </article>
+
+    <article class="dashboard-card quick-actions-card">
+      <h2 class="dashboard-title">Acciones rápidas</h2>
+      <div class="quick-actions-grid">
+        <button type="button" class="quick-card" onclick="window.location.href='/pages/registro/index.html'">
+          <span class="quick-icon material-symbols-outlined text-[32px]">person_add</span>
+          <span>
+            <span class="quick-title">Registrar Votante</span>
+            <span class="quick-description block">Registro rápido con OCR y biometría en 4 pasos.</span>
+          </span>
+          <span class="quick-arrow material-symbols-outlined">arrow_forward</span>
+        </button>
+        <button type="button" class="quick-card quick-card-blue" onclick="document.getElementById('resumen-electoral')?.scrollIntoView({behavior:'smooth', block:'center'})">
+          <span class="quick-icon material-symbols-outlined text-[32px]">description</span>
+          <span>
+            <span class="quick-title">Reportes</span>
+            <span class="quick-description block">Estadísticas y análisis del sistema.</span>
+          </span>
+          <span class="quick-arrow material-symbols-outlined">arrow_forward</span>
+        </button>
+        <button type="button" class="quick-card quick-card-kiosk" onclick="abrirModoVotacion()">
+          <span class="quick-icon material-symbols-outlined text-[32px]">how_to_vote</span>
+          <span>
+            <span class="quick-title">Modo votación</span>
+            <span class="quick-description block">Abrir pantalla kiosko para la jornada activa.</span>
+          </span>
+          <span class="quick-arrow material-symbols-outlined">open_in_new</span>
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <article class="dashboard-card activity-card">
+    <div class="activity-header">
+      <h2 class="activity-title">
+        <span class="material-symbols-outlined">monitoring</span>
+        Actividad reciente
+      </h2>
+      <button type="button" class="ghost-link" onclick="AdminRouter.irA('votantes')">
+        Ver actividad completa
+        <span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+      </button>
+    </div>
+    <div id="actividad-dashboard" class="activity-list">
+      <div class="activity-item">
+        <span class="activity-avatar activity-avatar-green material-symbols-outlined">groups</span>
+        <div>
+          <p class="activity-label">Último registro</p>
+          <p class="activity-name dashboard-skeleton">Cargando...</p>
+          <p class="activity-time">Hace unos instantes</p>
+        </div>
+      </div>
+      <div class="activity-item">
+        <span class="activity-avatar activity-avatar-purple material-symbols-outlined">fingerprint</span>
+        <div>
+          <p class="activity-label">Última autenticación</p>
+          <p class="activity-name dashboard-skeleton">Cargando...</p>
+          <p class="activity-time">Hace unos instantes</p>
+        </div>
+      </div>
+      <div class="activity-item">
+        <span class="activity-avatar activity-avatar-yellow material-symbols-outlined">badge</span>
+        <div>
+          <p class="activity-label">Último certificado</p>
+          <p class="activity-name dashboard-skeleton">Cargando...</p>
+          <p class="activity-time">Hace unos instantes</p>
+        </div>
+      </div>
+    </div>
+  </article>
+</section>
+
+<script src="../../js/dashboard.js"></script>
