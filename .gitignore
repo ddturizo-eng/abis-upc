@@ -29,6 +29,8 @@ abis-ocr/images/
 # ─── EXCEPCIONES: IMAGENES DEL PROYECTO PERMITIDAS ────────────────────────
 !abis-backend/src/main/resources/assets/PRESENTACION-GIT-HUB.png
 !abis-backend/src/main/resources/assets/img/
+!abis-backend/src/main/resources/assets/mediapipe/
+!abis-backend/src/main/resources/assets/mediapipe/**
 !abis-backend/src/main/resources/assets/mockup-*
 !abis-backend/src/main/resources/public/
 
@@ -76,6 +78,11 @@ release.properties
 abis-backend/.mvn/
 abis-biometric/.mvn/
 
+
+# ─── NODE.JS / NPM (raíz del proyecto) ─────────────────────────────────────
+node_modules/
+package-lock.json
+package.json
 
 # ─── LOGS ────────────────────────────────────────────────────────────────────
 *.log
