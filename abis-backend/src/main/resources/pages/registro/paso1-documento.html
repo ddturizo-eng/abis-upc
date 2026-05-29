@@ -79,27 +79,33 @@
 <div class="p-6 overflow-y-auto grid grid-cols-2 gap-x-6 gap-y-4 border-b border-slate-100">
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Primer Nombre *</label>
-                    <input class="form-field" id="f-primernombre" type="text" placeholder="Primer nombre">
+                    <input class="form-field" id="f-primernombre" type="text" placeholder="Primer nombre" data-validate="required|lettersOnly|noSpecialChars" maxlength="60">
+                    <small class="field-error-msg"></small>
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Segundo Nombre</label>
-                    <input class="form-field" id="f-segundonombre" type="text" placeholder="Segundo nombre">
+                    <input class="form-field" id="f-segundonombre" type="text" placeholder="Segundo nombre" data-validate="lettersOnly|noSpecialChars" maxlength="60">
+                    <small class="field-error-msg"></small>
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Primer Apellido *</label>
-                    <input class="form-field" id="f-primerapellido" type="text" placeholder="Primer apellido">
+                    <input class="form-field" id="f-primerapellido" type="text" placeholder="Primer apellido" data-validate="required|lettersOnly|noSpecialChars" maxlength="60">
+                    <small class="field-error-msg"></small>
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Segundo Apellido</label>
-                    <input class="form-field" id="f-segundoapellido" type="text" placeholder="Segundo apellido">
+                    <input class="form-field" id="f-segundoapellido" type="text" placeholder="Segundo apellido" data-validate="lettersOnly|noSpecialChars" maxlength="60">
+                    <small class="field-error-msg"></small>
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Número de Identificación *</label>
-                    <input class="form-field" id="f-identificacion" type="text" placeholder="Número de documento">
+                    <input class="form-field" id="f-identificacion" type="text" inputmode="numeric" placeholder="Número de documento" data-validate="required|cedula|noSpecialChars" maxlength="15">
+                    <small class="field-error-msg"></small>
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Fecha de Nacimiento</label>
                     <input class="form-field" id="f-fecha-nacimiento" type="date" placeholder="AAAA-MM-DD">
+                    <small class="field-error-msg"></small>
                 </div>
             </div>
 
@@ -111,23 +117,26 @@
             <div class="p-6 overflow-y-auto grid grid-cols-2 gap-x-6 gap-y-4">
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Correo Electrónico *</label>
-                    <input class="form-field" id="f-correo" type="email" placeholder="correo@ejemplo.com">
+                    <input class="form-field" id="f-correo" type="email" placeholder="correo@ejemplo.com" data-validate="required|emailStrict|noSpecialChars" maxlength="100">
+                    <small class="field-error-msg"></small>
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Rol del Votante *</label>
-                    <select class="form-field" id="f-rol">
+                    <select class="form-field" id="f-rol" data-validate="required">
                         <option value="">Seleccionar rol...</option>
                         <option value="1">ESTUDIANTE</option>
                         <option value="2">EGRESADO</option>
                         <option value="3">DOCENTE</option>
                         <option value="4">ADMINISTRATIVO</option>
                     </select>
+                    <small class="field-error-msg"></small>
                 </div>
                 <div class="col-span-1">
                     <label class="block text-sm font-medium text-gray-700 mb-1.5 ml-1">Puesto de Votación *</label>
-                    <select class="form-field" id="f-puesto">
+                    <select class="form-field" id="f-puesto" data-validate="required">
                         <option value="">Seleccionar puesto...</option>
                     </select>
+                    <small class="field-error-msg"></small>
                 </div>
             </div>
 
