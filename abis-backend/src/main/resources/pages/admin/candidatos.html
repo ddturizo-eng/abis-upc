@@ -104,37 +104,43 @@
         <div class="form-grid">
           <label>
             <span>Primer nombre *</span>
-            <input id="primerNombre" name="primerNombre" type="text" autocomplete="off">
+            <input id="primerNombre" name="primerNombre" type="text" autocomplete="off" data-validate="required|lettersOnly|noSpecialChars" maxlength="60">
             <small class="field-error"></small>
           </label>
           <label>
             <span>Segundo nombre</span>
-            <input id="segundoNombre" name="segundoNombre" type="text" autocomplete="off">
+            <input id="segundoNombre" name="segundoNombre" type="text" autocomplete="off" data-validate="lettersOnly|noSpecialChars" maxlength="60">
             <small class="field-error"></small>
           </label>
           <label>
             <span>Primer apellido *</span>
-            <input id="primerApellido" name="primerApellido" type="text" autocomplete="off">
+            <input id="primerApellido" name="primerApellido" type="text" autocomplete="off" data-validate="required|lettersOnly|noSpecialChars" maxlength="60">
             <small class="field-error"></small>
           </label>
           <label>
             <span>Segundo apellido</span>
-            <input id="segundoApellido" name="segundoApellido" type="text" autocomplete="off">
+            <input id="segundoApellido" name="segundoApellido" type="text" autocomplete="off" data-validate="lettersOnly|noSpecialChars" maxlength="60">
             <small class="field-error"></small>
           </label>
           <label>
             <span>Email</span>
-            <input id="email" name="email" type="email" autocomplete="off" placeholder="candidato@ejemplo.com">
+            <input id="email" name="email" type="email" autocomplete="off" placeholder="candidato@ejemplo.com" data-validate="emailStrict|noSpecialChars" maxlength="100">
             <small class="field-error"></small>
           </label>
           <label>
             <span>Número de campaña *</span>
-            <input id="numeroCampania" name="numeroCampania" type="number" min="1" max="9999" autocomplete="off">
+            <input id="numeroCampania" name="numeroCampania" type="number" min="1" max="9999" autocomplete="off" data-validate="required|numCampana">
             <small class="field-error"></small>
           </label>
           <label>
             <span>Cargo *</span>
-            <select id="cargoCandidato" name="cargo"></select>
+            <div class="cargo-select-wrap">
+              <select id="cargoCandidato" name="cargo" data-validate="required"></select>
+              <button type="button" id="btn-gestion-cargos" class="cargo-gestion-btn" title="Gestionar cargos">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                Gestionar
+              </button>
+            </div>
             <small class="field-error"></small>
           </label>
         </div>
@@ -152,6 +158,29 @@
     </div>
   </div>
 
+  <div class="candidate-modal" id="modalCargos" aria-hidden="true">
+    <div class="candidate-modal-panel" role="dialog" aria-modal="true">
+      <div class="candidate-modal-header">
+        <div>
+          <span class="module-badge">CONFIGURACIÓN</span>
+          <h2>Gestionar Cargos</h2>
+        </div>
+        <button class="modal-close" id="btnCerrarModalCargos" type="button" aria-label="Cerrar">×</button>
+      </div>
+      <div class="cargos-panel-body">
+        <p class="cargos-hint">Agrega los cargos que se elegirán en esta elección (ej: Representante estudiantil CSU, Representante ante Consejo Académico).</p>
+        <div class="cargos-add-row">
+          <input id="cargo-nuevo-nombre" type="text" placeholder="Nombre del nuevo cargo" maxlength="100" data-validate="required|lettersOnly|noSpecialChars">
+          <button type="button" id="btn-agregar-cargo" class="btn-primary btn-sm">Agregar</button>
+        </div>
+        <div class="cargos-list" id="cargos-list"></div>
+      </div>
+      <div class="candidate-modal-footer">
+        <button type="button" class="btn-outline" id="btnCerrarModalCargos2">Cerrar</button>
+      </div>
+    </div>
+  </div>
+
   <div class="candidate-modal" id="modalEliminarCandidato" aria-hidden="true">
     <div class="candidate-modal-panel candidate-modal-confirm" role="dialog" aria-modal="true" aria-labelledby="modalEliminarTitulo">
       <div id="modalEliminarContenido"></div>
@@ -159,4 +188,23 @@
   </div>
 </section>
 
+<script src="../../js/form-validation.js"></script>
 <script src="../../js/candidatos.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const form = document.getElementById('formCandidato');
+    if (form) {
+      FormValidator.setupForm(form, {
+        validateOn: 'blur',
+        onSubmit: () => {
+          if (typeof guardarCandidato === 'function') guardarCandidato();
+          return false;
+        }
+      });
+    }
+    const formCargo = document.getElementById('formCandidato');
+    if (formCargo) {
+      FormValidator.setupForm(formCargo, { validateOn: 'blur' });
+    }
+  });
+</script>
