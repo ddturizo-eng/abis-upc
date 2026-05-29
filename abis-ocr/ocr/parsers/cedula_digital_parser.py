@@ -3,26 +3,7 @@ cedula_digital_parser.py  — v2
 
 Campos reales observados en imágenes de CC Digital colombiana (2018–2024+):
 
-ANVERSO:
-    Etiqueta          Valor ejemplo
-    ─────────────────────────────────────────────
-    NUIP              1.052.041.109
-    Apellidos         TURIZO CHACON
-    Nombres           DANIEL DAVID
-    Nacionalidad      COL
-    Estatura          1.80
-    Sexo              M
-    Fecha de nac.     13 JUN 2006   ó   13-JUN-2006
-    G.S.              B+
-    Lugar de nac.     CICUCO (BOLIVAR)
-    Fecha y lugar exp 21 JUN 2024, CICUCO
-    Fecha expiración  11 JUN 2035
 
-REVERSO (MRZ de 3 líneas, orientación vertical):
-    Línea 1: ICCOL062598805015<<<<<<<<<<<<<<
-    Línea 2: 0606136M3506112COL1052041109<9
-    Línea 3: TURIZO<<CHACON<<DANIEL<DAVID<<<
-    → Parseado por _parse_mrz() para validación cruzada
 """
 
 import re
