@@ -545,6 +545,67 @@
     padding: 0 40px 32px; position: relative; z-index: 2;
   }
 
+  /* ── QR Contingency Panel ── */
+#qr-contingency-panel {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  animation: fadeUp .4s cubic-bezier(.16,1,.3,1) both;
+}
+
+/* Área cuadrada del QR — misma altura visual que fingerprint-stage */
+.qr-scan-area {
+  position: relative;
+  width: 220px; height: 220px;
+  background: var(--g-pale);
+  border-radius: 20px;
+  border: 1.5px solid rgba(45,134,83,.25);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px;
+}
+
+/* Esquinas tipo scanner — igual que .scanner-corner de la huella */
+.qc {
+  position: absolute;
+  width: 22px; height: 22px;
+  border-color: var(--g-dark); border-style: solid;
+}
+.qc.tl { top: 10px; left: 10px; border-width: 2px 0 0 2px; border-radius: 4px 0 0 0; }
+.qc.tr { top: 10px; right: 10px; border-width: 2px 2px 0 0; border-radius: 0 4px 0 0; }
+.qc.bl { bottom: 10px; left: 10px; border-width: 0 0 2px 2px; border-radius: 0 0 0 4px; }
+.qc.br { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; border-radius: 0 0 4px 0; }
+
+.qr-icon-wrap {
+  width: 88px; height: 88px;
+  background: var(--white);
+  border-radius: 14px;
+  border: 1px solid rgba(45,134,83,.2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--g-dark); font-size: 48px;
+}
+
+.qr-scan-label {
+  font-size: 15px; font-weight: 700;
+  color: var(--ink); margin: 0;
+}
+.qr-scan-sub {
+  font-size: 12px; color: var(--muted); margin: 0;
+}
+
+/* Badge inferior */
+.qr-mode-badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: var(--g-pale);
+  border: 1px solid rgba(45,134,83,.3);
+  border-radius: 9999px;
+  padding: 6px 16px;
+  font-size: 13px; font-weight: 600;
+  color: var(--g-dark);
+}
+
   /* ─── RESPONSIVE ────────────────────────────────────── */
   @media (max-width: 1024px) {
     .verify-panel { grid-template-columns: 1fr; }
@@ -687,6 +748,39 @@
           Cuando estés listo, inicia la verificación.
         </p>
         <span class="verify-substatus">No muevas tu dedo durante la lectura</span>
+      </div>
+
+      <!-- QR Contingency Panel — reemplazará el área de huella cuando JS active el modo QR -->
+      <div id="qr-contingency-panel">
+
+        <p class="kiosk-eyebrow">Modo Contingencia</p>
+
+        <h2>Escanea el <span>código QR</span> del votante</h2>
+
+        <p class="verify-copy">
+          Pide al votante que presente el QR recibido en su correo.
+          El escáner lo leerá automáticamente.
+        </p>
+
+        <div class="qr-scan-area">
+          <div class="qr-corners">
+            <span class="qc tl"></span>
+            <span class="qc tr"></span>
+            <span class="qc bl"></span>
+            <span class="qc br"></span>
+          </div>
+          <div class="qr-icon-wrap">
+            <i class="ti ti-qr-code"></i>
+          </div>
+          <p class="qr-scan-label">Escanea el QR</p>
+          <p class="qr-scan-sub">para iniciar la verificación</p>
+        </div>
+
+        <div class="qr-mode-badge">
+          <i class="ti ti-scan"></i>
+          Modo Contingencia QR activo
+        </div>
+
       </div>
 
       <!-- Tips -->
