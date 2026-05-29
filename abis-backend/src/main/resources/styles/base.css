@@ -200,6 +200,26 @@ h4 { font-size: 1rem; }
   font-weight: 600;
 }
 
+.form-field.is-invalid {
+  border-color: #dc2626 !important;
+  border-left-color: #dc2626 !important;
+  box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.10);
+}
+
+.form-field.is-valid {
+  border-color: #16a34a !important;
+  border-left-color: #16a34a !important;
+}
+
+.field-error-msg {
+  display: block;
+  font-size: 0.72rem;
+  color: #dc2626;
+  font-weight: 600;
+  margin-top: 4px;
+  min-height: 18px;
+}
+
 .btn {
   display: inline-flex;
   align-items: center;
