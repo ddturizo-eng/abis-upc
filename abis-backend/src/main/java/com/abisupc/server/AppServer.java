@@ -36,7 +36,14 @@ public class AppServer {
             );
         });
 
-        app.before(ctx -> ctx.res().setCharacterEncoding(StandardCharsets.UTF_8.name()));
+        app.before(ctx -> {
+            ctx.res().setCharacterEncoding(StandardCharsets.UTF_8.name());
+            if (ctx.path().endsWith(".wasm")) {
+                ctx.contentType("application/wasm");
+            } else if (ctx.path().endsWith(".mjs")) {
+                ctx.contentType("application/javascript");
+            }
+        });
         app.after(ctx -> {
             String contentType = ctx.res().getContentType();
             if (ctx.path().endsWith(".html") || (contentType != null && contentType.startsWith("text/html"))) {
