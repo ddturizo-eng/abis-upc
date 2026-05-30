@@ -1,4 +1,27 @@
-﻿const eHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+﻿/**
+ * Escapa caracteres HTML especiales para prevenir inyección de contenido.
+ *
+ * Se utiliza antes de insertar datos dinámicos en plantillas HTML
+ * generadas mediante template strings, evitando la ejecución de
+ * código no confiable proveniente de almacenamiento local o APIs.
+ *
+ * @param {*} v Valor a convertir de forma segura.
+ * @returns {string} Cadena escapada para renderizado HTML.
+ */
+
+const eHtml = (v) => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[c]));
+
+/**
+ * Carga dinámicamente un componente HTML dentro de un contenedor.
+ *
+ * Permite reutilizar fragmentos compartidos de interfaz como
+ * encabezados, barras de navegación y componentes institucionales
+ * sin duplicar código entre páginas.
+ *
+ * @param {string} id Identificador del elemento contenedor.
+ * @param {string} url Ruta del componente HTML.
+ * @returns {Promise<void>}
+ */
 
 async function cargarComponente(id, url) {
       const target = document.getElementById(id);
@@ -21,8 +44,23 @@ async function cargarComponente(id, url) {
 
       inicializarMenuAdministrador();
     }
-
+/**
+ * Inicializa los componentes visuales del panel administrativo.
+ *
+ * Carga los elementos compartidos de la interfaz y sincroniza
+ * el estado visual de navegación con la sección actualmente
+ * seleccionada dentro del router administrativo.
+ *
+ * @returns {Promise<void>}
+ */
     cargarComponentesAdmin();
+/**
+ * Configura el menú desplegable del perfil administrativo.
+ *
+ * Asigna la información del usuario autenticado a los elementos
+ * visuales del encabezado y registra los eventos necesarios para
+ * apertura, cierre y navegación del menú contextual.
+ */
 
     function inicializarMenuAdministrador() {
       const button = document.getElementById('admin-profile-button');
@@ -58,6 +96,12 @@ async function cargarComponente(id, url) {
         if (event.key === 'Escape') cerrarMenuAdministrador();
       });
     }
+/**
+ * Cierra el menú desplegable del perfil administrativo.
+ *
+ * Restablece el estado visual del componente y actualiza los
+ * atributos de accesibilidad utilizados por lectores de pantalla.
+ */
 
     function cerrarMenuAdministrador() {
       const button = document.getElementById('admin-profile-button');
@@ -76,6 +120,22 @@ async function cargarComponente(id, url) {
       });
       document.addEventListener('click', () => notifDropdown.classList.remove('open'));
     }
+
+/**
+ * Obtiene la información del administrador autenticado.
+ *
+ * Recupera los datos almacenados localmente durante el proceso
+ * de autenticación. Si la información no existe o se encuentra
+ * corrupta, retorna valores por defecto para mantener la
+ * estabilidad de la interfaz.
+ *
+ * @returns {{
+ *   usuario: string,
+ *   nombre: string,
+ *   rol: string,
+ *   iniciales: string
+ * }}
+ */
 
     function leerUsuarioAdmin() {
       const fallback = { usuario: 'abisadmin', nombre: 'Administrador', rol: 'Administrador', iniciales: 'AD' };
@@ -96,7 +156,13 @@ async function cargarComponente(id, url) {
         return fallback;
       }
     }
-
+/**
+ * Muestra la ventana modal con la información del administrador.
+ *
+ * Construye dinámicamente la interfaz de perfil cuando aún no
+ * existe en el DOM y reutiliza la instancia creada en accesos
+ * posteriores para reducir manipulaciones innecesarias.
+ */
     function verPerfilAdministrador() {
       cerrarMenuAdministrador();
       const user = leerUsuarioAdmin();
@@ -139,7 +205,16 @@ async function cargarComponente(id, url) {
       }
       modal.classList.remove('hidden');
     }
-
+/**
+ * Finaliza la sesión administrativa activa.
+ *
+ * Intenta notificar al servidor para invalidar el token de acceso.
+ * Independientemente del resultado de la comunicación, elimina las
+ * credenciales almacenadas localmente y redirige al formulario
+ * de autenticación.
+ *
+ * @returns {Promise<void>}
+ */
     async function cerrarSesion() {
       cerrarMenuAdministrador();
       const token = localStorage.getItem('abis_token');
