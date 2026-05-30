@@ -3,6 +3,15 @@ package com.abisupc.model;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
+/**
+ * Representa la asignacion de un votante como jurado en una mesa.
+ *
+ * <p>No extiende {@link Entity} porque su identidad en Oracle es una
+ * PK compuesta: {@code ID_MESA} + {@code IDENTIFICACION}. No existe
+ * un unico {@code Long id} que la identifique de forma independiente.
+ *
+ * <p>Tabla Oracle: {@code JURADOS}.
+ */
 public class Jurado {
 
     private Long idMesa;

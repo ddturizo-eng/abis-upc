@@ -2,6 +2,14 @@ package com.abisupc.model;
 
 import java.time.LocalDateTime;
 
+/**
+ * Representa una sesion activa de un administrador en el sistema.
+ *
+ * <p>Una sesion se considera activa mientras {@code fechaFin} sea {@code null}.
+ * Al cerrar sesion, {@code SesionRepository.invalidarToken()} escribe la hora
+ * de cierre sin eliminar el registro, conservando el historial de accesos.
+ * Tabla Oracle: {@code SESIONES}.
+ */
 public class Sesion extends Entity {
 
     private String token;

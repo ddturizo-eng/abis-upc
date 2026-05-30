@@ -24,7 +24,19 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * Orquesta el envio post-voto del certificado sin afectar la transaccion electoral.
+ * Orquesta el envio del certificado de participacion al votante tras emitir su voto.
+ *
+ * <p>El certificado es un PDF generado por el microservicio Node.js ({@code :8010})
+ * y enviado al correo del votante via Resend. Cada envio queda registrado en
+ * {@code AUDITORIA_CORREOS} para trazabilidad y posibles reenvios desde el panel
+ * de administracion.
+ *
+ * <p>El metodo {@link #enviarCertificadoPostVoto(String, Long)} es no bloqueante:
+ * captura cualquier excepcion y la registra sin propagarla, para no afectar la
+ * transaccion de votacion que ya fue confirmada en Oracle.
+ *
+ * <p>Cada certificado tiene un codigo unico {@code ABIS-XXXXXXXXXXXXXXXX} que
+ * permite verificar su autenticidad sin revelar informacion del voto.
  */
 public class CertificadoService {
 
@@ -37,6 +49,7 @@ public class CertificadoService {
     private final PuestoVotacionRepository puestoRepo;
     private final CertificadoClient certificadoClient;
 
+    /** Constructor por defecto. Crea sus propios repositorios y cliente. */
     public CertificadoService() {
         this(
                 new AuditoriaCorreoRepository(),
@@ -48,6 +61,16 @@ public class CertificadoService {
         );
     }
 
+    /**
+     * Constructor para inyeccion de dependencias (util en pruebas).
+     *
+     * @param auditoriaCorreoRepo repositorio de auditoria de correos
+     * @param votanteRepo         repositorio de votantes
+     * @param eleccionRepo        repositorio de elecciones
+     * @param registroVotoRepo    repositorio de registros de voto
+     * @param puestoRepo          repositorio de puestos de votacion
+     * @param certificadoClient   cliente HTTP para el microservicio de certificados
+     */
     public CertificadoService(
             AuditoriaCorreoRepository auditoriaCorreoRepo,
             VotanteRepository votanteRepo,
@@ -64,6 +87,16 @@ public class CertificadoService {
         this.certificadoClient = certificadoClient;
     }
 
+    /**
+     * Envia el certificado de participacion de forma no bloqueante.
+     *
+     * <p>Captura cualquier excepcion y la registra en consola sin propagarla.
+     * Se usa cuando el certificado se despacha de forma asincronica tras
+     * confirmar el voto, para no afectar la respuesta al kiosco.
+     *
+     * @param identificacion cedula del votante
+     * @param idEleccion     ID de la eleccion
+     */
     public void enviarCertificadoPostVoto(String identificacion, Long idEleccion) {
         try {
             enviarCertificado(identificacion, idEleccion);
@@ -72,6 +105,19 @@ public class CertificadoService {
         }
     }
 
+    /**
+     * Genera y envia el certificado de participacion al correo del votante.
+     *
+     * <p>Construye el payload con los datos del votante, la eleccion y el puesto,
+     * registra la solicitud en auditoria, llama al microservicio y marca el envio
+     * como exitoso o con error segun el resultado.
+     *
+     * @param identificacion cedula del votante
+     * @param idEleccion     ID de la eleccion
+     * @throws IOException              si el microservicio no puede enviar el correo
+     * @throws IllegalArgumentException si el votante o la eleccion no existen
+     * @throws IllegalStateException    si el votante no tiene registro de voto
+     */
     public void enviarCertificado(String identificacion, Long idEleccion) throws IOException {
         validarEntrada(identificacion, idEleccion);
 
@@ -101,6 +147,14 @@ public class CertificadoService {
         }
     }
 
+    /**
+     * Reenvía un certificado a partir de su ID de auditoria.
+     *
+     * @param idAuditoria ID del registro en {@code AUDITORIA_CORREOS}
+     * @return mapa con el nuevo {@code idAuditoria} del reintento
+     * @throws IOException              si el reenvio falla
+     * @throws IllegalArgumentException si la auditoria no existe
+     */
     public Map<String, Object> reenviarCertificado(Long idAuditoria) throws IOException {
         if (idAuditoria == null || idAuditoria <= 0) {
             throw new IllegalArgumentException("idAuditoria requerido");
@@ -111,6 +165,15 @@ public class CertificadoService {
         return Map.of("idAuditoria", nuevoId);
     }
 
+    /**
+     * Reenvía el ultimo certificado de un votante en una eleccion.
+     *
+     * @param identificacion cedula del votante
+     * @param idEleccion     ID de la eleccion
+     * @return mapa con el nuevo {@code idAuditoria} del reintento
+     * @throws IOException           si el reenvio falla
+     * @throws IllegalStateException si el votante no tiene registro de voto
+     */
     public Map<String, Object> reenviarCertificado(String identificacion, Long idEleccion) throws IOException {
         validarEntrada(identificacion, idEleccion);
         AuditoriaCorreo auditoria = auditoriaCorreoRepo
@@ -120,6 +183,13 @@ public class CertificadoService {
         return Map.of("idAuditoria", nuevoId);
     }
 
+    /**
+     * Lista los certificados emitidos para una eleccion con limite de resultados.
+     *
+     * @param idEleccion ID de la eleccion
+     * @param limit      numero maximo de registros
+     * @return lista de mapas con resumen de cada certificado
+     */
     public List<Map<String, Object>> listarCertificados(Long idEleccion, int limit) {
         List<Map<String, Object>> response = new ArrayList<>();
         for (AuditoriaCorreo auditoria : auditoriaCorreoRepo.findUltimasPorRegistrosVoto(idEleccion, limit)) {
@@ -128,6 +198,12 @@ public class CertificadoService {
         return response;
     }
 
+    /**
+     * Retorna el resumen de estado de certificados para el panel de administracion.
+     *
+     * @param idEleccion ID de la eleccion
+     * @return mapa con conteos de {@code total}, {@code enviados}, {@code errores} y {@code pendientes}
+     */
     public Map<String, Object> resumenPanel(Long idEleccion) {
         List<AuditoriaCorreo> auditorias = auditoriaCorreoRepo.findUltimasPorRegistrosVoto(idEleccion, 200);
         long enviados = auditorias.stream().filter(a -> "ENVIADO".equalsIgnoreCase(a.getEstado())).count();
@@ -143,6 +219,10 @@ public class CertificadoService {
         return resumen;
     }
 
+    /**
+     * Asegura que la infraestructura de auditoria de correos este lista en Oracle.
+     * Se llama durante el arranque del sistema.
+     */
     public void prepararAuditoria() {
         auditoriaCorreoRepo.asegurarInfraestructura();
     }
@@ -200,13 +280,9 @@ public class CertificadoService {
         return item;
     }
 
-    private CertificadoEnvioRequest construirPayload(
-            Votante votante,
-            Eleccion eleccion,
-            RegistroVoto registro,
-            PuestoVotacion puesto,
-            String codigoCertificado
-    ) {
+    private CertificadoEnvioRequest construirPayload(Votante votante, Eleccion eleccion,
+                                                     RegistroVoto registro, PuestoVotacion puesto,
+                                                     String codigoCertificado) {
         CertificadoEnvioRequest payload = new CertificadoEnvioRequest();
         payload.setIdentificacion(votante.getIdentificacion());
         payload.setNombre(nombreCompleto(votante));
@@ -235,6 +311,11 @@ public class CertificadoService {
         return FECHA_FORMATTER.format(fecha);
     }
 
+    /**
+     * Genera un codigo unico de certificado con el prefijo {@code ABIS-}.
+     *
+     * @return codigo de 16 caracteres alfanumericos en mayusculas precedido de {@code ABIS-}
+     */
     private String generarCodigoCertificado() {
         return "ABIS-" + UUID.randomUUID().toString().replace("-", "").substring(0, 16).toUpperCase();
     }

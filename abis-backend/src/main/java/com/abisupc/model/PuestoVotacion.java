@@ -2,6 +2,13 @@ package com.abisupc.model;
 
 import java.sql.Timestamp;
 
+/**
+ * Representa un puesto de votacion fisico en el sistema electoral.
+ *
+ * <p>{@code horaInicio} y {@code horaSalida} registran la apertura y cierre
+ * del puesto durante la jornada. Mientras {@code horaSalida} sea {@code null},
+ * el puesto se considera activo. Tabla Oracle: {@code PUESTOS_VOTACION}.
+ */
 public class PuestoVotacion extends Entity {
 
     private String ciudad;
@@ -11,36 +18,29 @@ public class PuestoVotacion extends Entity {
     private Timestamp horaSalida;
 
     public String getCiudad() {
-
         return ciudad;
     }
     public void setCiudad(String ciudad) {
-
         this.ciudad = ciudad;
     }
 
     public String getSede() {
-
         return sede;
     }
     public void setSede(String sede) {
-
         this.sede = sede;
     }
 
     public String getNombrePuesto() {
-
         return nombrePuesto;
     }
     public void setNombrePuesto(String nombrePuesto) {
-
         this.nombrePuesto = nombrePuesto;
     }
 
     public Timestamp getHoraInicio() {
         return horaInicio;
     }
-
     public void setHoraInicio(Timestamp horaInicio) {
         this.horaInicio = horaInicio;
     }
@@ -48,7 +48,6 @@ public class PuestoVotacion extends Entity {
     public Timestamp getHoraSalida() {
         return horaSalida;
     }
-
     public void setHoraSalida(Timestamp horaSalida) {
         this.horaSalida = horaSalida;
     }

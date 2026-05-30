@@ -4,10 +4,25 @@ import com.abisupc.model.EnrollRequest;
 import com.abisupc.service.BiometricService;
 import io.javalin.http.Context;
 
+/**
+ * Endpoints de enrolamiento y progreso biometrico.
+ *
+ * <p>Delega al servicio biometrico de Python el enrolamiento de huella
+ * dactilar de un votante (con opcion de re-enrolamiento) y consulta el
+ * progreso actual del proceso de captura.
+ */
 public class EnrollController {
 
     private static final BiometricService service = new BiometricService();
 
+    /**
+     * Inicia el enrolamiento de huella dactilar de un votante.
+     *
+     * <p>Delega al microservicio biometrico la captura de 4 muestras de huella.
+     * Si {@code re_enroll} es true, reemplaza la plantilla existente.
+     *
+     * @param ctx contexto HTTP con body {@link EnrollRequest}
+     */
     public static void enroll(Context ctx) {
         try {
             System.out.println("[EnrollController] Body recibido: " + ctx.body());
@@ -30,6 +45,11 @@ public class EnrollController {
         }
     }
 
+    /**
+     * Consulta el progreso actual del enrolamiento biometrico.
+     *
+     * @param ctx contexto HTTP
+     */
     public static void progress(Context ctx) {
         try {
             ctx.contentType("application/json").result(service.enrollProgress().toString());

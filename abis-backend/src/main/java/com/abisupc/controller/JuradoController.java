@@ -30,6 +30,12 @@ import java.util.Set;
 
 /**
  * Endpoints administrativos para mesas y jurados electorales.
+ *
+ * <p>Gestiona el ciclo completo de jurados: calculo de pool elegible con
+ * reglas de negocio, asignacion aleatoria o manual a mesas, CRUD de mesas
+ * y generacion de planillas PDF. El algoritmo de asignacion prioriza
+ * administrativos sobre docentes y minimiza la distancia entre puesto
+ * habitual y puesto asignado.
  */
 public class JuradoController {
 
@@ -42,6 +48,11 @@ public class JuradoController {
             4L, "ADMINISTRATIVO"
     );
 
+    /**
+     * Lista todos los jurados asignados con datos completos de votante y mesa.
+     *
+     * @param ctx contexto HTTP
+     */
     public static void getAll(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             ctx.json(ApiResponse.success(juradosCompletos(conn, null)));
@@ -50,6 +61,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Lista todas las mesas de jurados con sus puestos de votacion.
+     *
+     * @param ctx contexto HTTP
+     */
     public static void mesas(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             ctx.json(ApiResponse.success(mesasCompletas(conn, null)));
@@ -58,6 +74,12 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Calcula la simulacion de asignacion de jurados: pool elegible, jurados requeridos,
+     * cobertura y mesas completas/incompletas/criticas.
+     *
+     * @param ctx contexto HTTP con body de configuracion
+     */
     public static void resumenAsignacion(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -112,6 +134,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Retorna el pool de votantes elegibles para ser jurados segun configuracion.
+     *
+     * @param ctx contexto HTTP con body {@code configuracion} e {@code idEleccion}
+     */
     public static void poolElegible(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -123,6 +150,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Retorna el detalle completo de una mesa con sus jurados asignados.
+     *
+     * @param ctx contexto HTTP con path param {@code id}
+     */
     public static void mesaDetalle(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -137,6 +169,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Crea una nueva mesa de votacion con hora de ingreso, salida y puesto.
+     *
+     * @param ctx contexto HTTP con body de la mesa
+     */
     public static void crearMesa(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -149,6 +186,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Edita los datos de una mesa existente.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y body de la mesa
+     */
     public static void editarMesa(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -175,6 +217,13 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Elimina una mesa y sus jurados asociados.
+     *
+     * <p>Si la mesa tiene jurados, requiere {@code force=true} para confirmar.
+     *
+     * @param ctx contexto HTTP con path param {@code id} y query param opcional {@code force}
+     */
     public static void eliminarMesa(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -211,6 +260,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Asigna manualmente un jurado a una mesa con un cargo especifico.
+     *
+     * @param ctx contexto HTTP con body {@code identificacion}, {@code idMesa}, {@code cargo}
+     */
     public static void asignar(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);
@@ -233,6 +287,14 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Calcula y persiste la asignacion aleatoria de jurados a mesas.
+     *
+     * <p>Con {@code dry_run=true} solo simula sin persistir. El algoritmo prioriza
+     * administrativos sobre docentes y minimiza distancia al puesto asignado.
+     *
+     * @param ctx contexto HTTP con query param opcional {@code dry_run} y body de configuracion
+     */
     public static void asignarAleatorio(Context ctx) {
         boolean dryRun = "true".equalsIgnoreCase(ctx.queryParam("dry_run"));
         try (Connection conn = AppConfig.getConnection()) {
@@ -255,6 +317,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Remueve un jurado de una mesa especifica.
+     *
+     * @param ctx contexto HTTP con path params {@code identificacion} e {@code idMesa}
+     */
     public static void remover(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             String identificacion = ctx.pathParam("identificacion");
@@ -273,6 +340,11 @@ public class JuradoController {
         }
     }
 
+    /**
+     * Genera y descarga una planilla de jurados en formato PDF basico.
+     *
+     * @param ctx contexto HTTP con query params opcionales {@code puesto} y {@code mesa}
+     */
     public static void exportarPdf(Context ctx) {
         try (Connection conn = AppConfig.getConnection()) {
             Long idPuesto = optionalLong(ctx.queryParam("puesto"));

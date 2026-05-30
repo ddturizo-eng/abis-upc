@@ -9,6 +9,13 @@ import io.javalin.http.Context;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+/**
+ * Endpoints de certificados y panel de notificaciones.
+ *
+ * <p>Permite listar certificados emitidos, ver el resumen del panel con
+ * distribucion por eleccion, listar elecciones disponibles y reenviar
+ * certificados fallidos por auditoria o por identificacion de votante.
+ */
 public class CertificadoController {
 
     private static final CertificadoService certificadoService = new CertificadoService();
@@ -22,6 +29,11 @@ public class CertificadoController {
         app.post("/api/certificados/reenviar", CertificadoController::reenviarPorVotante);
     }
 
+    /**
+     * Lista certificados emitidos con limite y filtro por eleccion.
+     *
+     * @param ctx contexto HTTP con query params {@code eleccionId} y {@code limit}
+     */
     private static void listar(Context ctx) {
         try {
             Long idEleccion = queryLong(ctx, "eleccionId");
@@ -32,6 +44,11 @@ public class CertificadoController {
         }
     }
 
+    /**
+     * Retorna el resumen del panel de certificados con distribucion por eleccion.
+     *
+     * @param ctx contexto HTTP con query param {@code eleccionId}
+     */
     private static void resumen(Context ctx) {
         try {
             Long idEleccion = queryLong(ctx, "eleccionId");
@@ -41,6 +58,11 @@ public class CertificadoController {
         }
     }
 
+    /**
+     * Lista las elecciones disponibles para filtrar certificados.
+     *
+     * @param ctx contexto HTTP
+     */
     private static void elecciones(Context ctx) {
         try {
             var elecciones = eleccionRepo.findAll().stream().map(eleccion -> {
@@ -56,6 +78,11 @@ public class CertificadoController {
         }
     }
 
+    /**
+     * Reenvia un certificado fallido desde el panel de auditoria.
+     *
+     * @param ctx contexto HTTP con path param {@code id} del certificado
+     */
     private static void reenviarPorAuditoria(Context ctx) {
         try {
             Long id = Long.parseLong(ctx.pathParam("id"));
@@ -67,6 +94,11 @@ public class CertificadoController {
         }
     }
 
+    /**
+     * Reenvia un certificado buscando por identificacion de votante y eleccion.
+     *
+     * @param ctx contexto HTTP con body {@link ReenvioRequest}
+     */
     private static void reenviarPorVotante(Context ctx) {
         try {
             ReenvioRequest request = ctx.bodyAsClass(ReenvioRequest.class);
@@ -94,6 +126,7 @@ public class CertificadoController {
         return Integer.parseInt(value);
     }
 
+    /** Request para reenvio de certificado por votante. */
     public static class ReenvioRequest {
         public String identificacion;
         public Long idEleccion;

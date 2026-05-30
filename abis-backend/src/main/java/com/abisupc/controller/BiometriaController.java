@@ -7,10 +7,25 @@ import io.javalin.http.Context;
 import java.util.Base64;
 import java.util.Map;
 
+/**
+ * Endpoint de enrolamiento de biometria en Oracle.
+ *
+ * <p>Recibe la plantilla de huella dactilar codificada en Base64 junto con
+ * su hash de verificacion y la persiste en la base de datos a traves del
+ * repositorio especializado. Decodifica la plantilla antes de almacenarla.
+ */
 public class BiometriaController {
 
     private static final BiometriaOracleRepository biometriaRepo = new BiometriaOracleRepository();
 
+    /**
+     * Enrola la biometria de un votante en la base de datos Oracle.
+     *
+     * <p>Decodifica la plantilla Base64 y la almacena cifrada junto con su hash
+     * de verificacion.
+     *
+     * @param ctx contexto HTTP con body {@code identificacion}, {@code plantilla} y {@code hash}
+     */
     public static void enrolar(Context ctx) {
         try {
             Map<?, ?> body = ctx.bodyAsClass(Map.class);

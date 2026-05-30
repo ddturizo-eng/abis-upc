@@ -11,10 +11,25 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.Map;
 
+/**
+ * Endpoint de registro inicial de votantes.
+ *
+ * <p>Valida los datos del votante, verifica duplicados por identificacion,
+ * correo y QR de cedula, y persiste el nuevo registro con estado PENDIENTE.
+ * Normaliza el QR de la cedula eliminando caracteres invisibles y saltos de linea.
+ */
 public class RegistroController {
 
     private static final VotanteRepository repository = new VotanteRepository();
 
+    /**
+     * Registra un nuevo votante en el censo electoral.
+     *
+     * <p>Valida campos requeridos, verifica que no exista por identificacion,
+     * correo o QR de cedula, y persiste con estado PENDIENTE.
+     *
+     * @param ctx contexto HTTP con body {@link RegistroRequest}
+     */
     public static void crear(Context ctx) {
         try {
             var body = ctx.bodyAsClass(RegistroRequest.class);

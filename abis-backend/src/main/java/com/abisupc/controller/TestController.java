@@ -14,6 +14,10 @@ import java.util.Map;
 /**
  * ABIS-UPC | Capa de Controladores
  * Health check y status de todos los servicios del sistema.
+ *
+ * <p>Verifica la conectividad con la base de datos Oracle, los microservicios
+ * de biometria y OCR, el servicio nativo del lector de huella y el servicio
+ * de correo electronico. Retorna el estado de cada componente.
  */
 public class TestController {
 
